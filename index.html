@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>המשחקים של שמואל</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg: #FBF8FF;
+    --card-bg: #FFFFFF;
+    --ink: #2B2140;
+    --ink-soft: #6B6280;
+    --line: #E9E2F7;
+    --shadow: 220 60% 20%;
+    --c-trivia: #4EA8DE;
+    --c-english: #FF6FA0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg: #1B1530;
+      --card-bg: #261E42;
+      --ink: #F4F0FF;
+      --ink-soft: #B7ACD6;
+      --line: #3A2F5C;
+      --shadow: 260 60% 3%;
+    }
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, "Arial Hebrew", sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding: 48px 20px 40px;
+  }
+  .mascot{ font-size:60px; line-height:1; animation: bob 3.2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){ .mascot{ animation:none; } }
+  @keyframes bob{ 0%,100%{ transform: translateY(0) rotate(-2deg);} 50%{ transform: translateY(-8px) rotate(2deg);} }
+  h1{ font-size: clamp(28px,6vw,40px); font-weight:800; margin: 10px 0 4px; text-align:center; }
+  p.subtitle{ color: var(--ink-soft); font-size:17px; margin: 0 0 34px; text-align:center; }
+  .cards{ width:100%; max-width:640px; display:grid; gap:20px; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
+  a.game-card{
+    --c: var(--c-trivia);
+    text-decoration:none; color:inherit;
+    background: color-mix(in srgb, var(--c) 12%, var(--card-bg));
+    border-radius: 26px; padding: 30px 22px;
+    box-shadow: 0 2px 0 hsl(var(--shadow) / .06), inset 0 0 0 2px color-mix(in srgb, var(--c) 35%, transparent);
+    display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  a.game-card:hover{ transform: translateY(-4px); box-shadow: 0 10px 20px hsl(var(--shadow) / .18), inset 0 0 0 2px var(--c); }
+  a.game-card:active{ transform: translateY(0) scale(.98); }
+  .g-emoji{ font-size:50px; }
+  .g-title{ font-weight:800; font-size:20px; }
+  .g-desc{ color: var(--ink-soft); font-size:14px; }
+  .g-en{ font-size:15px; }
+  footer{ margin-top:44px; color: var(--ink-soft); font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+  <div class="mascot">🎮</div>
+  <h1>המשחקים של שמואל</h1>
+  <p class="subtitle">בחרי משחק ותתחילי לשחק!</p>
+
+  <div class="cards">
+    <a class="game-card" href="https://shmualdeutsch-create.github.io/brain-battle/" style="--c: var(--c-trivia);">
+      <div class="g-emoji">🧠</div>
+      <div class="g-title">קרב מוחות</div>
+      <div class="g-desc">משחק טריוויה</div>
+    </a>
+
+    <a class="game-card" href="foxy-english.html" style="--c: var(--c-english);">
+      <div class="g-emoji">🦊</div>
+      <div class="g-title g-en">Fun English with Foxy</div>
+      <div class="g-desc">לומדים אנגלית בכיף</div>
+    </a>
+  </div>
+
+  <footer>נוצר באהבה לשמואל ❤️</footer>
+</body>
+</html>

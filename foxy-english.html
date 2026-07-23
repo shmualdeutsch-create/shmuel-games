@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fun English with Foxy</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%8A%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<a href="index.html" style="position:fixed;top:14px;right:14px;z-index:100;background:#fff;color:#2B2140;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.15);font-family:-apple-system,'Segoe UI',system-ui,sans-serif;">⟵ למשחקים של שמואל</a>
+<div class="app" id="app" dir="rtl" lang="he"></div>
+
+<style>
+:root{
+  --bg: #FBF8FF;
+  --card-bg: #FFFFFF;
+  --ink: #2B2140;
+  --ink-soft: #6B6280;
+  --line: #E9E2F7;
+  --shadow: 220 60% 20%;
+
+  --c-animals: #FF6B6B;
+  --c-colors:  #8E5CD9;
+  --c-numbers: #4EA8DE;
+  --c-fruits:  #43B65A;
+  --c-family:  #FF6FA0;
+  --c-food:    #F5A623;
+  --c-clothes: #16A99A;
+  --c-house:   #FF8A3D;
+
+  --good: #34B26B;
+  --bad: #E5484D;
+}
+:root[data-theme="dark"]{
+  --bg: #1B1530;
+  --card-bg: #261E42;
+  --ink: #F4F0FF;
+  --ink-soft: #B7ACD6;
+  --line: #3A2F5C;
+  --shadow: 260 60% 3%;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg: #1B1530;
+    --card-bg: #261E42;
+    --ink: #F4F0FF;
+    --ink-soft: #B7ACD6;
+    --line: #3A2F5C;
+    --shadow: 260 60% 3%;
+  }
+}
+
+*{ box-sizing:border-box; }
+.app{
+  min-height:100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", system-ui, "Arial Hebrew", sans-serif;
+  padding: 28px 20px 40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  overflow-x:hidden;
+}
+.app *{ text-wrap: balance; }
+
+/* ---------- HOME ---------- */
+.home{ width:100%; max-width:780px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.mascot{ font-size:64px; line-height:1; filter: drop-shadow(0 6px 10px hsl(var(--shadow) / .25)); animation: bob 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce){ .mascot{ animation:none; } }
+@keyframes bob{ 0%,100%{ transform: translateY(0) rotate(-2deg);} 50%{ transform: translateY(-8px) rotate(2deg);} }
+h1.title{ font-size: clamp(28px,5vw,38px); font-weight:800; margin: 4px 0 0; letter-spacing:-0.01em; }
+p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
+
+.mode-tabs{ display:flex; gap:8px; margin:2px 0 18px; background: var(--card-bg); padding:5px; border-radius:16px; box-shadow: inset 0 0 0 1.5px var(--line); }
+.mode-tab{
+  border:none; background:transparent; color: var(--ink-soft); cursor:pointer;
+  font-family:inherit; font-weight:800; font-size:15px; padding:9px 18px; border-radius:12px;
+}
+.mode-tab.on{ background: var(--c-family); color:#fff; }
+
+.grid{ width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:14px; }
+.cat-card{
+  --c: var(--c-animals);
+  position:relative;
+  border:none; cursor:pointer;
+  border-radius: 22px;
+  padding: 20px 14px 16px;
+  background: color-mix(in srgb, var(--c) 14%, var(--card-bg));
+  box-shadow: 0 2px 0 hsl(var(--shadow) / .06), inset 0 0 0 2px color-mix(in srgb, var(--c) 35%, transparent);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  transition: transform .12s ease, box-shadow .12s ease;
+  font-family:inherit;
+}
+.cat-card:hover{ transform: translateY(-3px); box-shadow: 0 8px 16px hsl(var(--shadow) / .18), inset 0 0 0 2px var(--c); }
+.cat-card:active{ transform: translateY(0) scale(.98); }
+.cat-card:focus-visible{ outline: 3px solid var(--c); outline-offset:3px; }
+.cat-emoji{ font-size: 38px; }
+.cat-label{ font-weight:700; font-size:16px; color: var(--ink); }
+.cat-dot{ width:8px; height:8px; border-radius:50%; background:var(--c); }
+
+.mix-card{
+  grid-column: 1 / -1;
+  background: linear-gradient(120deg,
+    color-mix(in srgb, var(--c-animals) 20%, var(--card-bg)),
+    color-mix(in srgb, var(--c-numbers) 20%, var(--card-bg)),
+    color-mix(in srgb, var(--c-fruits) 20%, var(--card-bg)),
+    color-mix(in srgb, var(--c-family) 20%, var(--card-bg)));
+  flex-direction:row; justify-content:center; padding:18px;
+  box-shadow: 0 2px 0 hsl(var(--shadow) / .06), inset 0 0 0 2px var(--line);
+}
+.mix-card:hover{ box-shadow: 0 8px 16px hsl(var(--shadow) / .18), inset 0 0 0 2px var(--c-family); }
+.mix-card .cat-emoji{ font-size:30px; }
+
+/* ---------- QUIZ ---------- */
+.quiz{ width:100%; max-width:520px; display:flex; flex-direction:column; gap:18px; }
+.quiz-top{ display:flex; align-items:center; gap:12px; }
+.icon-btn{
+  border:none; background: var(--card-bg); color:var(--ink-soft);
+  width:38px; height:38px; border-radius:12px; font-size:18px; cursor:pointer;
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.icon-btn:hover{ color: var(--ink); }
+
+.back-pill{
+  border:none; background: var(--card-bg); color:var(--ink-soft);
+  height:38px; padding:0 16px 0 14px; border-radius:99px; font-size:14px; font-weight:700; cursor:pointer;
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  display:flex; align-items:center; gap:6px; flex-shrink:0;
+  font-family:inherit;
+}
+.back-pill:hover{ color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink-soft); }
+
+.bank-link{
+  border:none; background: var(--card-bg); color:var(--ink-soft);
+  padding:12px 18px; border-radius:16px; font-size:15px; font-weight:700; cursor:pointer;
+  box-shadow: inset 0 0 0 2px var(--line);
+  display:flex; align-items:center; gap:8px; margin-top:16px;
+  font-family:inherit;
+}
+.bank-link:hover{ color:var(--ink); box-shadow: inset 0 0 0 2px var(--c-family); }
+
+/* ---------- BANK ---------- */
+.bank{ width:100%; max-width:640px; display:flex; flex-direction:column; gap:16px; }
+.chips{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+.chip{
+  flex-shrink:0; border:none; background: var(--card-bg); color:var(--ink-soft);
+  padding:8px 16px; border-radius:99px; font-size:14px; font-weight:700; cursor:pointer;
+  box-shadow: inset 0 0 0 1.5px var(--line); font-family:inherit;
+}
+.chip.on{ color:var(--ink); box-shadow: inset 0 0 0 2px var(--c-family); }
+.bank-cat-head{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; margin:14px 0 6px; color:var(--ink); }
+.word-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px 6px; border-bottom:1px solid var(--line); font-size:16px;
+}
+.word-row .w-he{ display:flex; align-items:center; gap:8px; }
+.word-row .w-en{ color: var(--ink-soft); font-weight:700; }
+
+.add-box{
+  background: var(--card-bg); border-radius:20px; padding:18px 16px;
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.add-title{ font-weight:800; font-size:15px; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+.add-form{ display:flex; flex-wrap:wrap; gap:8px; }
+.field-input{
+  height:40px; border-radius:12px; border:none; padding:0 12px;
+  box-shadow: inset 0 0 0 1.5px var(--line); font-family:inherit; font-size:14px;
+  background: var(--bg); color: var(--ink);
+}
+.field-input:focus{ outline:none; box-shadow: inset 0 0 0 2px var(--c-family); }
+.field-emoji{ width:54px; text-align:center; }
+.field-he, .field-en{ flex:1; min-width:110px; }
+.add-btn{
+  height:40px; padding:0 18px; border-radius:12px; border:none; cursor:pointer;
+  background: var(--c-family); color:#fff; font-weight:800; font-size:14px; font-family:inherit;
+}
+.add-btn:active{ transform: scale(.97); }
+.form-msg{ font-size:13px; font-weight:700; margin-top:8px; min-height:16px; }
+.form-msg.ok{ color: var(--good); }
+.form-msg.warn{ color: #C97A16; }
+.progress-track{ flex:1; height:10px; background: var(--line); border-radius:99px; overflow:hidden; }
+.progress-fill{ height:100%; border-radius:99px; background: var(--cat-color, var(--c-animals)); transition: width .35s ease; }
+.stars-count{ font-weight:700; font-size:15px; white-space:nowrap; display:flex; align-items:center; gap:4px; }
+
+.q-card{
+  background: var(--card-bg);
+  border-radius: 26px;
+  padding: 38px 20px 30px;
+  text-align:center;
+  box-shadow: 0 4px 0 hsl(var(--shadow) / .06), inset 0 0 0 2px var(--line);
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.q-emoji{ font-size: 72px; line-height:1; }
+.q-word{ font-size:26px; font-weight:800; }
+.q-hint{ color:var(--ink-soft); font-size:14px; }
+
+.answers{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+.ans-btn{
+  font-family:inherit;
+  font-size:18px; font-weight:700;
+  padding:18px 10px;
+  border-radius:18px;
+  border:none;
+  background: var(--card-bg);
+  color: var(--ink);
+  box-shadow: 0 3px 0 hsl(var(--shadow) / .1), inset 0 0 0 2px var(--line);
+  cursor:pointer;
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+}
+.ans-btn:hover:not(:disabled){ box-shadow: 0 3px 0 hsl(var(--shadow) / .1), inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
+.ans-btn:active:not(:disabled){ transform: translateY(2px); }
+.ans-btn:focus-visible{ outline: 3px solid var(--cat-color, var(--c-animals)); outline-offset:2px; }
+.ans-btn.correct{ background: color-mix(in srgb, var(--good) 20%, var(--card-bg)); box-shadow: inset 0 0 0 2px var(--good); }
+.ans-btn.wrong{ background: color-mix(in srgb, var(--bad) 16%, var(--card-bg)); box-shadow: inset 0 0 0 2px var(--bad); animation: shake .35s ease; }
+.ans-btn:disabled{ cursor:default; opacity:.85; }
+@keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+@media (prefers-reduced-motion: reduce){ .ans-btn.wrong{ animation:none; } }
+
+.feedback{ min-height: 26px; text-align:center; font-weight:700; font-size:15px; }
+.feedback.good{ color: var(--good); }
+.feedback.bad{ color: var(--bad); }
+
+/* ---------- MEMORY ---------- */
+.memory{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
+.mem-meta{ font-weight:700; font-size:14px; color: var(--ink-soft); white-space:nowrap; }
+.mem-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+.mem-card{
+  aspect-ratio: 1 / 1; border:none; border-radius:16px; cursor:pointer;
+  background: var(--card-bg); box-shadow: inset 0 0 0 2px var(--line);
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  font-family:inherit; padding:4px; overflow:hidden;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.mem-card:hover:not(.flipped):not(.matched){ box-shadow: inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
+.mem-card .mem-back{ font-size:26px; opacity:.55; }
+.mem-card.flipped, .mem-card.matched{ background: color-mix(in srgb, var(--cat-color, var(--c-animals)) 14%, var(--card-bg)); box-shadow: inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
+.mem-card.matched{ background: color-mix(in srgb, var(--good) 18%, var(--card-bg)); box-shadow: inset 0 0 0 2px var(--good); cursor:default; }
+.mem-card .mem-pic{ font-size:26px; line-height:1; }
+.mem-card .mem-he{ font-size:12px; font-weight:700; margin-top:2px; }
+.mem-card .mem-en{ font-size:15px; font-weight:800; }
+@media (prefers-reduced-motion: no-preference){ .mem-card.flipped{ animation: pop .18s ease; } }
+@keyframes pop{ 0%{ transform:scale(.85); } 100%{ transform:scale(1); } }
+
+/* ---------- RESULT ---------- */
+.result{ width:100%; max-width:480px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; }
+.result-emoji{ font-size:64px; }
+.result-score{ font-size:44px; font-weight:800; font-variant-numeric: tabular-nums; }
+.result-msg{ color: var(--ink-soft); font-size:17px; margin-bottom:8px; }
+.result-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.btn{
+  font-family:inherit; font-weight:700; font-size:16px;
+  padding:14px 22px; border-radius:16px; border:none; cursor:pointer;
+  transition: transform .08s ease;
+}
+.btn:active{ transform: scale(.97); }
+.btn-primary{ background: var(--cat-color, var(--c-animals)); color:#fff; }
+.btn-ghost{ background: var(--card-bg); color:var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+
+/* particles */
+.particle{
+  position:fixed; top:0; left:0; pointer-events:none; font-size:22px; z-index:50;
+  animation: pop-fly 900ms ease-out forwards;
+}
+@keyframes pop-fly{
+  0%{ transform: translate(0,0) scale(.6) rotate(0deg); opacity:1; }
+  100%{ transform: var(--fly-to) scale(1.1) rotate(var(--fly-rot)); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){ .particle{ display:none; } }
+
+.sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+</style>
+
+<script>
+(function(){
+  document.documentElement.lang = "he";
+  document.documentElement.dir = "rtl";
+
+  var CATS = [
+    { id:"animals", label:"חיות",    icon:"🐶", color:"var(--c-animals)", words:[
+      {e:"🐶",he:"כלב",en:"dog"},{e:"🐱",he:"חתול",en:"cat"},{e:"🐭",he:"עכבר",en:"mouse"},
+      {e:"🐰",he:"ארנב",en:"rabbit"},{e:"🦊",he:"שועל",en:"fox"},{e:"🐻",he:"דוב",en:"bear"},
+      {e:"🦁",he:"אריה",en:"lion"},{e:"🐘",he:"פיל",en:"elephant"},{e:"🐸",he:"צפרדע",en:"frog"},{e:"🐟",he:"דג",en:"fish"}
+    ]},
+    { id:"colors", label:"צבעים",   icon:"🎨", color:"var(--c-colors)", words:[
+      {e:"🔴",he:"אדום",en:"red"},{e:"🟠",he:"כתום",en:"orange"},{e:"🟡",he:"צהוב",en:"yellow"},
+      {e:"🟢",he:"ירוק",en:"green"},{e:"🔵",he:"כחול",en:"blue"},{e:"🟣",he:"סגול",en:"purple"},
+      {e:"⚪",he:"לבן",en:"white"},{e:"⚫",he:"שחור",en:"black"},{e:"🟤",he:"חום",en:"brown"},{e:"🩷",he:"ורוד",en:"pink"}
+    ]},
+    { id:"numbers", label:"מספרים", icon:"🔢", color:"var(--c-numbers)", words:[
+      {e:"1️⃣",he:"אחת",en:"one"},{e:"2️⃣",he:"שתיים",en:"two"},{e:"3️⃣",he:"שלוש",en:"three"},
+      {e:"4️⃣",he:"ארבע",en:"four"},{e:"5️⃣",he:"חמש",en:"five"},{e:"6️⃣",he:"שש",en:"six"},
+      {e:"7️⃣",he:"שבע",en:"seven"},{e:"8️⃣",he:"שמונה",en:"eight"},{e:"9️⃣",he:"תשע",en:"nine"},{e:"🔟",he:"עשר",en:"ten"}
+    ]},
+    { id:"fruits", label:"פירות",  icon:"🍎", color:"var(--c-fruits)", words:[
+      {e:"🍎",he:"תפוח",en:"apple"},{e:"🍌",he:"בננה",en:"banana"},{e:"🍊",he:"תפוז",en:"orange"},
+      {e:"🍇",he:"ענבים",en:"grapes"},{e:"🍓",he:"תות",en:"strawberry"},{e:"🍉",he:"אבטיח",en:"watermelon"},
+      {e:"🍑",he:"אפרסק",en:"peach"},{e:"🍍",he:"אננס",en:"pineapple"},{e:"🥝",he:"קיווי",en:"kiwi"},{e:"🍒",he:"דובדבן",en:"cherry"}
+    ]},
+    { id:"family", label:"משפחה",  icon:"👨‍👩‍👧", color:"var(--c-family)", words:[
+      {e:"👨",he:"אבא",en:"dad"},{e:"👩",he:"אמא",en:"mom"},{e:"👦",he:"ילד",en:"boy"},
+      {e:"👧",he:"ילדה",en:"girl"},{e:"👶",he:"תינוק",en:"baby"},{e:"👴",he:"סבא",en:"grandpa"},{e:"👵",he:"סבתא",en:"grandma"}
+    ]},
+    { id:"food", label:"אוכל",    icon:"🍕", color:"var(--c-food)", words:[
+      {e:"🍕",he:"פיצה",en:"pizza"},{e:"🍔",he:"המבורגר",en:"burger"},{e:"🍞",he:"לחם",en:"bread"},
+      {e:"🧀",he:"גבינה",en:"cheese"},{e:"🥚",he:"ביצה",en:"egg"},{e:"🍦",he:"גלידה",en:"ice cream"},
+      {e:"🍪",he:"עוגייה",en:"cookie"},{e:"🍩",he:"דונאט",en:"donut"},{e:"🥛",he:"חלב",en:"milk"},{e:"🍫",he:"שוקולד",en:"chocolate"}
+    ]},
+    { id:"clothes", label:"בגדים", icon:"👕", color:"var(--c-clothes)", words:[
+      {e:"👕",he:"חולצה",en:"shirt"},{e:"👖",he:"מכנסיים",en:"pants"},{e:"🧦",he:"גרביים",en:"socks"},
+      {e:"👗",he:"שמלה",en:"dress"},{e:"👟",he:"נעליים",en:"shoes"},{e:"🧢",he:"כובע מצחייה",en:"cap"},
+      {e:"🎩",he:"כובע",en:"hat"},{e:"🧥",he:"מעיל",en:"coat"}
+    ]},
+    { id:"house", label:"בבית",   icon:"🏠", color:"var(--c-house)", words:[
+      {e:"🏠",he:"בית",en:"house"},{e:"🛏️",he:"מיטה",en:"bed"},{e:"🚪",he:"דלת",en:"door"},
+      {e:"🪟",he:"חלון",en:"window"},{e:"🛋️",he:"ספה",en:"sofa"},{e:"🚿",he:"מקלחת",en:"shower"},
+      {e:"🍽️",he:"צלחת",en:"plate"},{e:"🔑",he:"מפתח",en:"key"}
+    ]}
+  ];
+  var STORE_KEY = "fox_english_custom_words_v1";
+  function loadCustom(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return;
+      var data = JSON.parse(raw);
+      CATS.forEach(function(c){
+        if(data[c.id] && data[c.id].length) c.words = c.words.concat(data[c.id]);
+      });
+    }catch(e){}
+  }
+  function saveCustom(catId, word){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      var data = raw ? JSON.parse(raw) : {};
+      if(!data[catId]) data[catId] = [];
+      data[catId].push(word);
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+  loadCustom();
+  function allWords(){ return CATS.reduce(function(acc,c){ return acc.concat(c.words); }, []); }
+  var ROUND_LEN = 8;
+  var ENCOURAGE_GOOD = ["כל הכבוד! 🎉","מעולה! 🌟","נכון מאוד!","וואו, את שועלה חכמה! 🦊","יופי של תשובה!","מדהים!"];
+  var ENCOURAGE_BAD = ["כמעט! ננסה את הבא 💪","לא נורא, זה קורה!","בפעם הבאה נצליח!","קדימה, ממשיכים!"];
+
+  var app = document.getElementById("app");
+  var state = { screen:"home" };
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=a[i]; a[i]=a[j]; a[j]=t;
+    }
+    return a;
+  }
+  function pick(arr,n){ return shuffle(arr).slice(0,n); }
+  function el(tag, cls, html){
+    var d = document.createElement(tag);
+    if(cls) d.className = cls;
+    if(html !== undefined) d.innerHTML = html;
+    return d;
+  }
+
+  function goHome(){ state = { screen:"home" }; render(); }
+
+  function startRound(cat){
+    var isMix = cat.id === "mix";
+    var pool = isMix ? allWords() : cat.words;
+    var n = Math.min(ROUND_LEN, pool.length);
+    var qs = pick(pool, n).map(function(w){
+      var distractPool = (isMix ? allWords() : cat.words).filter(function(x){ return x.en !== w.en; });
+      var opts = [w];
+      var seen = { }; seen[w.en] = true;
+      shuffle(distractPool).forEach(function(d){
+        if(opts.length >= 4) return;
+        if(seen[d.en]) return;
+        seen[d.en] = true;
+        opts.push(d);
+      });
+      return { word:w, options: shuffle(opts) };
+    });
+    state = {
+      screen:"quiz", cat:cat, questions: qs, index:0, stars:0,
+      answered:false, wrongPicked:null
+    };
+    render();
+  }
+
+  function answer(opt){
+    if(state.answered) return;
+    var q = state.questions[state.index];
+    var correct = opt.en === q.word.en;
+    state.answered = true;
+    if(correct){
+      state.stars++;
+      spawnParticles();
+    } else {
+      state.wrongPicked = opt.en;
+    }
+    render();
+    setTimeout(function(){
+      if(state.index + 1 < state.questions.length){
+        state.index++;
+        state.answered = false;
+        state.wrongPicked = null;
+        render();
+      } else {
+        state.screen = "result";
+        render();
+      }
+    }, correct ? 850 : 1400);
+  }
+
+  var MEM_PAIRS = 6;
+
+  function startMemory(cat){
+    var pool = pick(cat.words, Math.min(MEM_PAIRS, cat.words.length));
+    var cards = [];
+    pool.forEach(function(w, i){
+      cards.push({ id:i, type:"pic",  w:w });
+      cards.push({ id:i, type:"word", w:w });
+    });
+    cards = shuffle(cards);
+    state = {
+      screen:"memory", cat:cat, cards:cards, flipped:[], matched:{}, moves:0, busy:false
+    };
+    render();
+  }
+
+  function flipCard(idx){
+    if(state.busy) return;
+    var c = state.cards[idx];
+    if(state.matched[c.id] !== undefined) return;
+    if(state.flipped.indexOf(idx) !== -1) return;
+    if(state.flipped.length >= 2) return;
+
+    state.flipped.push(idx);
+    if(state.flipped.length < 2){
+      render();
+      return;
+    }
+
+    state.moves++;
+    var a = state.cards[state.flipped[0]], b = state.cards[state.flipped[1]];
+    if(a.id === b.id){
+      state.matched[a.id] = true;
+      render();
+      spawnParticles();
+      var totalPairs = state.cards.length / 2;
+      if(Object.keys(state.matched).length === totalPairs){
+        setTimeout(function(){ state.screen = "memoryResult"; render(); }, 500);
+      } else {
+        state.flipped = [];
+      }
+    } else {
+      state.busy = true;
+      render();
+      setTimeout(function(){
+        state.flipped = [];
+        state.busy = false;
+        render();
+      }, 900);
+    }
+  }
+
+  function spawnParticles(){
+    var stars = ["⭐","✨","🌟"];
+    for(var i=0;i<7;i++){
+      var p = el("div","particle", stars[i % stars.length]);
+      var x = window.innerWidth/2 + (Math.random()*200-100);
+      var y = window.innerHeight/2 + (Math.random()*40-60);
+      p.style.left = x+"px";
+      p.style.top = y+"px";
+      var dx = (Math.random()*160-80);
+      var dy = -(120 + Math.random()*100);
+      p.style.setProperty("--fly-to", "translate("+dx+"px,"+dy+"px)");
+      p.style.setProperty("--fly-rot", (Math.random()*80-40)+"deg");
+      document.body.appendChild(p);
+      (function(node){ setTimeout(function(){ node.remove(); }, 950); })(p);
+    }
+  }
+
+  var homeMode = "quiz";
+
+  function renderHome(){
+    var wrap = el("div","home");
+    wrap.appendChild(el("div","mascot","🦊"));
+    wrap.appendChild(el("h1","title","Fun English with Foxy"));
+    wrap.appendChild(el("p","subtitle","בחרי איך לשחק, ואז בחרי נושא!"));
+
+    var tabs = el("div","mode-tabs");
+    var quizTab = el("button","mode-tab" + (homeMode==="quiz" ? " on":""), "🧠 חידון");
+    quizTab.addEventListener("click", function(){ homeMode="quiz"; render(); });
+    var memTab = el("button","mode-tab" + (homeMode==="memory" ? " on":""), "🧩 זיכרון");
+    memTab.addEventListener("click", function(){ homeMode="memory"; render(); });
+    tabs.appendChild(quizTab); tabs.appendChild(memTab);
+    wrap.appendChild(tabs);
+
+    var grid = el("div","grid");
+    CATS.forEach(function(c){
+      var btn = el("button","cat-card");
+      btn.style.setProperty("--c", c.color);
+      btn.appendChild(el("div","cat-emoji",c.icon));
+      btn.appendChild(el("div","cat-label",c.label));
+      btn.appendChild(el("div","cat-dot"));
+      btn.addEventListener("click", function(){ homeMode==="memory" ? startMemory(c) : startRound(c); });
+      grid.appendChild(btn);
+    });
+    var mix = el("button","cat-card mix-card");
+    mix.appendChild(el("div","cat-emoji","🎲"));
+    mix.appendChild(el("div","cat-label","התערובת הגדולה — קצת מהכל!"));
+    mix.addEventListener("click", function(){
+      var mixCat = {id:"mix", label:"התערובת הגדולה", color:"var(--c-family)", words:allWords()};
+      homeMode==="memory" ? startMemory(mixCat) : startRound(mixCat);
+    });
+    grid.appendChild(mix);
+    wrap.appendChild(grid);
+
+    var bankBtn = el("button","bank-link","📖 מאגר המילים לחזרה");
+    bankBtn.addEventListener("click", goBank);
+    wrap.appendChild(bankBtn);
+    return wrap;
+  }
+
+  function goBank(){ state = { screen:"bank", filter:"all" }; render(); }
+
+  function renderBank(){
+    var wrap = el("div","bank");
+
+    var top = el("div","quiz-top");
+    var back = el("button","back-pill","⟵ לתפריט");
+    back.addEventListener("click", goHome);
+    top.appendChild(back);
+    top.appendChild(el("h1","title","מאגר המילים 📖"));
+    wrap.appendChild(top);
+
+    var chips = el("div","chips");
+    var allChip = el("button","chip" + (state.filter==="all" ? " on":""), "הכל");
+    allChip.addEventListener("click", function(){ state.filter="all"; render(); });
+    chips.appendChild(allChip);
+    CATS.forEach(function(c){
+      var chip = el("button","chip" + (state.filter===c.id ? " on":""), c.label);
+      chip.addEventListener("click", function(){ state.filter=c.id; render(); });
+      chips.appendChild(chip);
+    });
+    wrap.appendChild(chips);
+
+    var list = el("div","word-list");
+    var catsToShow = state.filter === "all" ? CATS : CATS.filter(function(c){ return c.id === state.filter; });
+    catsToShow.forEach(function(c){
+      var head = el("div","bank-cat-head", c.icon + " " + c.label);
+      list.appendChild(head);
+      c.words.forEach(function(w){
+        var row = el("div","word-row");
+        row.innerHTML = '<span class="w-he">' + w.e + ' ' + w.he + '</span><span class="w-en">' + w.en + '</span>';
+        list.appendChild(row);
+      });
+    });
+    wrap.appendChild(list);
+
+    var addBox = el("div","add-box");
+    addBox.appendChild(el("div","add-title","➕ הוספת מילה חדשה"));
+    var form = el("div","add-form");
+
+    var sel = document.createElement("select");
+    sel.className = "field-input";
+    CATS.forEach(function(c){ var o=document.createElement("option"); o.value=c.id; o.textContent=c.label; sel.appendChild(o); });
+
+    var emojiIn = el("input","field-input field-emoji");
+    emojiIn.placeholder = "🙂"; emojiIn.maxLength = 4;
+
+    var heIn = el("input","field-input field-he");
+    heIn.placeholder = "מילה בעברית"; heIn.dir = "rtl";
+
+    var enIn = el("input","field-input field-en");
+    enIn.placeholder = "English word"; enIn.dir = "ltr";
+
+    var addBtn = el("button","add-btn","הוסיפי");
+
+    var msg = el("div","form-msg");
+
+    addBtn.addEventListener("click", function(){
+      var he = heIn.value.trim(), en = enIn.value.trim(), em = emojiIn.value.trim() || "✨";
+      if(!he || !en){
+        msg.className = "form-msg warn";
+        msg.textContent = "צריך למלא גם מילה בעברית וגם באנגלית 🙂";
+        return;
+      }
+      var catId = sel.value;
+      var cat = CATS.filter(function(c){ return c.id === catId; })[0];
+      var newWord = { e: em, he: he, en: en };
+      cat.words.push(newWord);
+      saveCustom(catId, newWord);
+      heIn.value = ""; enIn.value = ""; emojiIn.value = "";
+      msg.className = "form-msg ok";
+      msg.textContent = "המילה נוספה למאגר! 🎉";
+      state.filter = catId;
+      render();
+    });
+
+    form.appendChild(sel); form.appendChild(emojiIn); form.appendChild(heIn); form.appendChild(enIn); form.appendChild(addBtn);
+    addBox.appendChild(form);
+    addBox.appendChild(msg);
+    wrap.appendChild(addBox);
+
+    return wrap;
+  }
+
+  function renderQuiz(){
+    var wrap = el("div","quiz");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+
+    var top = el("div","quiz-top");
+    var back = el("button","back-pill","⟵ לתפריט");
+    back.addEventListener("click", goHome);
+    var track = el("div","progress-track");
+    var fill = el("div","progress-fill");
+    fill.style.width = Math.round((state.index/state.questions.length)*100) + "%";
+    track.appendChild(fill);
+    var stars = el("div","stars-count","⭐ " + state.stars);
+    top.appendChild(back); top.appendChild(track); top.appendChild(stars);
+    wrap.appendChild(top);
+
+    var q = state.questions[state.index];
+    var card = el("div","q-card");
+    card.appendChild(el("div","q-emoji", q.word.e));
+    card.appendChild(el("div","q-word", q.word.he));
+    card.appendChild(el("div","q-hint","איך אומרים את זה באנגלית?"));
+    wrap.appendChild(card);
+
+    var answers = el("div","answers");
+    q.options.forEach(function(opt){
+      var b = el("button","ans-btn", opt.en);
+      if(state.answered){
+        b.disabled = true;
+        if(opt.en === q.word.en) b.classList.add("correct");
+        else if(opt.en === state.wrongPicked) b.classList.add("wrong");
+      }
+      b.addEventListener("click", function(){ answer(opt); });
+      answers.appendChild(b);
+    });
+    wrap.appendChild(answers);
+
+    var fb = el("div","feedback");
+    if(state.answered){
+      var correct = state.wrongPicked === null;
+      fb.classList.add(correct ? "good":"bad");
+      var msgs = correct ? ENCOURAGE_GOOD : ENCOURAGE_BAD;
+      fb.textContent = msgs[Math.floor(Math.random()*msgs.length)];
+    }
+    wrap.appendChild(fb);
+
+    return wrap;
+  }
+
+  function renderMemory(){
+    var wrap = el("div","memory");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+
+    var top = el("div","quiz-top");
+    var back = el("button","back-pill","⟵ לתפריט");
+    back.addEventListener("click", goHome);
+    var totalPairs = state.cards.length / 2;
+    var matchedCount = Object.keys(state.matched).length;
+    var track = el("div","progress-track");
+    var fill = el("div","progress-fill");
+    fill.style.width = Math.round((matchedCount/totalPairs)*100) + "%";
+    track.appendChild(fill);
+    var meta = el("div","mem-meta", "🔎 " + matchedCount + "/" + totalPairs + " · מעברים " + state.moves);
+    top.appendChild(back); top.appendChild(track); top.appendChild(meta);
+    wrap.appendChild(top);
+
+    var grid = el("div","mem-grid");
+    state.cards.forEach(function(c, idx){
+      var isMatched = state.matched[c.id] !== undefined;
+      var isFlipped = state.flipped.indexOf(idx) !== -1;
+      var card = el("button","mem-card" + (isMatched ? " matched" : isFlipped ? " flipped" : ""));
+      if(isMatched || isFlipped){
+        if(c.type === "pic"){
+          card.innerHTML = '<div><div class="mem-pic">'+c.w.e+'</div><div class="mem-he">'+c.w.he+'</div></div>';
+        } else {
+          card.innerHTML = '<div class="mem-en">'+c.w.en+'</div>';
+        }
+      } else {
+        card.innerHTML = '<span class="mem-back">🐾</span>';
+      }
+      card.addEventListener("click", function(){ flipCard(idx); });
+      grid.appendChild(card);
+    });
+    wrap.appendChild(grid);
+
+    return wrap;
+  }
+
+  function renderMemoryResult(){
+    var wrap = el("div","result");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+    var totalPairs = state.cards.length / 2;
+    var ratio = state.moves / totalPairs;
+    var emoji = ratio <= 1.3 ? "🏆" : ratio <= 2 ? "🎉" : "🦊";
+    var msg = ratio <= 1.3 ? "זיכרון מדהים! מצאת הכל כמעט בלי טעויות!" :
+              ratio <= 2 ? "כל הכבוד! מצאת את כל הזוגות!" :
+              "יפה! מצאת את כל הזוגות, ננסה שוב מהר יותר?";
+    wrap.appendChild(el("div","result-emoji", emoji));
+    wrap.appendChild(el("div","result-score", totalPairs + " / " + totalPairs + " 🧩"));
+    wrap.appendChild(el("div","result-msg", msg + " (" + state.moves + " מעברים)"));
+    var actions = el("div","result-actions");
+    var again = el("button","btn btn-primary","שחקי שוב באותו נושא");
+    again.addEventListener("click", function(){ startMemory(state.cat); });
+    var home = el("button","btn btn-ghost","לתפריט הראשי");
+    home.addEventListener("click", goHome);
+    actions.appendChild(again); actions.appendChild(home);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  function renderResult(){
+    var wrap = el("div","result");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+    var total = state.questions.length;
+    var s = state.stars;
+    var emoji = s === total ? "🏆" : s >= total*0.7 ? "🎉" : s >= total*0.4 ? "🙂" : "🦊";
+    var msg = s === total ? "מדהים! את אלופת האנגלית!" :
+              s >= total*0.7 ? "כל הכבוד! את משתפרת מעולה!" :
+              s >= total*0.4 ? "יופי, תמשיכי להתאמן!" :
+              "יפה שניסית! בואי ננסה שוב, את תצליחי!";
+    wrap.appendChild(el("div","result-emoji", emoji));
+    wrap.appendChild(el("div","result-score", s + " / " + total + " ⭐"));
+    wrap.appendChild(el("div","result-msg", msg));
+    var actions = el("div","result-actions");
+    var again = el("button","btn btn-primary","שחקי שוב באותו נושא");
+    again.addEventListener("click", function(){ startRound(state.cat.id === "mix" ? {id:"mix", label:state.cat.label, color:state.cat.color} : CATS.filter(function(c){return c.id===state.cat.id;})[0]); });
+    var home = el("button","btn btn-ghost","לתפריט הראשי");
+    home.addEventListener("click", goHome);
+    actions.appendChild(again); actions.appendChild(home);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  function render(){
+    app.innerHTML = "";
+    if(state.screen === "home") app.appendChild(renderHome());
+    else if(state.screen === "quiz") app.appendChild(renderQuiz());
+    else if(state.screen === "bank") app.appendChild(renderBank());
+    else if(state.screen === "memory") app.appendChild(renderMemory());
+    else if(state.screen === "memoryResult") app.appendChild(renderMemoryResult());
+    else if(state.screen === "result") app.appendChild(renderResult());
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
