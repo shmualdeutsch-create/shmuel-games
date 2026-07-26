@@ -626,13 +626,13 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var q = state.questions[state.index];
     var card = el("div","q-card");
     card.appendChild(el("div","q-emoji", q.word.e));
-    card.appendChild(el("div","q-word", q.word.he));
-    card.appendChild(el("div","q-hint","איך אומרים את זה באנגלית?"));
+    card.appendChild(el("div","q-word", q.word.en));
+    card.appendChild(el("div","q-hint","מה זה אומר בעברית?"));
     wrap.appendChild(card);
 
     var answers = el("div","answers");
     q.options.forEach(function(opt){
-      var b = el("button","ans-btn", opt.en);
+      var b = el("button","ans-btn", opt.he);
       if(state.answered){
         b.disabled = true;
         if(opt.en === q.word.en) b.classList.add("correct");
