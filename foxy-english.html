@@ -72,7 +72,7 @@
 h1.title{ font-size: clamp(28px,5vw,38px); font-weight:800; margin: 4px 0 0; letter-spacing:-0.01em; }
 p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
-.mode-tabs{ display:flex; gap:8px; margin:2px 0 18px; background: var(--card-bg); padding:5px; border-radius:16px; box-shadow: inset 0 0 0 1.5px var(--line); }
+.mode-tabs{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:2px 0 18px; background: var(--card-bg); padding:5px; border-radius:16px; box-shadow: inset 0 0 0 1.5px var(--line); }
 .mode-tab{
   border:none; background:transparent; color: var(--ink-soft); cursor:pointer;
   font-family:inherit; font-weight:800; font-size:15px; padding:9px 18px; border-radius:12px;
@@ -260,6 +260,14 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 .letter-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
 .letter-nav{ display:flex; gap:10px; }
 .letter-nav .btn{ flex:1; }
+
+/* ---------- FLASHCARDS (Quizlet-style) ---------- */
+.flashcards{ width:100%; max-width:520px; display:flex; flex-direction:column; gap:18px; }
+.flash-card{ min-height:220px; justify-content:center; }
+.flash-actions{ display:flex; gap:10px; }
+.flash-actions .btn{ flex:1; }
+.flash-learn{ background: color-mix(in srgb, var(--bad) 16%, var(--card-bg)); color: var(--bad); box-shadow: inset 0 0 0 2px var(--bad); }
+.flash-know{ background: color-mix(in srgb, var(--good) 20%, var(--card-bg)); color: var(--good); box-shadow: inset 0 0 0 2px var(--good); }
 
 /* ---------- MEMORY ---------- */
 .memory{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
@@ -530,6 +538,35 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     render();
   }
 
+  function startFlashcards(cat){
+    var isMix = cat.id === "mix";
+    var pool = isMix ? allWords() : cat.words;
+    state = {
+      screen:"flashcards", cat:cat, total: pool.length,
+      round: shuffle(pool), index:0, flipped:false,
+      nextRound: [], masteredCount:0
+    };
+    render();
+  }
+
+  function flashcardAnswer(known){
+    var card = state.round[state.index];
+    if(known) state.masteredCount++;
+    else state.nextRound.push(card);
+    state.index++;
+    state.flipped = false;
+    if(state.index >= state.round.length){
+      if(state.nextRound.length === 0){
+        state.screen = "flashcardsResult";
+      } else {
+        state.round = shuffle(state.nextRound);
+        state.nextRound = [];
+        state.index = 0;
+      }
+    }
+    render();
+  }
+
   var MEM_PAIRS = 6;
 
   function startMemory(cat){
@@ -614,7 +651,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     memTab.addEventListener("click", function(){ homeMode="memory"; render(); });
     var lettersTab = el("button","mode-tab" + (homeMode==="letters" ? " on":""), "🔤 אותיות");
     lettersTab.addEventListener("click", function(){ homeMode="letters"; render(); });
-    tabs.appendChild(quizTab); tabs.appendChild(memTab); tabs.appendChild(lettersTab);
+    var flashTab = el("button","mode-tab" + (homeMode==="flashcards" ? " on":""), "🗂️ כרטיסיות");
+    flashTab.addEventListener("click", function(){ homeMode="flashcards"; render(); });
+    tabs.appendChild(quizTab); tabs.appendChild(memTab); tabs.appendChild(lettersTab); tabs.appendChild(flashTab);
     wrap.appendChild(tabs);
 
     var grid = el("div","grid");
@@ -627,6 +666,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       btn.addEventListener("click", function(){
         if(homeMode==="memory") startMemory(c);
         else if(homeMode==="letters") startLetters(c);
+        else if(homeMode==="flashcards") startFlashcards(c);
         else startRound(c);
       });
       grid.appendChild(btn);
@@ -638,6 +678,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       var mixCat = {id:"mix", label:"התערובת הגדולה", color:"var(--c-family)", words:allWords()};
       if(homeMode==="memory") startMemory(mixCat);
       else if(homeMode==="letters") startLetters(mixCat);
+      else if(homeMode==="flashcards") startFlashcards(mixCat);
       else startRound(mixCat);
     });
     grid.appendChild(mix);
@@ -888,6 +929,67 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     return wrap;
   }
 
+  function renderFlashcards(){
+    var wrap = el("div","flashcards");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+
+    var top = el("div","quiz-top");
+    var back = el("button","back-pill","⟵ לתפריט");
+    back.addEventListener("click", goHome);
+    var track = el("div","progress-track");
+    var fill = el("div","progress-fill");
+    fill.style.width = Math.round((state.masteredCount/state.total)*100) + "%";
+    track.appendChild(fill);
+    var counter = el("div","stars-count", "✅ " + state.masteredCount + "/" + state.total);
+    top.appendChild(back); top.appendChild(track); top.appendChild(counter);
+    wrap.appendChild(top);
+
+    var w = state.round[state.index];
+    var card = el("div","q-card flash-card");
+    card.appendChild(el("div","q-emoji", w.e));
+    card.appendChild(el("div","q-word", w.en));
+
+    if(!state.flipped){
+      var flipBtn = el("button","btn btn-ghost","🔄 הפכי כדי לראות תרגום");
+      flipBtn.addEventListener("click", function(){ state.flipped = true; render(); });
+      card.appendChild(flipBtn);
+    } else {
+      card.appendChild(el("div","q-hint", w.he));
+      var speakBtn = el("button","btn btn-ghost","🔊 השמעה");
+      speakBtn.addEventListener("click", function(){ speak(w.en); });
+      card.appendChild(speakBtn);
+    }
+    wrap.appendChild(card);
+
+    if(state.flipped){
+      var actions = el("div","flash-actions");
+      var learnBtn = el("button","btn flash-learn","❌ עוד לומדת");
+      learnBtn.addEventListener("click", function(){ flashcardAnswer(false); });
+      var knowBtn = el("button","btn flash-know","✅ ידעתי!");
+      knowBtn.addEventListener("click", function(){ flashcardAnswer(true); });
+      actions.appendChild(learnBtn); actions.appendChild(knowBtn);
+      wrap.appendChild(actions);
+    }
+
+    return wrap;
+  }
+
+  function renderFlashcardsResult(){
+    var wrap = el("div","result");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+    wrap.appendChild(el("div","result-emoji","🏆"));
+    wrap.appendChild(el("div","result-score", state.total + " / " + state.total + " 🗂️"));
+    wrap.appendChild(el("div","result-msg","כל הכבוד! עברת על כל הכרטיסיות וידעת את כולן!"));
+    var actions = el("div","result-actions");
+    var again = el("button","btn btn-primary","שחקי שוב באותו נושא");
+    again.addEventListener("click", function(){ startFlashcards(state.cat); });
+    var home = el("button","btn btn-ghost","לתפריט הראשי");
+    home.addEventListener("click", goHome);
+    actions.appendChild(again); actions.appendChild(home);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
   function renderMemory(){
     var wrap = el("div","memory");
     wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
@@ -979,6 +1081,8 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     else if(state.screen === "bank") app.appendChild(renderBank());
     else if(state.screen === "letters") app.appendChild(renderLetters());
     else if(state.screen === "alphabet") app.appendChild(renderAlphabet());
+    else if(state.screen === "flashcards") app.appendChild(renderFlashcards());
+    else if(state.screen === "flashcardsResult") app.appendChild(renderFlashcardsResult());
     else if(state.screen === "memory") app.appendChild(renderMemory());
     else if(state.screen === "memoryResult") app.appendChild(renderMemoryResult());
     else if(state.screen === "result") app.appendChild(renderResult());
