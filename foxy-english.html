@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fun English with Foxy</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%8A%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 </head>
 <body>
 <a href="index.html" style="position:fixed;top:14px;right:14px;z-index:100;background:#fff;color:#2B2140;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.15);font-family:-apple-system,'Segoe UI',system-ui,sans-serif;">⟵ למשחקים של שמואל</a>
@@ -583,16 +584,24 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
   }
 
   var coasterAnimId = null;
+  var coasterRenderer = null;
 
   function stopCoasterAnim(){
     if(coasterAnimId){ cancelAnimationFrame(coasterAnimId); coasterAnimId = null; }
+    if(coasterRenderer){
+      coasterRenderer.dispose();
+      var gl = coasterRenderer.getContext();
+      var ext = gl && gl.getExtension("WEBGL_lose_context");
+      if(ext) ext.loseContext();
+      coasterRenderer = null;
+    }
   }
 
   function coasterTerrainY(x){
-    return 150
-      + 42*Math.sin(x*0.006)
-      + 20*Math.sin(x*0.014 + 1.3)
-      + 10*Math.sin(x*0.03 + 2.7);
+    return 6
+      + 4*Math.sin(x*0.035)
+      + 2*Math.sin(x*0.08 + 1.3)
+      + 1*Math.sin(x*0.18 + 2.7);
   }
 
   function startCoaster(cat){
@@ -624,51 +633,72 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var canvas = document.createElement("canvas");
     canvas.className = "coaster-canvas";
     canvas.width = 680;
-    canvas.height = 220;
+    canvas.height = 380;
     wrap.appendChild(canvas);
 
-    var ctx = canvas.getContext("2d");
-    var CAR_X = canvas.width * 0.28;
+    var CHUNK = 90;
+    var trackLength = state.words.length * CHUNK + 60;
 
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xBFE3FF);
+    scene.fog = new THREE.Fog(0xBFE3FF, 40, 170);
+
+    var camera = new THREE.PerspectiveCamera(58, canvas.width/canvas.height, 0.1, 500);
+
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(canvas.width, canvas.height, false);
+    coasterRenderer = renderer;
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x445, 1.1));
+    var sun = new THREE.DirectionalLight(0xffffff, 0.7);
+    sun.position.set(6, 12, 8);
+    scene.add(sun);
+
+    var pts = [];
+    for(var x=-10; x<=trackLength+10; x+=4){
+      pts.push(new THREE.Vector3(x, coasterTerrainY(x), 3*Math.sin(x*0.02)));
+    }
+    var curve = new THREE.CatmullRomCurve3(pts);
+
+    var railGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 0.55, 8, false);
+    var railMat = new THREE.MeshStandardMaterial({ color:0x2B2140, roughness:0.6 });
+    scene.add(new THREE.Mesh(railGeo, railMat));
+
+    var bedGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 2.6, 8, false);
+    var bedMat = new THREE.MeshStandardMaterial({ color:0x8E5CD9, roughness:0.9 });
+    var bedMesh = new THREE.Mesh(bedGeo, bedMat);
+    bedMesh.position.y = -2.4;
+    scene.add(bedMesh);
+
+    function makeEmojiSprite(emoji, size){
+      var c = document.createElement("canvas");
+      c.width = 128; c.height = 128;
+      var cctx = c.getContext("2d");
+      cctx.font = "96px sans-serif";
+      cctx.textAlign = "center";
+      cctx.textBaseline = "middle";
+      cctx.fillText(emoji, 64, 70);
+      var tex = new THREE.CanvasTexture(c);
+      var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true }));
+      spr.scale.set(size, size, 1);
+      return spr;
+    }
+    var cart = makeEmojiSprite("🚋", 4.5);
+    scene.add(cart);
+
+    function placeCart(worldX){
+      var u = Math.max(0, Math.min(1, worldX/trackLength));
+      var pos = curve.getPointAt(u);
+      var tangent = curve.getTangentAt(u).normalize();
+      cart.position.copy(pos).add(new THREE.Vector3(0, 1.8, 0));
+      var camPos = pos.clone().add(new THREE.Vector3(0, 3.6, 0)).sub(tangent.clone().multiplyScalar(10));
+      camera.position.copy(camPos);
+      camera.lookAt(pos.clone().add(tangent.clone().multiplyScalar(12)).add(new THREE.Vector3(0, 1.6, 0)));
+    }
     function draw(worldX){
-      var w = canvas.width, h = canvas.height;
-      var sky = ctx.createLinearGradient(0,0,0,h);
-      sky.addColorStop(0, "#BFE3FF");
-      sky.addColorStop(1, "#EAF7FF");
-      ctx.fillStyle = sky;
-      ctx.fillRect(0,0,w,h);
-
-      ctx.beginPath();
-      ctx.moveTo(0, h);
-      for(var sx=0; sx<=w; sx+=8){
-        ctx.lineTo(sx, coasterTerrainY(worldX + (sx - CAR_X)));
-      }
-      ctx.lineTo(w, h);
-      ctx.closePath();
-      var ground = ctx.createLinearGradient(0,80,0,h);
-      ground.addColorStop(0, "#8E5CD9");
-      ground.addColorStop(1, "#5B3A9E");
-      ctx.fillStyle = ground;
-      ctx.fill();
-
-      ctx.beginPath();
-      for(var sx2=0; sx2<=w; sx2+=8){
-        var y2 = coasterTerrainY(worldX + (sx2 - CAR_X));
-        if(sx2===0) ctx.moveTo(sx2,y2); else ctx.lineTo(sx2,y2);
-      }
-      ctx.strokeStyle = "#2B2140";
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      var slopeNow = (coasterTerrainY(worldX+2) - coasterTerrainY(worldX-2)) / 4;
-      ctx.save();
-      ctx.translate(CAR_X, coasterTerrainY(worldX) - 14);
-      ctx.rotate(Math.atan(slopeNow));
-      ctx.font = "34px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("🚋", 0, 0);
-      ctx.restore();
+      placeCart(worldX);
+      renderer.render(scene, camera);
     }
     draw(state.worldX);
 
