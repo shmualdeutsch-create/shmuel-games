@@ -609,9 +609,12 @@
         else if(player.vy < 0){ player.y = p.y + p.h; player.vy = 0; }
       }
     }
-    // ground (with pits)
+    // ground (with pits) - use a small zone at the player's feet-center so
+    // falling/landing lines up with the drawn pit edges regardless of player size
     if(player.y + player.h >= GROUND_Y){
-      if(!isOverPit(player.x, player.w)){
+      const feetW = 10;
+      const feetX = player.x + player.w/2 - feetW/2;
+      if(!isOverPit(feetX, feetW)){
         player.y = GROUND_Y - player.h;
         player.vy = 0;
         player.onGround = true;
