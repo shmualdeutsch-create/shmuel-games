@@ -796,10 +796,7 @@
       }
       ctx.fillStyle = '#6FBF4E';
       ctx.fillRect(p.x, p.y, p.w, 8);
-      ctx.fillStyle = '#5AAA3E';
-      for(let tx = p.x+4; tx < p.x+p.w-4; tx += 9){
-        ctx.beginPath(); ctx.moveTo(tx, p.y); ctx.lineTo(tx+3, p.y-6); ctx.lineTo(tx+6, p.y); ctx.fill();
-      }
+      drawGrassBlades(p.x, p.w, p.y);
     }
 
     // goal flag
@@ -921,9 +918,20 @@
     }
     ctx.fillStyle = '#6FBF4E';
     ctx.fillRect(gx, GROUND_Y, gw, 10);
-    ctx.fillStyle = '#5AAA3E';
-    for(let tx = gx+5; tx < gx+gw-5; tx += 11){
-      ctx.beginPath(); ctx.moveTo(tx, GROUND_Y); ctx.lineTo(tx+4, GROUND_Y-8); ctx.lineTo(tx+8, GROUND_Y); ctx.fill();
+    drawGrassBlades(gx, gw, GROUND_Y);
+  }
+
+  function drawGrassBlades(x0, w, topY){
+    ctx.strokeStyle = '#4F9A38';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for(let bx = x0+2; bx < x0+w-2; bx += 4){
+      const h = 4 + (Math.sin(bx*0.9) * 0.5 + 0.5) * 4;
+      const lean = Math.sin(bx*0.5) * 2;
+      ctx.beginPath();
+      ctx.moveTo(bx, topY);
+      ctx.lineTo(bx + lean, topY - h);
+      ctx.stroke();
     }
   }
 
