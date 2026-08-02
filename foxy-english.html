@@ -222,22 +222,27 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 .feedback.good{ color: var(--good); }
 .feedback.bad{ color: var(--bad); }
 
-/* ---------- LETTERS ---------- */
-.letters{ width:100%; max-width:520px; display:flex; flex-direction:column; gap:18px; }
-.letter-tiles{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:10px 0 4px; direction:ltr; }
-.letter-tile{
-  font-family:inherit; font-weight:800; font-size:22px;
-  width:46px; height:46px; border-radius:14px; border:none; cursor:pointer;
-  background: var(--card-bg); color: var(--ink);
-  box-shadow: 0 3px 0 hsl(var(--shadow) / .1), inset 0 0 0 2px var(--line);
-  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+/* ---------- LETTERS (alphabet) ---------- */
+.letters{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
+.alpha-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(64px,1fr)); gap:10px; direction:ltr; }
+.alpha-tile{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background: var(--card-bg); border-radius:16px; padding:12px 4px 10px;
+  box-shadow: inset 0 0 0 2px var(--line);
+  transition: box-shadow .15s ease, background .15s ease;
 }
-.letter-tile:hover{ box-shadow: 0 3px 0 hsl(var(--shadow) / .1), inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
-.letter-tile:active, .letter-tile.active{ transform: translateY(2px) scale(1.05); background: color-mix(in srgb, var(--cat-color, var(--c-animals)) 22%, var(--card-bg)); box-shadow: inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
-.letter-gap{ width:14px; }
-.letter-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
-.letter-nav{ display:flex; gap:10px; }
-.letter-nav .btn{ flex:1; }
+.alpha-tile.known{ box-shadow: inset 0 0 0 2px var(--good); background: color-mix(in srgb, var(--good) 14%, var(--card-bg)); }
+.alpha-letter-btn{
+  font-family:inherit; font-weight:800; font-size:24px; border:none; background:transparent;
+  color: var(--ink); cursor:pointer; width:100%; padding:2px 0;
+}
+.alpha-letter-btn:active{ transform: scale(.9); }
+.alpha-known-btn{
+  border:none; border-radius:99px; width:26px; height:26px; cursor:pointer; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--line); color: var(--ink-soft); font-weight:800;
+}
+.alpha-tile.known .alpha-known-btn{ background: var(--good); color:#fff; }
 
 /* ---------- MEMORY ---------- */
 .memory{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
@@ -383,26 +388,19 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
-  function spellOut(word){
+  var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  var STORE_KEY_LETTERS = "fox_english_known_letters_v1";
+  var knownLetters = {};
+  function loadKnownLetters(){
     try{
-      if(!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      var letters = word.replace(/ /g,"").split("");
-      var i = 0;
-      function next(){
-        if(i >= letters.length){
-          setTimeout(function(){ speak(word); }, 250);
-          return;
-        }
-        var u = new SpeechSynthesisUtterance(letters[i]);
-        u.lang = "en-US";
-        u.rate = 0.8;
-        u.onend = function(){ i++; setTimeout(next, 150); };
-        window.speechSynthesis.speak(u);
-      }
-      next();
+      var raw = localStorage.getItem(STORE_KEY_LETTERS);
+      if(raw) knownLetters = JSON.parse(raw);
     }catch(e){}
   }
+  function saveKnownLetters(){
+    try{ localStorage.setItem(STORE_KEY_LETTERS, JSON.stringify(knownLetters)); }catch(e){}
+  }
+  loadKnownLetters();
   function el(tag, cls, html){
     var d = document.createElement(tag);
     if(cls) d.className = cls;
@@ -460,12 +458,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     }, correct ? 850 : 1400);
   }
 
-  function startLetters(cat){
-    var isMix = cat.id === "mix";
-    var pool = isMix ? allWords() : cat.words;
-    state = { screen:"letters", cat:cat, words: shuffle(pool), index:0 };
-    render();
-  }
+  function goLetters(){ state = { screen:"letters" }; render(); }
 
   var MEM_PAIRS = 6;
 
@@ -549,9 +542,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     quizTab.addEventListener("click", function(){ homeMode="quiz"; render(); });
     var memTab = el("button","mode-tab" + (homeMode==="memory" ? " on":""), "🧩 זיכרון");
     memTab.addEventListener("click", function(){ homeMode="memory"; render(); });
-    var lettersTab = el("button","mode-tab" + (homeMode==="letters" ? " on":""), "🔤 אותיות");
-    lettersTab.addEventListener("click", function(){ homeMode="letters"; render(); });
-    tabs.appendChild(quizTab); tabs.appendChild(memTab); tabs.appendChild(lettersTab);
+    tabs.appendChild(quizTab); tabs.appendChild(memTab);
     wrap.appendChild(tabs);
 
     var grid = el("div","grid");
@@ -561,11 +552,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       btn.appendChild(el("div","cat-emoji",c.icon));
       btn.appendChild(el("div","cat-label",c.label));
       btn.appendChild(el("div","cat-dot"));
-      btn.addEventListener("click", function(){
-        if(homeMode==="memory") startMemory(c);
-        else if(homeMode==="letters") startLetters(c);
-        else startRound(c);
-      });
+      btn.addEventListener("click", function(){ homeMode==="memory" ? startMemory(c) : startRound(c); });
       grid.appendChild(btn);
     });
     var mix = el("button","cat-card mix-card");
@@ -573,9 +560,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     mix.appendChild(el("div","cat-label","התערובת הגדולה — קצת מהכל!"));
     mix.addEventListener("click", function(){
       var mixCat = {id:"mix", label:"התערובת הגדולה", color:"var(--c-family)", words:allWords()};
-      if(homeMode==="memory") startMemory(mixCat);
-      else if(homeMode==="letters") startLetters(mixCat);
-      else startRound(mixCat);
+      homeMode==="memory" ? startMemory(mixCat) : startRound(mixCat);
     });
     grid.appendChild(mix);
     wrap.appendChild(grid);
@@ -583,6 +568,10 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var bankBtn = el("button","bank-link","📖 מאגר המילים לחזרה");
     bankBtn.addEventListener("click", goBank);
     wrap.appendChild(bankBtn);
+
+    var lettersBtn = el("button","bank-link","🔤 לימוד האותיות A-Z");
+    lettersBtn.addEventListener("click", goLetters);
+    wrap.appendChild(lettersBtn);
     return wrap;
   }
 
@@ -719,61 +708,43 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
   function renderLetters(){
     var wrap = el("div","letters");
-    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
 
     var top = el("div","quiz-top");
     var back = el("button","back-pill","⟵ לתפריט");
     back.addEventListener("click", goHome);
-    var track = el("div","progress-track");
-    var fill = el("div","progress-fill");
-    fill.style.width = Math.round((state.index/state.words.length)*100) + "%";
-    track.appendChild(fill);
-    var counter = el("div","stars-count", (state.index+1) + " / " + state.words.length);
-    top.appendChild(back); top.appendChild(track); top.appendChild(counter);
+    top.appendChild(back);
+    top.appendChild(el("h1","title","לימוד האותיות 🔤"));
     wrap.appendChild(top);
 
-    var w = state.words[state.index];
-    var card = el("div","q-card");
-    card.appendChild(el("div","q-emoji", w.e));
+    var knownCount = ALPHABET.filter(function(L){ return knownLetters[L]; }).length;
+    var progRow = el("div","quiz-top");
+    var track = el("div","progress-track");
+    var fill = el("div","progress-fill");
+    fill.style.width = Math.round((knownCount/ALPHABET.length)*100) + "%";
+    track.appendChild(fill);
+    var counter = el("div","stars-count", "✅ " + knownCount + "/" + ALPHABET.length);
+    progRow.appendChild(track); progRow.appendChild(counter);
+    wrap.appendChild(progRow);
 
-    var tiles = el("div","letter-tiles");
-    w.en.split(" ").forEach(function(part, pi){
-      if(pi > 0) tiles.appendChild(el("div","letter-gap"));
-      part.split("").forEach(function(ch){
-        var t = el("button","letter-tile", ch.toUpperCase());
-        t.addEventListener("click", function(){
-          t.classList.add("active");
-          speak(ch);
-          setTimeout(function(){ t.classList.remove("active"); }, 400);
-        });
-        tiles.appendChild(t);
+    wrap.appendChild(el("p","subtitle","לחצי על אות כדי לשמוע איך אומרים אותה, ולחצי על העיגול כדי לסמן שאת יודעת אותה!"));
+
+    var grid = el("div","alpha-grid");
+    ALPHABET.forEach(function(L){
+      var known = !!knownLetters[L];
+      var tile = el("div","alpha-tile" + (known ? " known" : ""));
+      var letterBtn = el("button","alpha-letter-btn", L);
+      letterBtn.addEventListener("click", function(){ speak(L); });
+      var knownBtn = el("button","alpha-known-btn", known ? "✓" : "");
+      knownBtn.addEventListener("click", function(){
+        knownLetters[L] = !knownLetters[L];
+        saveKnownLetters();
+        render();
       });
+      tile.appendChild(letterBtn);
+      tile.appendChild(knownBtn);
+      grid.appendChild(tile);
     });
-    card.appendChild(tiles);
-    card.appendChild(el("div","q-hint", w.he));
-
-    var actions = el("div","letter-actions");
-    var spellBtn = el("button","btn btn-ghost","🔤 השמעה אות-אות");
-    spellBtn.addEventListener("click", function(){ spellOut(w.en); });
-    var wordBtn = el("button","btn btn-primary","🔊 השמע את המילה");
-    wordBtn.addEventListener("click", function(){ speak(w.en); });
-    actions.appendChild(spellBtn); actions.appendChild(wordBtn);
-    card.appendChild(actions);
-
-    wrap.appendChild(card);
-
-    var isLast = state.index + 1 >= state.words.length;
-    var nav = el("div","letter-nav");
-    var prevBtn = el("button","btn btn-ghost","← מילה קודמת");
-    prevBtn.disabled = state.index === 0;
-    prevBtn.addEventListener("click", function(){ if(state.index>0){ state.index--; render(); } });
-    var nextBtn = el("button","btn btn-primary", isLast ? "סיימתי! 🎉" : "מילה הבאה →");
-    nextBtn.addEventListener("click", function(){
-      if(isLast){ goHome(); }
-      else { state.index++; render(); }
-    });
-    nav.appendChild(prevBtn); nav.appendChild(nextBtn);
-    wrap.appendChild(nav);
+    wrap.appendChild(grid);
 
     return wrap;
   }
