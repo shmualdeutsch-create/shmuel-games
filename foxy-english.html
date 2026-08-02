@@ -405,6 +405,32 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
+  var LETTER_SOUNDS = {
+    A:"ah", B:"buh", C:"kuh", D:"duh", E:"eh", F:"ffuh", G:"guh", H:"huh",
+    I:"ih", J:"juh", K:"kuh", L:"luh", M:"muh", N:"nuh", O:"ah", P:"puh",
+    Q:"kwuh", R:"ruh", S:"sss", T:"tuh", U:"uh", V:"vuh", W:"wuh", X:"ks",
+    Y:"yuh", Z:"zzz"
+  };
+  function speakLetterSound(letter){
+    try{
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      var u1 = new SpeechSynthesisUtterance(letter);
+      u1.lang = "en-US";
+      u1.rate = 0.85;
+      u1.onend = function(){
+        var sound = LETTER_SOUNDS[letter.toUpperCase()];
+        if(!sound) return;
+        setTimeout(function(){
+          var u2 = new SpeechSynthesisUtterance(sound);
+          u2.lang = "en-US";
+          u2.rate = 0.8;
+          window.speechSynthesis.speak(u2);
+        }, 150);
+      };
+      window.speechSynthesis.speak(u1);
+    }catch(e){}
+  }
   function spellOut(word){
     try{
       if(!('speechSynthesis' in window)) return;
@@ -785,7 +811,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       var known = !!knownLetters[L];
       var tile = el("div","alpha-tile" + (known ? " known" : ""));
       var letterBtn = el("button","alpha-letter-btn", L);
-      letterBtn.addEventListener("click", function(){ speak(L); });
+      letterBtn.addEventListener("click", function(){ speakLetterSound(L); });
       var knownBtn = el("button","alpha-known-btn", known ? "✓" : "");
       knownBtn.addEventListener("click", function(){
         knownLetters[L] = !knownLetters[L];
@@ -827,7 +853,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         var t = el("button","letter-tile", ch.toUpperCase());
         t.addEventListener("click", function(){
           t.classList.add("active");
-          speak(ch);
+          speakLetterSound(ch);
           setTimeout(function(){ t.classList.remove("active"); }, 400);
         });
         tiles.appendChild(t);
