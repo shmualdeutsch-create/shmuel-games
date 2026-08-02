@@ -705,15 +705,15 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var q = state.words[state.index];
     var card = el("div","q-card");
     card.appendChild(el("div","q-emoji", q.e));
-    card.appendChild(el("div","q-word", q.he));
-    card.appendChild(el("div","q-hint","כתבי את המילה באנגלית כדי לטפס!"));
+    card.appendChild(el("div","q-word", q.en));
+    card.appendChild(el("div","q-hint","כתבי את המילה בעברית כדי לטפס!"));
     wrap.appendChild(card);
 
     var row = el("div","coaster-input-row");
     var input = document.createElement("input");
     input.type = "text";
     input.className = "field-input coaster-input";
-    input.dir = "ltr";
+    input.dir = "rtl";
     input.autocomplete = "off";
     input.autocapitalize = "off";
     input.spellcheck = false;
@@ -725,11 +725,11 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     wrap.appendChild(fb);
 
     function doCheck(){
-      var typed = input.value.trim().toLowerCase();
+      var typed = input.value.trim();
       if(!typed) return;
       input.disabled = true;
       checkBtn.disabled = true;
-      if(typed === q.en.toLowerCase()){
+      if(typed === q.he){
         fb.className = "feedback good";
         fb.textContent = ENCOURAGE_GOOD[Math.floor(Math.random()*ENCOURAGE_GOOD.length)];
         spawnParticles();
@@ -756,7 +756,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         setTimeout(advance, 750);
       } else {
         fb.className = "feedback bad";
-        fb.textContent = "לא בדיוק... התשובה הנכונה: " + q.en;
+        fb.textContent = "לא בדיוק... התשובה הנכונה: " + q.he;
         setTimeout(function(){
           input.disabled = false;
           checkBtn.disabled = false;
