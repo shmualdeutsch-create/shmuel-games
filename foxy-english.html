@@ -637,7 +637,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     wrap.appendChild(canvas);
 
     var CHUNK = 90;
-    var trackLength = state.words.length * CHUNK + 60;
+    var wordsEndX = state.words.length * CHUNK + 60;
+    var LOOP_RADIUS = 14, LOOP_STEPS = 64, LOOP_TURNS = 2, LOOP_RUN = 180;
+    var trackLength = wordsEndX + LOOP_RUN;
 
     var scene = new THREE.Scene();
     scene.background = new THREE.Color(0xBFE3FF);
@@ -656,9 +658,20 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     scene.add(sun);
 
     var pts = [];
-    for(var x=-10; x<=trackLength+10; x+=4){
+    for(var x=-10; x<=wordsEndX; x+=4){
       pts.push(new THREE.Vector3(x, coasterTerrainY(x), 3*Math.sin(x*0.02)));
     }
+    var loopBaseY = coasterTerrainY(wordsEndX);
+    var loopBaseZ = 3*Math.sin(wordsEndX*0.02);
+    for(var li=1; li<=LOOP_STEPS*LOOP_TURNS; li++){
+      var la = (li/LOOP_STEPS) * Math.PI*2;
+      var lx = wordsEndX + LOOP_RADIUS*Math.sin(la);
+      var ly = loopBaseY + LOOP_RADIUS - LOOP_RADIUS*Math.cos(la);
+      var lz = loopBaseZ + (li/(LOOP_STEPS*LOOP_TURNS))*10;
+      pts.push(new THREE.Vector3(lx, ly, lz));
+    }
+    var afterLoopX = wordsEndX + 30;
+    pts.push(new THREE.Vector3(afterLoopX, coasterTerrainY(afterLoopX), loopBaseZ+10));
     var curve = new THREE.CatmullRomCurve3(pts);
 
     var railGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 0.55, 8, false);
@@ -734,15 +747,38 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         fb.textContent = ENCOURAGE_GOOD[Math.floor(Math.random()*ENCOURAGE_GOOD.length)];
         spawnParticles();
         var fromX = state.worldX, toX = state.worldX + 90, start = null, advanced = false;
+        function playFinaleLoop(){
+          var loopFrom = state.worldX, loopTo = trackLength, start2 = null, DURATION = 3400;
+          function loopStep(ts){
+            if(!start2) start2 = ts;
+            var t2 = Math.min(1, (ts-start2)/DURATION);
+            var eased2 = t2 < 0.5 ? 2*t2*t2 : 1 - Math.pow(-2*t2+2, 2)/2;
+            draw(loopFrom + (loopTo-loopFrom)*eased2);
+            if(t2 < 1){ coasterAnimId = requestAnimationFrame(loopStep); }
+            else {
+              stopCoasterAnim();
+              state.worldX = trackLength;
+              state.screen = "coasterResult";
+              render();
+            }
+          }
+          coasterAnimId = requestAnimationFrame(loopStep);
+        }
         function advance(){
           if(advanced) return;
           advanced = true;
-          stopCoasterAnim();
           state.worldX = toX;
           state.index++;
           state.correctCount++;
-          if(state.index >= state.words.length) state.screen = "coasterResult";
-          render();
+          if(state.index >= state.words.length){
+            fb.className = "feedback good";
+            fb.textContent = "🎉 סיבוב ניצחון! 🎢";
+            row.style.display = "none";
+            playFinaleLoop();
+          } else {
+            stopCoasterAnim();
+            render();
+          }
         }
         function step(ts){
           if(!start) start = ts;
