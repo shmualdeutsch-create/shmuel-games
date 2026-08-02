@@ -222,8 +222,8 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 .feedback.good{ color: var(--good); }
 .feedback.bad{ color: var(--bad); }
 
-/* ---------- LETTERS (alphabet) ---------- */
-.letters{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
+/* ---------- ALPHABET (A-Z learner) ---------- */
+.alphabet{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
 .alpha-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(64px,1fr)); gap:10px; direction:ltr; }
 .alpha-tile{
   display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -243,6 +243,23 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
   background: var(--line); color: var(--ink-soft); font-weight:800;
 }
 .alpha-tile.known .alpha-known-btn{ background: var(--good); color:#fff; }
+
+/* ---------- LETTERS (per-word spelling) ---------- */
+.letters{ width:100%; max-width:520px; display:flex; flex-direction:column; gap:18px; }
+.letter-tiles{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:10px 0 4px; direction:ltr; }
+.letter-tile{
+  font-family:inherit; font-weight:800; font-size:22px;
+  width:46px; height:46px; border-radius:14px; border:none; cursor:pointer;
+  background: var(--card-bg); color: var(--ink);
+  box-shadow: 0 3px 0 hsl(var(--shadow) / .1), inset 0 0 0 2px var(--line);
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+}
+.letter-tile:hover{ box-shadow: 0 3px 0 hsl(var(--shadow) / .1), inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
+.letter-tile:active, .letter-tile.active{ transform: translateY(2px) scale(1.05); background: color-mix(in srgb, var(--cat-color, var(--c-animals)) 22%, var(--card-bg)); box-shadow: inset 0 0 0 2px var(--cat-color, var(--c-animals)); }
+.letter-gap{ width:14px; }
+.letter-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+.letter-nav{ display:flex; gap:10px; }
+.letter-nav .btn{ flex:1; }
 
 /* ---------- MEMORY ---------- */
 .memory{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
@@ -388,6 +405,26 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
+  function spellOut(word){
+    try{
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      var letters = word.replace(/ /g,"").split("");
+      var i = 0;
+      function next(){
+        if(i >= letters.length){
+          setTimeout(function(){ speak(word); }, 250);
+          return;
+        }
+        var u = new SpeechSynthesisUtterance(letters[i]);
+        u.lang = "en-US";
+        u.rate = 0.8;
+        u.onend = function(){ i++; setTimeout(next, 150); };
+        window.speechSynthesis.speak(u);
+      }
+      next();
+    }catch(e){}
+  }
   var ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   var STORE_KEY_LETTERS = "fox_english_known_letters_v1";
   var knownLetters = {};
@@ -458,7 +495,14 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     }, correct ? 850 : 1400);
   }
 
-  function goLetters(){ state = { screen:"letters" }; render(); }
+  function goAlphabet(){ state = { screen:"alphabet" }; render(); }
+
+  function startLetters(cat){
+    var isMix = cat.id === "mix";
+    var pool = isMix ? allWords() : cat.words;
+    state = { screen:"letters", cat:cat, words: shuffle(pool), index:0 };
+    render();
+  }
 
   var MEM_PAIRS = 6;
 
@@ -542,7 +586,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     quizTab.addEventListener("click", function(){ homeMode="quiz"; render(); });
     var memTab = el("button","mode-tab" + (homeMode==="memory" ? " on":""), "🧩 זיכרון");
     memTab.addEventListener("click", function(){ homeMode="memory"; render(); });
-    tabs.appendChild(quizTab); tabs.appendChild(memTab);
+    var lettersTab = el("button","mode-tab" + (homeMode==="letters" ? " on":""), "🔤 אותיות");
+    lettersTab.addEventListener("click", function(){ homeMode="letters"; render(); });
+    tabs.appendChild(quizTab); tabs.appendChild(memTab); tabs.appendChild(lettersTab);
     wrap.appendChild(tabs);
 
     var grid = el("div","grid");
@@ -552,7 +598,11 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       btn.appendChild(el("div","cat-emoji",c.icon));
       btn.appendChild(el("div","cat-label",c.label));
       btn.appendChild(el("div","cat-dot"));
-      btn.addEventListener("click", function(){ homeMode==="memory" ? startMemory(c) : startRound(c); });
+      btn.addEventListener("click", function(){
+        if(homeMode==="memory") startMemory(c);
+        else if(homeMode==="letters") startLetters(c);
+        else startRound(c);
+      });
       grid.appendChild(btn);
     });
     var mix = el("button","cat-card mix-card");
@@ -560,7 +610,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     mix.appendChild(el("div","cat-label","התערובת הגדולה — קצת מהכל!"));
     mix.addEventListener("click", function(){
       var mixCat = {id:"mix", label:"התערובת הגדולה", color:"var(--c-family)", words:allWords()};
-      homeMode==="memory" ? startMemory(mixCat) : startRound(mixCat);
+      if(homeMode==="memory") startMemory(mixCat);
+      else if(homeMode==="letters") startLetters(mixCat);
+      else startRound(mixCat);
     });
     grid.appendChild(mix);
     wrap.appendChild(grid);
@@ -569,9 +621,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     bankBtn.addEventListener("click", goBank);
     wrap.appendChild(bankBtn);
 
-    var lettersBtn = el("button","bank-link","🔤 לימוד האותיות A-Z");
-    lettersBtn.addEventListener("click", goLetters);
-    wrap.appendChild(lettersBtn);
+    var alphaBtn = el("button","bank-link","🔤 לימוד האלפבית A-Z");
+    alphaBtn.addEventListener("click", goAlphabet);
+    wrap.appendChild(alphaBtn);
     return wrap;
   }
 
@@ -706,14 +758,14 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     return wrap;
   }
 
-  function renderLetters(){
-    var wrap = el("div","letters");
+  function renderAlphabet(){
+    var wrap = el("div","alphabet");
 
     var top = el("div","quiz-top");
     var back = el("button","back-pill","⟵ לתפריט");
     back.addEventListener("click", goHome);
     top.appendChild(back);
-    top.appendChild(el("h1","title","לימוד האותיות 🔤"));
+    top.appendChild(el("h1","title","לימוד האלפבית 🔤"));
     wrap.appendChild(top);
 
     var knownCount = ALPHABET.filter(function(L){ return knownLetters[L]; }).length;
@@ -745,6 +797,67 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       grid.appendChild(tile);
     });
     wrap.appendChild(grid);
+
+    return wrap;
+  }
+
+  function renderLetters(){
+    var wrap = el("div","letters");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+
+    var top = el("div","quiz-top");
+    var back = el("button","back-pill","⟵ לתפריט");
+    back.addEventListener("click", goHome);
+    var track = el("div","progress-track");
+    var fill = el("div","progress-fill");
+    fill.style.width = Math.round((state.index/state.words.length)*100) + "%";
+    track.appendChild(fill);
+    var counter = el("div","stars-count", (state.index+1) + " / " + state.words.length);
+    top.appendChild(back); top.appendChild(track); top.appendChild(counter);
+    wrap.appendChild(top);
+
+    var w = state.words[state.index];
+    var card = el("div","q-card");
+    card.appendChild(el("div","q-emoji", w.e));
+
+    var tiles = el("div","letter-tiles");
+    w.en.split(" ").forEach(function(part, pi){
+      if(pi > 0) tiles.appendChild(el("div","letter-gap"));
+      part.split("").forEach(function(ch){
+        var t = el("button","letter-tile", ch.toUpperCase());
+        t.addEventListener("click", function(){
+          t.classList.add("active");
+          speak(ch);
+          setTimeout(function(){ t.classList.remove("active"); }, 400);
+        });
+        tiles.appendChild(t);
+      });
+    });
+    card.appendChild(tiles);
+    card.appendChild(el("div","q-hint", w.he));
+
+    var actions = el("div","letter-actions");
+    var spellBtn = el("button","btn btn-ghost","🔤 השמעה אות-אות");
+    spellBtn.addEventListener("click", function(){ spellOut(w.en); });
+    var wordBtn = el("button","btn btn-primary","🔊 השמע את המילה");
+    wordBtn.addEventListener("click", function(){ speak(w.en); });
+    actions.appendChild(spellBtn); actions.appendChild(wordBtn);
+    card.appendChild(actions);
+
+    wrap.appendChild(card);
+
+    var isLast = state.index + 1 >= state.words.length;
+    var nav = el("div","letter-nav");
+    var prevBtn = el("button","btn btn-ghost","← מילה קודמת");
+    prevBtn.disabled = state.index === 0;
+    prevBtn.addEventListener("click", function(){ if(state.index>0){ state.index--; render(); } });
+    var nextBtn = el("button","btn btn-primary", isLast ? "סיימתי! 🎉" : "מילה הבאה →");
+    nextBtn.addEventListener("click", function(){
+      if(isLast){ goHome(); }
+      else { state.index++; render(); }
+    });
+    nav.appendChild(prevBtn); nav.appendChild(nextBtn);
+    wrap.appendChild(nav);
 
     return wrap;
   }
@@ -839,6 +952,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     else if(state.screen === "quiz") app.appendChild(renderQuiz());
     else if(state.screen === "bank") app.appendChild(renderBank());
     else if(state.screen === "letters") app.appendChild(renderLetters());
+    else if(state.screen === "alphabet") app.appendChild(renderAlphabet());
     else if(state.screen === "memory") app.appendChild(renderMemory());
     else if(state.screen === "memoryResult") app.appendChild(renderMemoryResult());
     else if(state.screen === "result") app.appendChild(renderResult());
