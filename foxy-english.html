@@ -297,13 +297,13 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
   box-shadow: 0 4px 0 hsl(var(--shadow) / .06), inset 0 0 0 2px var(--line);
   touch-action:none;
 }
-.coaster-gas{
-  width:100%; font-size:20px; padding:20px; border-radius:18px; border:none; cursor:pointer;
-  background: var(--c-house); color:#fff; font-weight:800; font-family:inherit;
-  user-select:none; -webkit-user-select:none; touch-action:none;
-  transition: transform .06s ease, filter .1s ease;
+.coaster-input-row{ display:flex; gap:8px; }
+.coaster-input{ flex:1; height:46px; font-size:18px; text-align:center; }
+.coaster-check-btn{
+  height:46px; padding:0 22px; border-radius:12px; border:none; cursor:pointer;
+  background: var(--cat-color, var(--c-house)); color:#fff; font-weight:800; font-size:16px; font-family:inherit;
 }
-.coaster-gas:active{ transform: scale(.97); filter: brightness(1.12); }
+.coaster-check-btn:active{ transform: scale(.97); }
 
 /* ---------- RESULT ---------- */
 .result{ width:100%; max-width:480px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; }
@@ -582,89 +582,55 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     render();
   }
 
-  var coasterRafId = null;
-  var coasterKeyDown = null;
-  var coasterKeyUp = null;
+  var coasterAnimId = null;
 
-  function goCoaster(){ state = { screen:"coaster" }; render(); }
+  function stopCoasterAnim(){
+    if(coasterAnimId){ cancelAnimationFrame(coasterAnimId); coasterAnimId = null; }
+  }
 
-  function stopCoaster(){
-    if(coasterRafId){ cancelAnimationFrame(coasterRafId); coasterRafId = null; }
-    if(coasterKeyDown){ window.removeEventListener("keydown", coasterKeyDown); coasterKeyDown = null; }
-    if(coasterKeyUp){ window.removeEventListener("keyup", coasterKeyUp); coasterKeyUp = null; }
+  function coasterTerrainY(x){
+    return 150
+      + 42*Math.sin(x*0.006)
+      + 20*Math.sin(x*0.014 + 1.3)
+      + 10*Math.sin(x*0.03 + 2.7);
+  }
+
+  function startCoaster(cat){
+    var isMix = cat.id === "mix";
+    var pool = isMix ? allWords() : cat.words;
+    var n = Math.min(ROUND_LEN, pool.length);
+    state = {
+      screen:"coaster", cat:cat, words: pick(pool, n), index:0,
+      worldX:0, correctCount:0, wrong:false
+    };
+    render();
   }
 
   function renderCoaster(){
     var wrap = el("div","coaster");
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
 
     var top = el("div","quiz-top");
     var back = el("button","back-pill","⟵ לתפריט");
-    back.addEventListener("click", function(){ stopCoaster(); goHome(); });
-    var scoreEl = el("div","stars-count","🪙 0 · 📏 0מ'");
-    top.appendChild(back); top.appendChild(scoreEl);
+    back.addEventListener("click", function(){ stopCoasterAnim(); goHome(); });
+    var track = el("div","progress-track");
+    var fill = el("div","progress-fill");
+    fill.style.width = Math.round((state.index/state.words.length)*100) + "%";
+    track.appendChild(fill);
+    var counter = el("div","stars-count", "⭐ " + state.correctCount + "/" + state.words.length);
+    top.appendChild(back); top.appendChild(track); top.appendChild(counter);
     wrap.appendChild(top);
-
-    wrap.appendChild(el("p","subtitle","החזיקי על כפתור הגז כדי להאיץ במורדות ולטפס בעליות! 🎢"));
 
     var canvas = document.createElement("canvas");
     canvas.className = "coaster-canvas";
     canvas.width = 680;
-    canvas.height = 260;
+    canvas.height = 220;
     wrap.appendChild(canvas);
-
-    var gasBtn = el("button","coaster-gas","🚀 גז! (החזיקי לחוצה)");
-    wrap.appendChild(gasBtn);
-
-    var finishBtn = el("button","btn btn-ghost","🏁 סיימי את הנסיעה");
-    wrap.appendChild(finishBtn);
 
     var ctx = canvas.getContext("2d");
     var CAR_X = canvas.width * 0.28;
-    var worldX = 0;
-    var velocity = 4;
-    var thrust = false;
-    var coins = [];
-    var nextCoinAt = 250;
-    var coinCount = 0;
 
-    function terrainY(x){
-      return 150
-        + 42*Math.sin(x*0.006)
-        + 20*Math.sin(x*0.014 + 1.3)
-        + 10*Math.sin(x*0.03 + 2.7);
-    }
-
-    function ensureCoins(){
-      while(nextCoinAt < worldX + canvas.width*1.5){
-        coins.push({ wx: nextCoinAt, taken:false });
-        nextCoinAt += 180 + Math.random()*220;
-      }
-      coins = coins.filter(function(c){ return c.wx > worldX - 100; });
-    }
-    ensureCoins();
-
-    function setThrust(v){ thrust = v; }
-    gasBtn.addEventListener("mousedown", function(){ setThrust(true); });
-    gasBtn.addEventListener("touchstart", function(e){ e.preventDefault(); setThrust(true); }, {passive:false});
-    ["mouseup","mouseleave","touchend","touchcancel"].forEach(function(evt){
-      gasBtn.addEventListener(evt, function(){ setThrust(false); });
-    });
-    coasterKeyDown = function(e){ if(e.code==="Space" || e.code==="ArrowUp"){ e.preventDefault(); setThrust(true); } };
-    coasterKeyUp = function(e){ if(e.code==="Space" || e.code==="ArrowUp") setThrust(false); };
-    window.addEventListener("keydown", coasterKeyDown);
-    window.addEventListener("keyup", coasterKeyUp);
-
-    finishBtn.addEventListener("click", function(){
-      stopCoaster();
-      state = { screen:"coasterResult", distance: Math.floor(worldX/8), coins: coinCount };
-      render();
-    });
-
-    function updateScore(){
-      scoreEl.textContent = "🪙 " + coinCount + " · 📏 " + Math.floor(worldX/8) + "מ'";
-    }
-
-    function draw(){
+    function draw(worldX){
       var w = canvas.width, h = canvas.height;
       var sky = ctx.createLinearGradient(0,0,0,h);
       sky.addColorStop(0, "#BFE3FF");
@@ -675,8 +641,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       ctx.beginPath();
       ctx.moveTo(0, h);
       for(var sx=0; sx<=w; sx+=8){
-        var y = terrainY(worldX + (sx - CAR_X));
-        ctx.lineTo(sx, y);
+        ctx.lineTo(sx, coasterTerrainY(worldX + (sx - CAR_X)));
       }
       ctx.lineTo(w, h);
       ctx.closePath();
@@ -688,26 +653,16 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
       ctx.beginPath();
       for(var sx2=0; sx2<=w; sx2+=8){
-        var y2 = terrainY(worldX + (sx2 - CAR_X));
+        var y2 = coasterTerrainY(worldX + (sx2 - CAR_X));
         if(sx2===0) ctx.moveTo(sx2,y2); else ctx.lineTo(sx2,y2);
       }
       ctx.strokeStyle = "#2B2140";
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      ctx.font = "24px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "alphabetic";
-      coins.forEach(function(c){
-        if(c.taken) return;
-        var sx = CAR_X + (c.wx - worldX);
-        if(sx < -30 || sx > w+30) return;
-        ctx.fillText("⭐", sx, terrainY(c.wx) - 36);
-      });
-
-      var slopeNow = (terrainY(worldX+2) - terrainY(worldX-2)) / 4;
+      var slopeNow = (coasterTerrainY(worldX+2) - coasterTerrainY(worldX-2)) / 4;
       ctx.save();
-      ctx.translate(CAR_X, terrainY(worldX) - 14);
+      ctx.translate(CAR_X, coasterTerrainY(worldX) - 14);
       ctx.rotate(Math.atan(slopeNow));
       ctx.font = "34px sans-serif";
       ctx.textAlign = "center";
@@ -715,44 +670,94 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       ctx.fillText("🚋", 0, 0);
       ctx.restore();
     }
+    draw(state.worldX);
 
-    function loop(){
-      var slope = (terrainY(worldX+2) - terrainY(worldX-2)) / 4;
-      velocity += -slope * 0.14;
-      if(thrust) velocity += 0.35;
-      velocity *= 0.992;
-      if(velocity < 2.4) velocity = 2.4;
-      if(velocity > 11) velocity = 11;
-      worldX += velocity;
+    var q = state.words[state.index];
+    var card = el("div","q-card");
+    card.appendChild(el("div","q-emoji", q.e));
+    card.appendChild(el("div","q-word", q.he));
+    card.appendChild(el("div","q-hint","כתבי את המילה באנגלית כדי לטפס!"));
+    wrap.appendChild(card);
 
-      ensureCoins();
-      var scoreChanged = false;
-      coins.forEach(function(c){
-        if(!c.taken && Math.abs(c.wx - worldX) < 16){
-          c.taken = true;
-          coinCount++;
-          scoreChanged = true;
+    var row = el("div","coaster-input-row");
+    var input = document.createElement("input");
+    input.type = "text";
+    input.className = "field-input coaster-input";
+    input.dir = "ltr";
+    input.autocomplete = "off";
+    input.autocapitalize = "off";
+    input.spellcheck = false;
+    var checkBtn = el("button","coaster-check-btn","טפסי! 🎢");
+    row.appendChild(input); row.appendChild(checkBtn);
+    wrap.appendChild(row);
+
+    var fb = el("div","feedback");
+    wrap.appendChild(fb);
+
+    function doCheck(){
+      var typed = input.value.trim().toLowerCase();
+      if(!typed) return;
+      input.disabled = true;
+      checkBtn.disabled = true;
+      if(typed === q.en.toLowerCase()){
+        fb.className = "feedback good";
+        fb.textContent = ENCOURAGE_GOOD[Math.floor(Math.random()*ENCOURAGE_GOOD.length)];
+        spawnParticles();
+        var fromX = state.worldX, toX = state.worldX + 90, start = null, advanced = false;
+        function advance(){
+          if(advanced) return;
+          advanced = true;
+          stopCoasterAnim();
+          state.worldX = toX;
+          state.index++;
+          state.correctCount++;
+          if(state.index >= state.words.length) state.screen = "coasterResult";
+          render();
         }
-      });
-      if(scoreChanged || Math.random() < 0.03) updateScore();
-
-      draw();
-      coasterRafId = requestAnimationFrame(loop);
+        function step(ts){
+          if(!start) start = ts;
+          var t = Math.min(1, (ts-start)/700);
+          var eased = 1 - Math.pow(1-t, 3);
+          draw(fromX + (toX-fromX)*eased);
+          if(t < 1){ coasterAnimId = requestAnimationFrame(step); }
+          else advance();
+        }
+        coasterAnimId = requestAnimationFrame(step);
+        setTimeout(advance, 750);
+      } else {
+        fb.className = "feedback bad";
+        fb.textContent = "לא בדיוק... התשובה הנכונה: " + q.en;
+        setTimeout(function(){
+          input.disabled = false;
+          checkBtn.disabled = false;
+          input.value = "";
+          input.focus();
+          fb.textContent = "";
+          fb.className = "feedback";
+        }, 1400);
+      }
     }
-
-    coasterRafId = requestAnimationFrame(loop);
+    checkBtn.addEventListener("click", doCheck);
+    input.addEventListener("keydown", function(e){ if(e.key === "Enter") doCheck(); });
 
     return wrap;
   }
 
   function renderCoasterResult(){
     var wrap = el("div","result");
-    wrap.appendChild(el("div","result-emoji","🎢"));
-    wrap.appendChild(el("div","result-score", state.distance + " מ' 📏"));
-    wrap.appendChild(el("div","result-msg","אספת " + state.coins + " כוכבים 🪙 בנסיעה שלך!"));
+    wrap.style.setProperty("--cat-color", state.cat.color || "var(--c-animals)");
+    var total = state.words.length;
+    var s = state.correctCount;
+    var emoji = s === total ? "🏆" : s >= total*0.7 ? "🎉" : "🎢";
+    var msg = s === total ? "מדהים! טיפסת על כל הפסגות!" :
+              s >= total*0.7 ? "כל הכבוד על הנסיעה!" :
+              "יפה שניסית! בואי נטפס שוב!";
+    wrap.appendChild(el("div","result-emoji", emoji));
+    wrap.appendChild(el("div","result-score", s + " / " + total + " ⭐"));
+    wrap.appendChild(el("div","result-msg", msg));
     var actions = el("div","result-actions");
     var again = el("button","btn btn-primary","נסיעה נוספת! 🎢");
-    again.addEventListener("click", goCoaster);
+    again.addEventListener("click", function(){ startCoaster(state.cat); });
     var home = el("button","btn btn-ghost","לתפריט הראשי");
     home.addEventListener("click", goHome);
     actions.appendChild(again); actions.appendChild(home);
@@ -846,7 +851,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     lettersTab.addEventListener("click", function(){ homeMode="letters"; render(); });
     var flashTab = el("button","mode-tab" + (homeMode==="flashcards" ? " on":""), "🗂️ כרטיסיות");
     flashTab.addEventListener("click", function(){ homeMode="flashcards"; render(); });
-    tabs.appendChild(quizTab); tabs.appendChild(memTab); tabs.appendChild(lettersTab); tabs.appendChild(flashTab);
+    var coasterTab = el("button","mode-tab" + (homeMode==="coaster" ? " on":""), "🎢 רכבת הרים");
+    coasterTab.addEventListener("click", function(){ homeMode="coaster"; render(); });
+    tabs.appendChild(quizTab); tabs.appendChild(memTab); tabs.appendChild(lettersTab); tabs.appendChild(flashTab); tabs.appendChild(coasterTab);
     wrap.appendChild(tabs);
 
     var grid = el("div","grid");
@@ -860,6 +867,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         if(homeMode==="memory") startMemory(c);
         else if(homeMode==="letters") startLetters(c);
         else if(homeMode==="flashcards") startFlashcards(c);
+        else if(homeMode==="coaster") startCoaster(c);
         else startRound(c);
       });
       grid.appendChild(btn);
@@ -872,6 +880,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       if(homeMode==="memory") startMemory(mixCat);
       else if(homeMode==="letters") startLetters(mixCat);
       else if(homeMode==="flashcards") startFlashcards(mixCat);
+      else if(homeMode==="coaster") startCoaster(mixCat);
       else startRound(mixCat);
     });
     grid.appendChild(mix);
@@ -884,10 +893,6 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var alphaBtn = el("button","bank-link","🔤 לימוד האלפבית A-Z");
     alphaBtn.addEventListener("click", goAlphabet);
     wrap.appendChild(alphaBtn);
-
-    var coasterBtn = el("button","bank-link","🎢 רכבת הרים - משחק כיף!");
-    coasterBtn.addEventListener("click", goCoaster);
-    wrap.appendChild(coasterBtn);
     return wrap;
   }
 
