@@ -290,6 +290,21 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 @media (prefers-reduced-motion: no-preference){ .mem-card.flipped{ animation: pop .18s ease; } }
 @keyframes pop{ 0%{ transform:scale(.85); } 100%{ transform:scale(1); } }
 
+/* ---------- COASTER (bonus mini-game) ---------- */
+.coaster{ width:100%; max-width:720px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.coaster-canvas{
+  width:100%; height:auto; display:block; border-radius:22px;
+  box-shadow: 0 4px 0 hsl(var(--shadow) / .06), inset 0 0 0 2px var(--line);
+  touch-action:none;
+}
+.coaster-gas{
+  width:100%; font-size:20px; padding:20px; border-radius:18px; border:none; cursor:pointer;
+  background: var(--c-house); color:#fff; font-weight:800; font-family:inherit;
+  user-select:none; -webkit-user-select:none; touch-action:none;
+  transition: transform .06s ease, filter .1s ease;
+}
+.coaster-gas:active{ transform: scale(.97); filter: brightness(1.12); }
+
 /* ---------- RESULT ---------- */
 .result{ width:100%; max-width:480px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; }
 .result-emoji{ font-size:64px; }
@@ -567,6 +582,184 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     render();
   }
 
+  var coasterRafId = null;
+  var coasterKeyDown = null;
+  var coasterKeyUp = null;
+
+  function goCoaster(){ state = { screen:"coaster" }; render(); }
+
+  function stopCoaster(){
+    if(coasterRafId){ cancelAnimationFrame(coasterRafId); coasterRafId = null; }
+    if(coasterKeyDown){ window.removeEventListener("keydown", coasterKeyDown); coasterKeyDown = null; }
+    if(coasterKeyUp){ window.removeEventListener("keyup", coasterKeyUp); coasterKeyUp = null; }
+  }
+
+  function renderCoaster(){
+    var wrap = el("div","coaster");
+
+    var top = el("div","quiz-top");
+    var back = el("button","back-pill","⟵ לתפריט");
+    back.addEventListener("click", function(){ stopCoaster(); goHome(); });
+    var scoreEl = el("div","stars-count","🪙 0 · 📏 0מ'");
+    top.appendChild(back); top.appendChild(scoreEl);
+    wrap.appendChild(top);
+
+    wrap.appendChild(el("p","subtitle","החזיקי על כפתור הגז כדי להאיץ במורדות ולטפס בעליות! 🎢"));
+
+    var canvas = document.createElement("canvas");
+    canvas.className = "coaster-canvas";
+    canvas.width = 680;
+    canvas.height = 260;
+    wrap.appendChild(canvas);
+
+    var gasBtn = el("button","coaster-gas","🚀 גז! (החזיקי לחוצה)");
+    wrap.appendChild(gasBtn);
+
+    var finishBtn = el("button","btn btn-ghost","🏁 סיימי את הנסיעה");
+    wrap.appendChild(finishBtn);
+
+    var ctx = canvas.getContext("2d");
+    var CAR_X = canvas.width * 0.28;
+    var worldX = 0;
+    var velocity = 4;
+    var thrust = false;
+    var coins = [];
+    var nextCoinAt = 250;
+    var coinCount = 0;
+
+    function terrainY(x){
+      return 150
+        + 42*Math.sin(x*0.006)
+        + 20*Math.sin(x*0.014 + 1.3)
+        + 10*Math.sin(x*0.03 + 2.7);
+    }
+
+    function ensureCoins(){
+      while(nextCoinAt < worldX + canvas.width*1.5){
+        coins.push({ wx: nextCoinAt, taken:false });
+        nextCoinAt += 180 + Math.random()*220;
+      }
+      coins = coins.filter(function(c){ return c.wx > worldX - 100; });
+    }
+    ensureCoins();
+
+    function setThrust(v){ thrust = v; }
+    gasBtn.addEventListener("mousedown", function(){ setThrust(true); });
+    gasBtn.addEventListener("touchstart", function(e){ e.preventDefault(); setThrust(true); }, {passive:false});
+    ["mouseup","mouseleave","touchend","touchcancel"].forEach(function(evt){
+      gasBtn.addEventListener(evt, function(){ setThrust(false); });
+    });
+    coasterKeyDown = function(e){ if(e.code==="Space" || e.code==="ArrowUp"){ e.preventDefault(); setThrust(true); } };
+    coasterKeyUp = function(e){ if(e.code==="Space" || e.code==="ArrowUp") setThrust(false); };
+    window.addEventListener("keydown", coasterKeyDown);
+    window.addEventListener("keyup", coasterKeyUp);
+
+    finishBtn.addEventListener("click", function(){
+      stopCoaster();
+      state = { screen:"coasterResult", distance: Math.floor(worldX/8), coins: coinCount };
+      render();
+    });
+
+    function updateScore(){
+      scoreEl.textContent = "🪙 " + coinCount + " · 📏 " + Math.floor(worldX/8) + "מ'";
+    }
+
+    function draw(){
+      var w = canvas.width, h = canvas.height;
+      var sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0, "#BFE3FF");
+      sky.addColorStop(1, "#EAF7FF");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0,0,w,h);
+
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for(var sx=0; sx<=w; sx+=8){
+        var y = terrainY(worldX + (sx - CAR_X));
+        ctx.lineTo(sx, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      var ground = ctx.createLinearGradient(0,80,0,h);
+      ground.addColorStop(0, "#8E5CD9");
+      ground.addColorStop(1, "#5B3A9E");
+      ctx.fillStyle = ground;
+      ctx.fill();
+
+      ctx.beginPath();
+      for(var sx2=0; sx2<=w; sx2+=8){
+        var y2 = terrainY(worldX + (sx2 - CAR_X));
+        if(sx2===0) ctx.moveTo(sx2,y2); else ctx.lineTo(sx2,y2);
+      }
+      ctx.strokeStyle = "#2B2140";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.font = "24px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      coins.forEach(function(c){
+        if(c.taken) return;
+        var sx = CAR_X + (c.wx - worldX);
+        if(sx < -30 || sx > w+30) return;
+        ctx.fillText("⭐", sx, terrainY(c.wx) - 36);
+      });
+
+      var slopeNow = (terrainY(worldX+2) - terrainY(worldX-2)) / 4;
+      ctx.save();
+      ctx.translate(CAR_X, terrainY(worldX) - 14);
+      ctx.rotate(Math.atan(slopeNow));
+      ctx.font = "34px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🚋", 0, 0);
+      ctx.restore();
+    }
+
+    function loop(){
+      var slope = (terrainY(worldX+2) - terrainY(worldX-2)) / 4;
+      velocity += -slope * 0.14;
+      if(thrust) velocity += 0.35;
+      velocity *= 0.992;
+      if(velocity < 2.4) velocity = 2.4;
+      if(velocity > 11) velocity = 11;
+      worldX += velocity;
+
+      ensureCoins();
+      var scoreChanged = false;
+      coins.forEach(function(c){
+        if(!c.taken && Math.abs(c.wx - worldX) < 16){
+          c.taken = true;
+          coinCount++;
+          scoreChanged = true;
+        }
+      });
+      if(scoreChanged || Math.random() < 0.03) updateScore();
+
+      draw();
+      coasterRafId = requestAnimationFrame(loop);
+    }
+
+    coasterRafId = requestAnimationFrame(loop);
+
+    return wrap;
+  }
+
+  function renderCoasterResult(){
+    var wrap = el("div","result");
+    wrap.appendChild(el("div","result-emoji","🎢"));
+    wrap.appendChild(el("div","result-score", state.distance + " מ' 📏"));
+    wrap.appendChild(el("div","result-msg","אספת " + state.coins + " כוכבים 🪙 בנסיעה שלך!"));
+    var actions = el("div","result-actions");
+    var again = el("button","btn btn-primary","נסיעה נוספת! 🎢");
+    again.addEventListener("click", goCoaster);
+    var home = el("button","btn btn-ghost","לתפריט הראשי");
+    home.addEventListener("click", goHome);
+    actions.appendChild(again); actions.appendChild(home);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
   var MEM_PAIRS = 6;
 
   function startMemory(cat){
@@ -691,6 +884,10 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var alphaBtn = el("button","bank-link","🔤 לימוד האלפבית A-Z");
     alphaBtn.addEventListener("click", goAlphabet);
     wrap.appendChild(alphaBtn);
+
+    var coasterBtn = el("button","bank-link","🎢 רכבת הרים - משחק כיף!");
+    coasterBtn.addEventListener("click", goCoaster);
+    wrap.appendChild(coasterBtn);
     return wrap;
   }
 
@@ -1083,6 +1280,8 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     else if(state.screen === "alphabet") app.appendChild(renderAlphabet());
     else if(state.screen === "flashcards") app.appendChild(renderFlashcards());
     else if(state.screen === "flashcardsResult") app.appendChild(renderFlashcardsResult());
+    else if(state.screen === "coaster") app.appendChild(renderCoaster());
+    else if(state.screen === "coasterResult") app.appendChild(renderCoasterResult());
     else if(state.screen === "memory") app.appendChild(renderMemory());
     else if(state.screen === "memoryResult") app.appendChild(renderMemoryResult());
     else if(state.screen === "result") app.appendChild(renderResult());
