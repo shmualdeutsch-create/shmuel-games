@@ -341,41 +341,41 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
   document.documentElement.dir = "rtl";
 
   var CATS = [
-    { id:"animals", label:"חיות",    icon:"🐶", color:"var(--c-animals)", words:[
+    { id:"animals", label:"חיות",    icon:"🐶", color:"var(--c-animals)", hex:0xFF6B6B, words:[
       {e:"🐶",he:"כלב",en:"dog"},{e:"🐱",he:"חתול",en:"cat"},{e:"🐭",he:"עכבר",en:"mouse"},
       {e:"🐰",he:"ארנב",en:"rabbit"},{e:"🦊",he:"שועל",en:"fox"},{e:"🐻",he:"דוב",en:"bear"},
       {e:"🦁",he:"אריה",en:"lion"},{e:"🐘",he:"פיל",en:"elephant"},{e:"🐸",he:"צפרדע",en:"frog"},{e:"🐟",he:"דג",en:"fish"}
     ]},
-    { id:"colors", label:"צבעים",   icon:"🎨", color:"var(--c-colors)", words:[
+    { id:"colors", label:"צבעים",   icon:"🎨", color:"var(--c-colors)", hex:0x8E5CD9, words:[
       {e:"🔴",he:"אדום",en:"red"},{e:"🟠",he:"כתום",en:"orange"},{e:"🟡",he:"צהוב",en:"yellow"},
       {e:"🟢",he:"ירוק",en:"green"},{e:"🔵",he:"כחול",en:"blue"},{e:"🟣",he:"סגול",en:"purple"},
       {e:"⚪",he:"לבן",en:"white"},{e:"⚫",he:"שחור",en:"black"},{e:"🟤",he:"חום",en:"brown"},{e:"🩷",he:"ורוד",en:"pink"}
     ]},
-    { id:"numbers", label:"מספרים", icon:"🔢", color:"var(--c-numbers)", words:[
+    { id:"numbers", label:"מספרים", icon:"🔢", color:"var(--c-numbers)", hex:0x4EA8DE, words:[
       {e:"1️⃣",he:"אחת",en:"one"},{e:"2️⃣",he:"שתיים",en:"two"},{e:"3️⃣",he:"שלוש",en:"three"},
       {e:"4️⃣",he:"ארבע",en:"four"},{e:"5️⃣",he:"חמש",en:"five"},{e:"6️⃣",he:"שש",en:"six"},
       {e:"7️⃣",he:"שבע",en:"seven"},{e:"8️⃣",he:"שמונה",en:"eight"},{e:"9️⃣",he:"תשע",en:"nine"},{e:"🔟",he:"עשר",en:"ten"}
     ]},
-    { id:"fruits", label:"פירות",  icon:"🍎", color:"var(--c-fruits)", words:[
+    { id:"fruits", label:"פירות",  icon:"🍎", color:"var(--c-fruits)", hex:0x43B65A, words:[
       {e:"🍎",he:"תפוח",en:"apple"},{e:"🍌",he:"בננה",en:"banana"},{e:"🍊",he:"תפוז",en:"orange"},
       {e:"🍇",he:"ענבים",en:"grapes"},{e:"🍓",he:"תות",en:"strawberry"},{e:"🍉",he:"אבטיח",en:"watermelon"},
       {e:"🍑",he:"אפרסק",en:"peach"},{e:"🍍",he:"אננס",en:"pineapple"},{e:"🥝",he:"קיווי",en:"kiwi"},{e:"🍒",he:"דובדבן",en:"cherry"}
     ]},
-    { id:"family", label:"משפחה",  icon:"👨‍👩‍👧", color:"var(--c-family)", words:[
+    { id:"family", label:"משפחה",  icon:"👨‍👩‍👧", color:"var(--c-family)", hex:0xFF6FA0, words:[
       {e:"👨",he:"אבא",en:"dad"},{e:"👩",he:"אמא",en:"mom"},{e:"👦",he:"ילד",en:"boy"},
       {e:"👧",he:"ילדה",en:"girl"},{e:"👶",he:"תינוק",en:"baby"},{e:"👴",he:"סבא",en:"grandpa"},{e:"👵",he:"סבתא",en:"grandma"}
     ]},
-    { id:"food", label:"אוכל",    icon:"🍕", color:"var(--c-food)", words:[
+    { id:"food", label:"אוכל",    icon:"🍕", color:"var(--c-food)", hex:0xF5A623, words:[
       {e:"🍕",he:"פיצה",en:"pizza"},{e:"🍔",he:"המבורגר",en:"burger"},{e:"🍞",he:"לחם",en:"bread"},
       {e:"🧀",he:"גבינה",en:"cheese"},{e:"🥚",he:"ביצה",en:"egg"},{e:"🍦",he:"גלידה",en:"ice cream"},
       {e:"🍪",he:"עוגייה",en:"cookie"},{e:"🍩",he:"דונאט",en:"donut"},{e:"🥛",he:"חלב",en:"milk"},{e:"🍫",he:"שוקולד",en:"chocolate"}
     ]},
-    { id:"clothes", label:"בגדים", icon:"👕", color:"var(--c-clothes)", words:[
+    { id:"clothes", label:"בגדים", icon:"👕", color:"var(--c-clothes)", hex:0x16A99A, words:[
       {e:"👕",he:"חולצה",en:"shirt"},{e:"👖",he:"מכנסיים",en:"pants"},{e:"🧦",he:"גרביים",en:"socks"},
       {e:"👗",he:"שמלה",en:"dress"},{e:"👟",he:"נעליים",en:"shoes"},{e:"🧢",he:"כובע מצחייה",en:"cap"},
       {e:"🎩",he:"כובע",en:"hat"},{e:"🧥",he:"מעיל",en:"coat"}
     ]},
-    { id:"house", label:"בבית",   icon:"🏠", color:"var(--c-house)", words:[
+    { id:"house", label:"בבית",   icon:"🏠", color:"var(--c-house)", hex:0xFF8A3D, words:[
       {e:"🏠",he:"בית",en:"house"},{e:"🛏️",he:"מיטה",en:"bed"},{e:"🚪",he:"דלת",en:"door"},
       {e:"🪟",he:"חלון",en:"window"},{e:"🛋️",he:"ספה",en:"sofa"},{e:"🚿",he:"מקלחת",en:"shower"},
       {e:"🍽️",he:"צלחת",en:"plate"},{e:"🔑",he:"מפתח",en:"key"}
@@ -638,12 +638,13 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
     var CHUNK = 90;
     var wordsEndX = state.words.length * CHUNK + 60;
-    var LOOP_RADIUS = 14, LOOP_STEPS = 64, LOOP_TURNS = 2, LOOP_RUN = 180;
+    var LOOP_RADIUS = 14, LOOP_STEPS = 64, LOOP_TURNS = 2, LOOP_RUN = 320;
     var trackLength = wordsEndX + LOOP_RUN;
+    var catHex = state.cat.hex !== undefined ? state.cat.hex : 0xFF6FA0;
 
     var scene = new THREE.Scene();
     scene.background = new THREE.Color(0xBFE3FF);
-    scene.fog = new THREE.Fog(0xBFE3FF, 40, 170);
+    scene.fog = new THREE.Fog(0xBFE3FF, 60, 220);
 
     var camera = new THREE.PerspectiveCamera(58, canvas.width/canvas.height, 0.1, 500);
 
@@ -670,19 +671,71 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       var lz = loopBaseZ + (li/(LOOP_STEPS*LOOP_TURNS))*10;
       pts.push(new THREE.Vector3(lx, ly, lz));
     }
-    var afterLoopX = wordsEndX + 30;
-    pts.push(new THREE.Vector3(afterLoopX, coasterTerrainY(afterLoopX), loopBaseZ+10));
+    for(var ai=60; ai<=140; ai+=40){
+      var afx = wordsEndX + ai;
+      var afz = loopBaseZ + 10 + 4*Math.sin(ai*0.05);
+      pts.push(new THREE.Vector3(afx, loopBaseY + 3*Math.sin(ai*0.06+0.8), afz));
+    }
     var curve = new THREE.CatmullRomCurve3(pts);
+    var curveLen = curve.getLength();
 
     var railGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 0.55, 8, false);
-    var railMat = new THREE.MeshStandardMaterial({ color:0x2B2140, roughness:0.6 });
+    var railMat = new THREE.MeshStandardMaterial({ color:0xF2F2F2, roughness:0.5, metalness:0.2 });
     scene.add(new THREE.Mesh(railGeo, railMat));
 
     var bedGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 2.6, 8, false);
-    var bedMat = new THREE.MeshStandardMaterial({ color:0x8E5CD9, roughness:0.9 });
+    var bedMat = new THREE.MeshStandardMaterial({ color:catHex, roughness:0.85 });
     var bedMesh = new THREE.Mesh(bedGeo, bedMat);
     bedMesh.position.y = -2.4;
     scene.add(bedMesh);
+
+    var GROUND_Y = -7;
+    var groundGeo = new THREE.PlaneGeometry(trackLength + 200, 220);
+    var groundMat = new THREE.MeshStandardMaterial({ color:0x7CC576, roughness:1 });
+    var ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI/2;
+    ground.position.set(trackLength/2 - 40, GROUND_Y, 10);
+    scene.add(ground);
+
+    function sideOffset(u, dist){
+      var pos = curve.getPointAt(u);
+      var tangent = curve.getTangentAt(u).normalize();
+      var side = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0,1,0)).normalize();
+      return pos.clone().add(side.multiplyScalar(dist));
+    }
+
+    var pillarMat = new THREE.MeshStandardMaterial({ color:0xD8D8DC, roughness:0.6 });
+    var pillarStep = Math.max(1, Math.floor(curveLen / 18));
+    for(var pi=0; pi<=pillarStep; pi++){
+      var pu = pi/pillarStep;
+      var ppos = curve.getPointAt(pu);
+      var topY = ppos.y - 2.6;
+      var height = Math.max(1, topY - GROUND_Y);
+      var pillar = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.3, height, 8), pillarMat);
+      pillar.position.set(ppos.x, GROUND_Y + height/2, ppos.z);
+      scene.add(pillar);
+    }
+
+    var TREE_EMOJI = ["🌲","🌳"];
+    var treeStep = Math.max(1, Math.floor(curveLen / 14));
+    for(var ti=0; ti<=treeStep; ti++){
+      var tu = ti/treeStep;
+      [-1, 1].forEach(function(dir){
+        var tp = sideOffset(tu, dir*(8 + Math.random()*6));
+        var tree = makeEmojiSprite(TREE_EMOJI[Math.floor(Math.random()*TREE_EMOJI.length)], 7 + Math.random()*3);
+        tree.position.set(tp.x, GROUND_Y + 3.5, tp.z);
+        scene.add(tree);
+      });
+    }
+
+    var cloudCount = 8;
+    for(var ci=0; ci<cloudCount; ci++){
+      var cu = ci/(cloudCount-1);
+      var cpos = curve.getPointAt(cu);
+      var cloud = makeEmojiSprite("☁️", 14 + Math.random()*8);
+      cloud.position.set(cpos.x, cpos.y + 22 + Math.random()*10, cpos.z - 20 - Math.random()*20);
+      scene.add(cloud);
+    }
 
     function makeEmojiSprite(emoji, size){
       var c = document.createElement("canvas");
@@ -748,7 +801,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         spawnParticles();
         var fromX = state.worldX, toX = state.worldX + 90, start = null, advanced = false;
         function playFinaleLoop(){
-          var loopFrom = state.worldX, loopTo = trackLength, start2 = null, DURATION = 3400;
+          var loopFrom = state.worldX, loopTo = trackLength, start2 = null, DURATION = 5200;
           function loopStep(ts){
             if(!start2) start2 = ts;
             var t2 = Math.min(1, (ts-start2)/DURATION);
@@ -942,7 +995,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     mix.appendChild(el("div","cat-emoji","🎲"));
     mix.appendChild(el("div","cat-label","התערובת הגדולה — קצת מהכל!"));
     mix.addEventListener("click", function(){
-      var mixCat = {id:"mix", label:"התערובת הגדולה", color:"var(--c-family)", words:allWords()};
+      var mixCat = {id:"mix", label:"התערובת הגדולה", color:"var(--c-family)", hex:0xFF6FA0, words:allWords()};
       if(homeMode==="memory") startMemory(mixCat);
       else if(homeMode==="letters") startLetters(mixCat);
       else if(homeMode==="flashcards") startFlashcards(mixCat);
