@@ -72,6 +72,26 @@
   }
   .btn:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--c-dark); }
   .hiscore{ color:#FFD966; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+  .btn.secondary{ background: transparent; color:#fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+  .btn.secondary:active{ box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+  .bank{ color:#FFD966; font-weight:800; font-size:15px; }
+  .shop-list{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:420px; }
+  .shop-card{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background: rgba(255,255,255,.1); border-radius:14px; padding:10px 14px;
+    text-align:right;
+  }
+  .shop-card .info{ display:flex; flex-direction:column; gap:2px; }
+  .shop-card .cname{ font-weight:800; font-size:15px; }
+  .shop-card .cstats{ font-size:12px; color:#E7E0FF; }
+  .shop-card .cbtn{
+    border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:13px;
+    padding:8px 14px; border-radius:10px; white-space:nowrap;
+    background: var(--c); color:#0D3A24; box-shadow: 0 3px 0 var(--c-dark);
+  }
+  .shop-card .cbtn:active{ transform: translateY(2px); box-shadow: 0 1px 0 var(--c-dark); }
+  .shop-card .cbtn:disabled{ background:#8A83A0; color:#3A3550; box-shadow: 0 3px 0 #5C566E; cursor:default; }
+  .shop-card .cbtn.selected{ background:#FFD966; color:#5C3D00; box-shadow: 0 3px 0 #C99A2E; }
 
   .touch-controls{
     display:flex; justify-content:space-between; align-items:flex-end;
@@ -109,14 +129,24 @@
       <h2>🚙 טיפוס גבעות</h2>
       <p>
       תיסעי על הג'יפ מעל גבעות משתלשלות, תשמרי על איזון כדי לא להתהפך, ותגיעי הכי רחוק שאפשר!<br><br>
-      🪙 אספי מטבעות בדרך לניקוד.<br>
+      🪙 אספי מטבעות - הן נשמרות גם אחרי הסוף וקונים איתן רכבים בחנות.<br>
       ⛽ אספי פחיות דלק לפני שנגמר לך הדלק.<br>
+      🏔️ ככל שמתקדמים הגבעות נהיות תלולות יותר, ומדי פעם יש הר גדול וחד - אם דוהרים אליו בלי לבלום אפשר להתעופף ולהתהפך!<br>
       🪂 בקפיצות באוויר - החזקת גז מרימה את החרטום, בלימה מורידה אותו. תנחתי ישר כדי לא להתהפך!<br><br>
       מקלדת: חץ ימינה / D / W = גז, חץ שמאלה / A / S = בלימה.<br>
       במסך מגע: כפתור ▶ לגז, כפתור ◀ לבלימה.
       </p>
       <p class="hiscore" id="startHighScore"></p>
+      <p class="bank">🪙 יש לך <span id="bankLabel">0</span> מטבעות בבנק</p>
       <button class="btn" id="startBtn">בואי ניסע!</button>
+      <button class="btn secondary" id="openShopBtn">🛒 חנות רכבים</button>
+    </div>
+
+    <div class="overlay hidden" id="shopScreen">
+      <h2>🛒 חנות רכבים</h2>
+      <p class="bank">🪙 יש לך <span id="shopBankLabel">0</span> מטבעות</p>
+      <div class="shop-list" id="shopList"></div>
+      <button class="btn secondary" id="closeShopBtn">→ חזרה</button>
     </div>
 
     <div class="overlay hidden" id="gameOverScreen">
@@ -149,6 +179,10 @@
   const finalStats = document.getElementById('finalStats');
   const startHighScore = document.getElementById('startHighScore');
   const gameOverHighScore = document.getElementById('gameOverHighScore');
+  const bankLabel = document.getElementById('bankLabel');
+  const shopBankLabel = document.getElementById('shopBankLabel');
+  const shopScreen = document.getElementById('shopScreen');
+  const shopList = document.getElementById('shopList');
 
   // ---- sound (WebAudio beeps, no assets) ----
   let actx = null;
@@ -173,28 +207,125 @@
 
   // ---- constants ----
   const GRAVITY = 0.5;
-  const WHEEL_RADIUS = 15;
-  const HALF_WB = 34;
   const K_POS = 0.16, DAMP_POS = 0.42;
   const K_ANG = 0.14, DAMP_ANG = 0.4;
   const AIR_TORQUE = 0.0055, MAX_ANGVEL = 0.09;
-  const ACCEL = 0.32, BRAKE_ACCEL = 0.42;
-  const MAX_VX = 8.2, MIN_VX = -3.2;
+  const BRAKE_ACCEL = 0.42;
+  const MIN_VX = -3.2;
   const CRASH_ANGLE = 1.65;
   const PX_PER_METER = 12;
 
-  // ---- terrain: two-octave value noise ----
-  const N1_SPACING = 240, N1_MAXDELTA = 85, N1_MIN = 150, N1_MAX = 380, N1_BASE = 300;
-  const N2_SPACING = 50, N2_AMP = 9;
-  let noise1 = [N1_BASE, N1_BASE];
-  let noise2 = [];
+  // ---- cars (shop) ----
+  const CARS = {
+    base: {
+      key:'base', name:'ג\'יפ בסיסי', cost:0, accel:0.32, maxVx:8.2, wheelR:15, halfWB:34,
+      body:[-40,-32,80,26], cabin:[-8,-50,34,20], bumper:[[40,-22],[50,-14],[40,-8]],
+      bodyColor:'#E8452C', bodyStroke:'#A32C17', cabinColor:'#BEE7FF', cabinStroke:'#4B7FA3', bumperColor:'#C93A22',
+    },
+    monster: {
+      key:'monster', name:'מפלצת ההרים', cost:250, accel:0.44, maxVx:11, wheelR:19, halfWB:42,
+      body:[-50,-40,100,33], cabin:[-10,-63,43,25], bumper:[[50,-28],[62,-18],[50,-10]],
+      bodyColor:'#2B6CB0', bodyStroke:'#1A4373', cabinColor:'#CFE8FF', cabinStroke:'#274B6B', bumperColor:'#1E4E86',
+    },
+  };
+  const BANK_KEY = 'hillClimb_bank', OWNED_KEY = 'hillClimb_owned', SELECTED_KEY = 'hillClimb_selectedCar';
+  let bankCoins = 0;
+  try{ bankCoins = parseInt(localStorage.getItem(BANK_KEY) || '0', 10) || 0; }catch(e){}
+  let owned = ['base'];
+  try{
+    const stored = JSON.parse(localStorage.getItem(OWNED_KEY) || '["base"]');
+    if(Array.isArray(stored)) owned = stored;
+  }catch(e){}
+  if(!owned.includes('base')) owned.push('base');
+  let selectedCarKey = 'base';
+  try{ selectedCarKey = localStorage.getItem(SELECTED_KEY) || 'base'; }catch(e){}
+  if(!CARS[selectedCarKey]) selectedCarKey = 'base';
+  let vehicle = CARS[selectedCarKey];
+
+  function saveBank(){ try{ localStorage.setItem(BANK_KEY, String(bankCoins)); }catch(e){} }
+  function saveOwned(){ try{ localStorage.setItem(OWNED_KEY, JSON.stringify(owned)); }catch(e){} }
+  function saveSelected(){ try{ localStorage.setItem(SELECTED_KEY, selectedCarKey); }catch(e){} }
+
+  function refreshBankLabels(){
+    bankLabel.textContent = bankCoins;
+    shopBankLabel.textContent = bankCoins;
+  }
+
+  function renderShop(){
+    shopList.innerHTML = '';
+    Object.values(CARS).forEach(c=>{
+      const isOwned = owned.includes(c.key);
+      const isSelected = selectedCarKey === c.key;
+      const card = document.createElement('div');
+      card.className = 'shop-card';
+      const info = document.createElement('div');
+      info.className = 'info';
+      const cname = document.createElement('div');
+      cname.className = 'cname';
+      cname.textContent = c.name;
+      const cstats = document.createElement('div');
+      cstats.className = 'cstats';
+      cstats.textContent = 'מהירות ' + c.maxVx.toFixed(1) + ' | האצה ' + c.accel.toFixed(2);
+      info.appendChild(cname); info.appendChild(cstats);
+      const btn = document.createElement('button');
+      btn.className = 'cbtn';
+      if(isSelected){
+        btn.textContent = '✓ נבחר';
+        btn.classList.add('selected');
+        btn.disabled = true;
+      } else if(isOwned){
+        btn.textContent = 'בחרי';
+        btn.addEventListener('click', ()=>{
+          selectedCarKey = c.key;
+          saveSelected();
+          renderShop();
+        });
+      } else {
+        btn.textContent = 'קני ב-' + c.cost + ' 🪙';
+        if(bankCoins < c.cost) btn.disabled = true;
+        btn.addEventListener('click', ()=>{
+          if(bankCoins < c.cost) return;
+          bankCoins -= c.cost;
+          owned.push(c.key);
+          selectedCarKey = c.key;
+          saveBank(); saveOwned(); saveSelected();
+          refreshBankLabels();
+          renderShop();
+        });
+      }
+      card.appendChild(info); card.appendChild(btn);
+      shopList.appendChild(card);
+    });
+  }
+
+  document.getElementById('openShopBtn').addEventListener('click', ()=>{
+    startScreen.classList.add('hidden');
+    renderShop();
+    shopScreen.classList.remove('hidden');
+  });
+  document.getElementById('closeShopBtn').addEventListener('click', ()=>{
+    shopScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+  });
 
   function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
 
+  // ---- terrain: two-octave value noise + progressive difficulty + big hills ----
+  const N1_SPACING = 240, N1_MAXDELTA_BASE = 75, N1_MIN = 150, N1_MAX = 380, N1_BASE = 300;
+  const N2_SPACING = 50, N2_AMP = 9;
+  let noise1 = [N1_BASE, N1_BASE];
+  let noise2 = [];
+  let bigHills = [];
+  let nextBigHillX = 1300;
+
+  function difficultyMaxDelta(x){
+    return clamp(N1_MAXDELTA_BASE + x*0.012, N1_MAXDELTA_BASE, 165);
+  }
   function noise1At(i){
     while(noise1.length <= i){
       const prev = noise1[noise1.length-1];
-      let h = prev + (Math.random()*2-1)*N1_MAXDELTA;
+      const maxDelta = difficultyMaxDelta(noise1.length * N1_SPACING);
+      let h = prev + (Math.random()*2-1)*maxDelta;
       h = clamp(h, N1_MIN, N1_MAX);
       noise1.push(h);
     }
@@ -207,6 +338,26 @@
     return noise2[i];
   }
   function smooth(t){ return t*t*(3-2*t); }
+
+  function ensureBigHills(uptoX){
+    while(nextBigHillX < uptoX){
+      const rise = 175 + Math.random()*95;
+      const halfW = 85 + Math.random()*35;
+      bigHills.push({x: nextBigHillX, rise, halfW});
+      nextBigHillX += 1700 + Math.random()*900;
+    }
+  }
+  function bigHillOffset(x){
+    let offset = 0;
+    for(const h of bigHills){
+      if(x < h.x-h.halfW || x > h.x+h.halfW) continue;
+      const t = (x-h.x)/h.halfW;
+      const shape = (Math.cos(t*Math.PI)+1)/2;
+      offset -= h.rise*shape;
+    }
+    return offset;
+  }
+
   function terrainHeight(x){
     if(x < 0) x = 0;
     const i1 = Math.floor(x / N1_SPACING);
@@ -217,13 +368,14 @@
     const t2 = smooth((x - i2*N2_SPACING)/N2_SPACING);
     const a2 = noise2At(i2), b2 = noise2At(i2+1);
     const h2 = a2 + (b2-a2)*t2;
-    return h1 + h2;
+    return clamp(h1 + h2 + bigHillOffset(x), 55, 420);
   }
 
   // ---- items ----
   let coins = [], fuelCans = [];
   let nextCoinX = 480, nextFuelX = 800, coinGroupCounter = 0;
   function ensureItems(uptoX){
+    ensureBigHills(uptoX);
     while(nextCoinX < uptoX){
       const gy = terrainHeight(nextCoinX) - 55;
       coinGroupCounter++;
@@ -258,6 +410,7 @@
     return false;
   }
   refreshHighScoreLabels();
+  refreshBankLabels();
 
   // ---- input ----
   const keys = {};
@@ -289,8 +442,10 @@
   }
 
   function resetGame(){
+    vehicle = CARS[selectedCarKey] || CARS.base;
     noise1 = [N1_BASE, N1_BASE];
     noise2 = [];
+    bigHills = []; nextBigHillX = 1300;
     coins = []; fuelCans = [];
     nextCoinX = 480; nextFuelX = 800; coinGroupCounter = 0;
     car = { x: 90, y: terrainHeight(90) - 40, angle: 0, vx: 0, vy: 0, angularVel: 0 };
@@ -321,6 +476,9 @@
     const isNew = checkAndSaveHighScore(dist);
     gameOverHighScore.textContent = isNew ? '🏆 שיא חדש!' : ('🏆 השיא שלך: ' + highScore + ' מ\'');
     refreshHighScoreLabels();
+    bankCoins += coinsCollected;
+    saveBank();
+    refreshBankLabels();
     gameOverScreen.classList.remove('hidden');
   }
 
@@ -333,15 +491,15 @@
     const brake = keys['ArrowLeft']||keys['a']||keys['A']||keys['s']||keys['S']||touch.brake;
 
     // wheel world positions
-    const frontX = car.x + HALF_WB*Math.cos(car.angle);
-    const frontY = car.y + HALF_WB*Math.sin(car.angle);
-    const rearX = car.x - HALF_WB*Math.cos(car.angle);
-    const rearY = car.y - HALF_WB*Math.sin(car.angle);
+    const frontX = car.x + vehicle.halfWB*Math.cos(car.angle);
+    const frontY = car.y + vehicle.halfWB*Math.sin(car.angle);
+    const rearX = car.x - vehicle.halfWB*Math.cos(car.angle);
+    const rearY = car.y - vehicle.halfWB*Math.sin(car.angle);
 
     const groundFront = terrainHeight(frontX);
     const groundRear = terrainHeight(rearX);
-    const restFrontY = groundFront - WHEEL_RADIUS;
-    const restRearY = groundRear - WHEEL_RADIUS;
+    const restFrontY = groundFront - vehicle.wheelR;
+    const restRearY = groundRear - vehicle.wheelR;
 
     const groundedFront = frontY >= restFrontY - 3;
     const groundedRear = rearY >= restRearY - 3;
@@ -357,7 +515,7 @@
       car.angularVel += angErr*K_ANG - car.angularVel*DAMP_ANG;
 
       if(fuel > 0){
-        if(gas) car.vx += ACCEL;
+        if(gas) car.vx += vehicle.accel;
         if(brake) car.vx -= BRAKE_ACCEL;
       }
       car.vx *= 0.965;
@@ -375,7 +533,7 @@
       wheelSpin += car.vx*0.14;
     }
 
-    car.vx = clamp(car.vx, MIN_VX, MAX_VX);
+    car.vx = clamp(car.vx, MIN_VX, vehicle.maxVx);
     car.x += car.vx;
     if(car.x < 40){ car.x = 40; if(car.vx < 0) car.vx = 0; }
 
@@ -424,8 +582,9 @@
         endGame('crash');
         return;
       }
-      const roofX = car.x + 34*Math.sin(car.angle);
-      const roofY = car.y - 34*Math.cos(car.angle);
+      const roofOffset = -vehicle.body[1];
+      const roofX = car.x + roofOffset*Math.sin(car.angle);
+      const roofY = car.y - roofOffset*Math.cos(car.angle);
       if(roofY >= terrainHeight(roofX) - 2){
         endGame('crash');
         return;
@@ -560,43 +719,44 @@
     ctx.rotate(car.angle);
 
     // wheels
-    for(const wx of [-HALF_WB, HALF_WB]){
+    const wheelR = vehicle.wheelR;
+    for(const wx of [-vehicle.halfWB, vehicle.halfWB]){
       ctx.save();
       ctx.translate(wx, 0);
       ctx.fillStyle = '#2B2130';
-      ctx.beginPath(); ctx.arc(0,0,WHEEL_RADIUS,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0,0,wheelR,0,Math.PI*2); ctx.fill();
       ctx.fillStyle = '#8A83A0';
-      ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0,0,wheelR*0.47,0,Math.PI*2); ctx.fill();
       ctx.strokeStyle = '#2B2130';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(-WHEEL_RADIUS*0.7*Math.cos(wheelSpin), -WHEEL_RADIUS*0.7*Math.sin(wheelSpin));
-      ctx.lineTo(WHEEL_RADIUS*0.7*Math.cos(wheelSpin), WHEEL_RADIUS*0.7*Math.sin(wheelSpin));
-      ctx.moveTo(-WHEEL_RADIUS*0.7*Math.cos(wheelSpin+Math.PI/2), -WHEEL_RADIUS*0.7*Math.sin(wheelSpin+Math.PI/2));
-      ctx.lineTo(WHEEL_RADIUS*0.7*Math.cos(wheelSpin+Math.PI/2), WHEEL_RADIUS*0.7*Math.sin(wheelSpin+Math.PI/2));
+      ctx.moveTo(-wheelR*0.7*Math.cos(wheelSpin), -wheelR*0.7*Math.sin(wheelSpin));
+      ctx.lineTo(wheelR*0.7*Math.cos(wheelSpin), wheelR*0.7*Math.sin(wheelSpin));
+      ctx.moveTo(-wheelR*0.7*Math.cos(wheelSpin+Math.PI/2), -wheelR*0.7*Math.sin(wheelSpin+Math.PI/2));
+      ctx.lineTo(wheelR*0.7*Math.cos(wheelSpin+Math.PI/2), wheelR*0.7*Math.sin(wheelSpin+Math.PI/2));
       ctx.stroke();
       ctx.restore();
     }
 
     // chassis
-    ctx.fillStyle = '#E8452C';
-    ctx.strokeStyle = '#A32C17';
+    ctx.fillStyle = vehicle.bodyColor;
+    ctx.strokeStyle = vehicle.bodyStroke;
     ctx.lineWidth = 2;
-    roundRectPath(-40, -32, 80, 26, 8);
+    roundRectPath(vehicle.body[0], vehicle.body[1], vehicle.body[2], vehicle.body[3], 8);
     ctx.fill(); ctx.stroke();
 
     // cabin
-    ctx.fillStyle = '#BEE7FF';
-    ctx.strokeStyle = '#4B7FA3';
-    roundRectPath(-8, -50, 34, 20, 6);
+    ctx.fillStyle = vehicle.cabinColor;
+    ctx.strokeStyle = vehicle.cabinStroke;
+    roundRectPath(vehicle.cabin[0], vehicle.cabin[1], vehicle.cabin[2], vehicle.cabin[3], 6);
     ctx.fill(); ctx.stroke();
 
     // front bumper wedge
-    ctx.fillStyle = '#C93A22';
+    ctx.fillStyle = vehicle.bumperColor;
     ctx.beginPath();
-    ctx.moveTo(40, -22);
-    ctx.lineTo(50, -14);
-    ctx.lineTo(40, -8);
+    ctx.moveTo(vehicle.bumper[0][0], vehicle.bumper[0][1]);
+    ctx.lineTo(vehicle.bumper[1][0], vehicle.bumper[1][1]);
+    ctx.lineTo(vehicle.bumper[2][0], vehicle.bumper[2][1]);
     ctx.closePath();
     ctx.fill();
 
