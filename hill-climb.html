@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>טיפוס גבעות</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%99%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg: #FBF8FF;
+    --card-bg: #FFFFFF;
+    --ink: #2B2140;
+    --ink-soft: #6B6280;
+    --line: #E9E2F7;
+    --c: #3FBF7F;
+    --c-dark: #2A8F5C;
+    --c-fuel: #FF5A3C;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg: #1B1530;
+      --card-bg: #261E42;
+      --ink: #F4F0FF;
+      --ink-soft: #B7ACD6;
+      --line: #3A2F5C;
+    }
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html,body{ height:100%; }
+  body{
+    margin:0; min-height:100vh;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, "Arial Hebrew", sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding: 14px 12px 20px;
+  }
+  a.back{ align-self:flex-start; color: var(--ink-soft); text-decoration:none; font-size:14px; margin-bottom:6px; }
+  a.back:hover{ color: var(--ink); }
+  h1{ font-size: clamp(22px,5vw,30px); font-weight:800; margin: 2px 0 10px; text-align:center; }
+
+  .stage{
+    position:relative; width:100%; max-width:900px;
+    border-radius: 22px; overflow:hidden;
+    box-shadow: 0 10px 24px rgba(30,20,60,.18), inset 0 0 0 2px var(--line);
+    background:#7EC8F2;
+  }
+  canvas{ display:block; width:100%; height:auto; }
+
+  .hud{
+    position:absolute; top:10px; left:0; right:0;
+    display:flex; justify-content:space-between; padding: 0 14px;
+    font-weight:800; font-size: clamp(13px,2.6vw,17px); color:#fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,.35); pointer-events:none;
+  }
+  .hud span.pill{ background: rgba(0,0,0,.22); border-radius:10px; padding:3px 10px; display:inline-flex; align-items:center; gap:6px; }
+  .fuel-wrap{ display:inline-block; width:60px; height:10px; background:rgba(255,255,255,.28); border-radius:6px; overflow:hidden; }
+  .fuel-fill{ height:100%; width:100%; background:#3FBF7F; transition: background .2s linear; }
+  .fuel-fill.low{ background:#FF5A3C; animation: fuelPulse .6s ease-in-out infinite; }
+  @keyframes fuelPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+  .overlay{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background: rgba(20,14,40,.62); color:#fff; text-align:center; padding:20px; gap:14px;
+  }
+  .overlay.hidden{ display:none; }
+  .overlay h2{ font-size: clamp(22px,5vw,30px); margin:0; }
+  .overlay p{ margin:0; color:#E7E0FF; font-size:15px; max-width:460px; line-height:1.7; text-align:right; }
+  .btn{
+    border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:16px;
+    padding: 12px 28px; border-radius:14px; background: var(--c); color:#0D3A24;
+    box-shadow: 0 4px 0 var(--c-dark); transition: transform .1s, box-shadow .1s;
+  }
+  .btn:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--c-dark); }
+  .hiscore{ color:#FFD966; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+
+  .touch-controls{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    width:100%; max-width:900px; margin-top:14px; padding:0 4px;
+  }
+  .tbtn{
+    width:84px; height:84px; border-radius:50%; border:none;
+    background: var(--card-bg); color: var(--ink);
+    box-shadow: 0 4px 0 var(--line), inset 0 0 0 2px var(--line);
+    font-size:30px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .tbtn:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--line), inset 0 0 0 2px var(--line); }
+  #gasBtn{ background: var(--c); color:#0D3A24; box-shadow: 0 4px 0 var(--c-dark); }
+  #gasBtn:active{ box-shadow: 0 1px 0 var(--c-dark); }
+  #brakeBtn{ background: var(--c-fuel); color:#4A0E00; box-shadow: 0 4px 0 #B3391F; }
+  #brakeBtn:active{ box-shadow: 0 1px 0 #B3391F; }
+
+  footer{ margin-top:26px; color: var(--ink-soft); font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html">→ חזרה למשחקים</a>
+  <h1>🚙 טיפוס גבעות</h1>
+
+  <div class="stage">
+    <canvas id="game" width="900" height="450"></canvas>
+    <div class="hud">
+      <span class="pill">⛽ <span class="fuel-wrap"><span id="fuelFill" class="fuel-fill"></span></span></span>
+      <span class="pill">🪙 <span id="coinsEl">0</span></span>
+      <span class="pill">🏁 <span id="distEl">0</span> מ'</span>
+    </div>
+
+    <div class="overlay" id="startScreen">
+      <h2>🚙 טיפוס גבעות</h2>
+      <p>
+      תיסעי על הג'יפ מעל גבעות משתלשלות, תשמרי על איזון כדי לא להתהפך, ותגיעי הכי רחוק שאפשר!<br><br>
+      🪙 אספי מטבעות בדרך לניקוד.<br>
+      ⛽ אספי פחיות דלק לפני שנגמר לך הדלק.<br>
+      🪂 בקפיצות באוויר - החזקת גז מרימה את החרטום, בלימה מורידה אותו. תנחתי ישר כדי לא להתהפך!<br><br>
+      מקלדת: חץ ימינה / D / W = גז, חץ שמאלה / A / S = בלימה.<br>
+      במסך מגע: כפתור ▶ לגז, כפתור ◀ לבלימה.
+      </p>
+      <p class="hiscore" id="startHighScore"></p>
+      <button class="btn" id="startBtn">בואי ניסע!</button>
+    </div>
+
+    <div class="overlay hidden" id="gameOverScreen">
+      <h2 id="gameOverTitle">😵 הפגיעה!</h2>
+      <p id="finalStats"></p>
+      <p class="hiscore" id="gameOverHighScore"></p>
+      <button class="btn" id="retryBtn">ננסה שוב</button>
+    </div>
+  </div>
+
+  <div class="touch-controls">
+    <button class="tbtn" id="brakeBtn">◀</button>
+    <button class="tbtn" id="gasBtn">▶</button>
+  </div>
+
+  <footer>נוצר באהבה לשמואל ❤️</footer>
+
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const fuelFill = document.getElementById('fuelFill');
+  const coinsEl = document.getElementById('coinsEl');
+  const distEl = document.getElementById('distEl');
+  const startScreen = document.getElementById('startScreen');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const gameOverTitle = document.getElementById('gameOverTitle');
+  const finalStats = document.getElementById('finalStats');
+  const startHighScore = document.getElementById('startHighScore');
+  const gameOverHighScore = document.getElementById('gameOverHighScore');
+
+  // ---- sound (WebAudio beeps, no assets) ----
+  let actx = null;
+  function beep(freq, dur, type, gainVal){
+    try{
+      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = actx.createOscillator(); const g = actx.createGain();
+      o.type = type||'square'; o.frequency.value = freq;
+      g.gain.value = gainVal||0.06;
+      o.connect(g); g.connect(actx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + (dur||0.12));
+      o.stop(actx.currentTime + (dur||0.12));
+    }catch(e){}
+  }
+  const sfx = {
+    coin: () => { beep(880,.08,'square',.05); setTimeout(()=>beep(1320,.1,'square',.05),60); },
+    fuel: () => { [520,780,1040].forEach((f,i)=>setTimeout(()=>beep(f,.1,'square',.05), i*80)); },
+    crash: () => { beep(140,.3,'sawtooth',.08); setTimeout(()=>beep(90,.35,'sawtooth',.07),90); },
+    outoffuel: () => { beep(300,.2,'sine',.05); setTimeout(()=>beep(200,.3,'sine',.05),150); },
+  };
+
+  // ---- constants ----
+  const GRAVITY = 0.5;
+  const WHEEL_RADIUS = 15;
+  const HALF_WB = 34;
+  const K_POS = 0.16, DAMP_POS = 0.42;
+  const K_ANG = 0.14, DAMP_ANG = 0.4;
+  const AIR_TORQUE = 0.0055, MAX_ANGVEL = 0.09;
+  const ACCEL = 0.32, BRAKE_ACCEL = 0.42;
+  const MAX_VX = 8.2, MIN_VX = -3.2;
+  const CRASH_ANGLE = 1.65;
+  const PX_PER_METER = 12;
+
+  // ---- terrain: two-octave value noise ----
+  const N1_SPACING = 240, N1_MAXDELTA = 85, N1_MIN = 150, N1_MAX = 380, N1_BASE = 300;
+  const N2_SPACING = 50, N2_AMP = 9;
+  let noise1 = [N1_BASE, N1_BASE];
+  let noise2 = [];
+
+  function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+
+  function noise1At(i){
+    while(noise1.length <= i){
+      const prev = noise1[noise1.length-1];
+      let h = prev + (Math.random()*2-1)*N1_MAXDELTA;
+      h = clamp(h, N1_MIN, N1_MAX);
+      noise1.push(h);
+    }
+    return noise1[i];
+  }
+  function noise2At(i){
+    while(noise2.length <= i){
+      noise2.push((Math.random()*2-1)*N2_AMP);
+    }
+    return noise2[i];
+  }
+  function smooth(t){ return t*t*(3-2*t); }
+  function terrainHeight(x){
+    if(x < 0) x = 0;
+    const i1 = Math.floor(x / N1_SPACING);
+    const t1 = smooth((x - i1*N1_SPACING)/N1_SPACING);
+    const a1 = noise1At(i1), b1 = noise1At(i1+1);
+    const h1 = a1 + (b1-a1)*t1;
+    const i2 = Math.floor(x / N2_SPACING);
+    const t2 = smooth((x - i2*N2_SPACING)/N2_SPACING);
+    const a2 = noise2At(i2), b2 = noise2At(i2+1);
+    const h2 = a2 + (b2-a2)*t2;
+    return h1 + h2;
+  }
+
+  // ---- items ----
+  let coins = [], fuelCans = [];
+  let nextCoinX = 480, nextFuelX = 800, coinGroupCounter = 0;
+  function ensureItems(uptoX){
+    while(nextCoinX < uptoX){
+      const gy = terrainHeight(nextCoinX) - 55;
+      coinGroupCounter++;
+      if(coinGroupCounter % 4 === 0){
+        coins.push({x:nextCoinX-24, y:gy, collected:false});
+        coins.push({x:nextCoinX, y:gy-8, collected:false});
+        coins.push({x:nextCoinX+24, y:gy, collected:false});
+      } else {
+        coins.push({x:nextCoinX, y:gy, collected:false});
+      }
+      nextCoinX += 150 + Math.random()*130;
+    }
+    while(nextFuelX < uptoX){
+      fuelCans.push({x:nextFuelX, y:terrainHeight(nextFuelX)-32, collected:false});
+      nextFuelX += 900 + Math.random()*600;
+    }
+  }
+
+  // ---- high score ----
+  const HIGH_SCORE_KEY = 'hillClimb_highScore';
+  let highScore = 0;
+  try{ highScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || '0', 10) || 0; }catch(e){}
+  function refreshHighScoreLabels(){
+    startHighScore.textContent = highScore > 0 ? ('🏆 השיא שלך: ' + highScore + ' מ\'') : '';
+  }
+  function checkAndSaveHighScore(dist){
+    if(dist > highScore){
+      highScore = dist;
+      try{ localStorage.setItem(HIGH_SCORE_KEY, String(highScore)); }catch(e){}
+      return true;
+    }
+    return false;
+  }
+  refreshHighScoreLabels();
+
+  // ---- input ----
+  const keys = {};
+  window.addEventListener('keydown', e=>{
+    if(['ArrowLeft','ArrowRight','a','d','w','s','A','D','W','S'].includes(e.key)) e.preventDefault();
+    keys[e.key] = true;
+  });
+  window.addEventListener('keyup', e=>{ keys[e.key] = false; });
+
+  function bindHold(el, onDown, onUp){
+    const down = e=>{ e.preventDefault(); onDown(); };
+    const up = e=>{ e.preventDefault(); onUp(); };
+    el.addEventListener('mousedown', down);
+    el.addEventListener('touchstart', down, {passive:false});
+    ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>el.addEventListener(ev, up, {passive:false}));
+  }
+  const touch = {gas:false, brake:false};
+  bindHold(document.getElementById('gasBtn'), ()=>touch.gas=true, ()=>touch.gas=false);
+  bindHold(document.getElementById('brakeBtn'), ()=>touch.brake=true, ()=>touch.brake=false);
+
+  // ---- state ----
+  let car, running = false, cameraX = 0, wheelSpin = 0, fuel = 100, coinsCollected = 0, graceFrames = 0;
+
+  function normAngle(a){
+    a = a % (Math.PI*2);
+    if(a > Math.PI) a -= Math.PI*2;
+    if(a < -Math.PI) a += Math.PI*2;
+    return a;
+  }
+
+  function resetGame(){
+    noise1 = [N1_BASE, N1_BASE];
+    noise2 = [];
+    coins = []; fuelCans = [];
+    nextCoinX = 480; nextFuelX = 800; coinGroupCounter = 0;
+    car = { x: 90, y: terrainHeight(90) - 40, angle: 0, vx: 0, vy: 0, angularVel: 0 };
+    cameraX = 0; wheelSpin = 0; fuel = 100; coinsCollected = 0; graceFrames = 25;
+    ensureItems(W + 400);
+    updateHUD();
+  }
+
+  function updateHUD(){
+    coinsEl.textContent = coinsCollected;
+    distEl.textContent = Math.max(0, Math.floor(car.x / PX_PER_METER));
+    const pct = clamp(fuel, 0, 100);
+    fuelFill.style.width = pct + '%';
+    fuelFill.classList.toggle('low', pct < 25);
+  }
+
+  function endGame(reason){
+    running = false;
+    const dist = Math.max(0, Math.floor(car.x / PX_PER_METER));
+    if(reason === 'fuel'){
+      gameOverTitle.textContent = '⛽ נגמר הדלק!';
+      sfx.outoffuel();
+    } else {
+      gameOverTitle.textContent = '😵 התהפכת!';
+      sfx.crash();
+    }
+    finalStats.textContent = 'מרחק: ' + dist + ' מ\'   מטבעות: ' + coinsCollected;
+    const isNew = checkAndSaveHighScore(dist);
+    gameOverHighScore.textContent = isNew ? '🏆 שיא חדש!' : ('🏆 השיא שלך: ' + highScore + ' מ\'');
+    refreshHighScoreLabels();
+    gameOverScreen.classList.remove('hidden');
+  }
+
+  function rectsOverlap(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+  }
+
+  function update(){
+    const gas = keys['ArrowRight']||keys['d']||keys['D']||keys['w']||keys['W']||touch.gas;
+    const brake = keys['ArrowLeft']||keys['a']||keys['A']||keys['s']||keys['S']||touch.brake;
+
+    // wheel world positions
+    const frontX = car.x + HALF_WB*Math.cos(car.angle);
+    const frontY = car.y + HALF_WB*Math.sin(car.angle);
+    const rearX = car.x - HALF_WB*Math.cos(car.angle);
+    const rearY = car.y - HALF_WB*Math.sin(car.angle);
+
+    const groundFront = terrainHeight(frontX);
+    const groundRear = terrainHeight(rearX);
+    const restFrontY = groundFront - WHEEL_RADIUS;
+    const restRearY = groundRear - WHEEL_RADIUS;
+
+    const groundedFront = frontY >= restFrontY - 3;
+    const groundedRear = rearY >= restRearY - 3;
+    const grounded = groundedFront || groundedRear;
+
+    const desiredAngle = Math.atan2(restFrontY - restRearY, frontX - rearX || 0.0001);
+    const desiredCenterY = (restFrontY + restRearY) / 2;
+
+    if(grounded){
+      const posErr = desiredCenterY - car.y;
+      car.vy += posErr*K_POS - car.vy*DAMP_POS;
+      const angErr = normAngle(desiredAngle - car.angle);
+      car.angularVel += angErr*K_ANG - car.angularVel*DAMP_ANG;
+
+      if(fuel > 0){
+        if(gas) car.vx += ACCEL;
+        if(brake) car.vx -= BRAKE_ACCEL;
+      }
+      car.vx *= 0.965;
+      car.vx += Math.sin(car.angle)*GRAVITY*0.22;
+      wheelSpin += car.vx*0.14;
+    } else {
+      car.vy += GRAVITY;
+      car.angularVel *= 0.997;
+      car.vx *= 0.999;
+      if(fuel > 0){
+        if(gas) car.angularVel -= AIR_TORQUE;
+        if(brake) car.angularVel += AIR_TORQUE;
+      }
+      car.angularVel = clamp(car.angularVel, -MAX_ANGVEL, MAX_ANGVEL);
+      wheelSpin += car.vx*0.14;
+    }
+
+    car.vx = clamp(car.vx, MIN_VX, MAX_VX);
+    car.x += car.vx;
+    if(car.x < 40){ car.x = 40; if(car.vx < 0) car.vx = 0; }
+
+    car.y += car.vy;
+    car.angle += car.angularVel;
+    car.angle = normAngle(car.angle);
+
+    // fuel drain
+    if(fuel > 0){
+      fuel -= 0.035;
+      if(gas) fuel -= 0.045;
+      if(fuel < 0) fuel = 0;
+    }
+
+    ensureItems(car.x + W + 500);
+
+    // coins
+    const carBox = {x:car.x-32, y:car.y-40, w:64, h:60};
+    for(const c of coins){
+      if(c.collected) continue;
+      const cb = {x:c.x-16, y:c.y-16, w:32, h:32};
+      if(rectsOverlap(carBox, cb)){
+        c.collected = true;
+        coinsCollected++;
+        sfx.coin();
+      }
+    }
+    for(const f of fuelCans){
+      if(f.collected) continue;
+      const fb = {x:f.x-17, y:f.y-17, w:34, h:34};
+      if(rectsOverlap(carBox, fb)){
+        f.collected = true;
+        fuel = clamp(fuel + 35, 0, 100);
+        sfx.fuel();
+      }
+    }
+
+    // camera
+    cameraX = car.x - W*0.32;
+    if(cameraX < 0) cameraX = 0;
+
+    if(graceFrames > 0){ graceFrames--; }
+    else {
+      // crash checks
+      if(grounded && Math.abs(car.angle) > CRASH_ANGLE){
+        endGame('crash');
+        return;
+      }
+      const roofX = car.x + 34*Math.sin(car.angle);
+      const roofY = car.y - 34*Math.cos(car.angle);
+      if(roofY >= terrainHeight(roofX) - 2){
+        endGame('crash');
+        return;
+      }
+      if(fuel <= 0 && Math.abs(car.vx) < 0.15 && grounded){
+        endGame('fuel');
+        return;
+      }
+    }
+
+    updateHUD();
+  }
+
+  function drawCloud(cx,cy){
+    ctx.beginPath();
+    ctx.arc(cx,cy,20,0,Math.PI*2);
+    ctx.arc(cx+22,cy+6,16,0,Math.PI*2);
+    ctx.arc(cx-22,cy+6,16,0,Math.PI*2);
+    ctx.fill();
+  }
+  function drawMountain(cx, baseY, w, h){
+    ctx.beginPath();
+    ctx.moveTo(cx - w/2, baseY);
+    ctx.lineTo(cx, baseY - h);
+    ctx.lineTo(cx + w/2, baseY);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function draw(){
+    // sky
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#5EA9E8'); g.addColorStop(.6,'#8FCFF5'); g.addColorStop(1,'#D8F1FF');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+    const sunG = ctx.createRadialGradient(W-90,70,4,W-90,70,70);
+    sunG.addColorStop(0,'rgba(255,247,196,1)'); sunG.addColorStop(1,'rgba(255,247,196,0)');
+    ctx.fillStyle = sunG; ctx.beginPath(); ctx.arc(W-90,70,70,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFEFA8'; ctx.beginPath(); ctx.arc(W-90,70,26,0,Math.PI*2); ctx.fill();
+
+    ctx.save();
+    ctx.translate(-cameraX*0.25, 0);
+    ctx.fillStyle = 'rgba(120,140,190,.45)';
+    const mCount = Math.ceil((cameraX+W)/500)+2;
+    for(let i=0;i<mCount;i++) drawMountain(i*500, H-60, 300, 140);
+    ctx.fillStyle = 'rgba(120,140,190,.65)';
+    for(let i=0;i<mCount+1;i++) drawMountain(i*420+180, H-60, 220, 95);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(-cameraX*0.5, 0);
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    const cCount = Math.ceil((cameraX+W)/400)+2;
+    for(let i=0;i<cCount;i++){
+      const cx = i*400 + 120, cy = 55 + (i%3)*28;
+      drawCloud(cx,cy);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(-cameraX, 0);
+
+    // terrain
+    const startX = Math.floor(cameraX/10)*10 - 20;
+    const endX = cameraX + W + 20;
+    ctx.beginPath();
+    ctx.moveTo(startX, terrainHeight(startX));
+    for(let x = startX; x <= endX; x += 8){
+      ctx.lineTo(x, terrainHeight(x));
+    }
+    ctx.lineTo(endX, H);
+    ctx.lineTo(startX, H);
+    ctx.closePath();
+    const dirtG = ctx.createLinearGradient(0, H-140, 0, H);
+    dirtG.addColorStop(0, '#8A5A34');
+    dirtG.addColorStop(1, '#5E3B20');
+    ctx.fillStyle = dirtG;
+    ctx.fill();
+
+    // grass top line
+    ctx.beginPath();
+    ctx.moveTo(startX, terrainHeight(startX));
+    for(let x = startX; x <= endX; x += 8){
+      ctx.lineTo(x, terrainHeight(x));
+    }
+    ctx.strokeStyle = '#6FBF4E';
+    ctx.lineWidth = 9;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // grass blades
+    ctx.strokeStyle = '#4F9A38';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for(let bx = startX; bx <= endX; bx += 10){
+      const by = terrainHeight(bx);
+      const h = 4 + (Math.sin(bx*0.9) * 0.5 + 0.5) * 5;
+      const lean = Math.sin(bx*0.5) * 2;
+      ctx.beginPath();
+      ctx.moveTo(bx, by-4);
+      ctx.lineTo(bx + lean, by - 4 - h);
+      ctx.stroke();
+    }
+
+    // coins
+    ctx.font = '26px sans-serif';
+    for(const c of coins){
+      if(c.collected) continue;
+      if(c.x < cameraX-40 || c.x > cameraX+W+40) continue;
+      ctx.fillText('🪙', c.x-13, c.y+10);
+    }
+    // fuel cans
+    ctx.font = '30px sans-serif';
+    for(const f of fuelCans){
+      if(f.collected) continue;
+      if(f.x < cameraX-40 || f.x > cameraX+W+40) continue;
+      ctx.fillText('⛽', f.x-15, f.y+13);
+    }
+
+    // car shadow
+    const shX = car.x, shY = terrainHeight(car.x)+2;
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,15,10,.25)';
+    ctx.beginPath();
+    ctx.ellipse(shX, shY, 42, 10, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // car
+    ctx.save();
+    ctx.translate(car.x, car.y);
+    ctx.rotate(car.angle);
+
+    // wheels
+    for(const wx of [-HALF_WB, HALF_WB]){
+      ctx.save();
+      ctx.translate(wx, 0);
+      ctx.fillStyle = '#2B2130';
+      ctx.beginPath(); ctx.arc(0,0,WHEEL_RADIUS,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#8A83A0';
+      ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#2B2130';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-WHEEL_RADIUS*0.7*Math.cos(wheelSpin), -WHEEL_RADIUS*0.7*Math.sin(wheelSpin));
+      ctx.lineTo(WHEEL_RADIUS*0.7*Math.cos(wheelSpin), WHEEL_RADIUS*0.7*Math.sin(wheelSpin));
+      ctx.moveTo(-WHEEL_RADIUS*0.7*Math.cos(wheelSpin+Math.PI/2), -WHEEL_RADIUS*0.7*Math.sin(wheelSpin+Math.PI/2));
+      ctx.lineTo(WHEEL_RADIUS*0.7*Math.cos(wheelSpin+Math.PI/2), WHEEL_RADIUS*0.7*Math.sin(wheelSpin+Math.PI/2));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // chassis
+    ctx.fillStyle = '#E8452C';
+    ctx.strokeStyle = '#A32C17';
+    ctx.lineWidth = 2;
+    roundRectPath(-40, -32, 80, 26, 8);
+    ctx.fill(); ctx.stroke();
+
+    // cabin
+    ctx.fillStyle = '#BEE7FF';
+    ctx.strokeStyle = '#4B7FA3';
+    roundRectPath(-8, -50, 34, 20, 6);
+    ctx.fill(); ctx.stroke();
+
+    // front bumper wedge
+    ctx.fillStyle = '#C93A22';
+    ctx.beginPath();
+    ctx.moveTo(40, -22);
+    ctx.lineTo(50, -14);
+    ctx.lineTo(40, -8);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function roundRectPath(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function loop(){
+    if(!running) return;
+    update();
+    draw();
+    if(running) requestAnimationFrame(loop);
+  }
+
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    startScreen.classList.add('hidden');
+    if(actx===null){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    resetGame();
+    running = true;
+    requestAnimationFrame(loop);
+  });
+
+  document.getElementById('retryBtn').addEventListener('click', ()=>{
+    gameOverScreen.classList.add('hidden');
+    resetGame();
+    running = true;
+    requestAnimationFrame(loop);
+  });
+
+  // initial static preview frame
+  resetGame();
+  draw();
+})();
+</script>
+</body>
+</html>
