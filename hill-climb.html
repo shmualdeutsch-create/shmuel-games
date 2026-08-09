@@ -704,10 +704,9 @@
     car.angle += car.angularVel;
     car.angle = normAngle(car.angle);
 
-    // fuel drain
-    if(fuel > 0){
-      fuel -= 0.02;
-      if(gas) fuel -= 0.05;
+    // fuel drain - only while actually holding gas, never just from sitting idle
+    if(fuel > 0 && gas){
+      fuel -= 0.06;
       if(fuel < 0) fuel = 0;
     }
 
