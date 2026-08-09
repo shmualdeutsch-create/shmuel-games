@@ -65,6 +65,7 @@
   }
   .overlay::before, .overlay::after{ content:""; margin:auto 0; }
   .overlay.hidden{ display:none; }
+  .shop-list.hidden{ display:none; }
   .overlay h2{ font-size: clamp(22px,5vw,30px); margin:0; }
   .overlay p{ margin:0; color:#E7E0FF; font-size:15px; max-width:460px; line-height:1.7; text-align:right; }
   .btn{
@@ -94,6 +95,9 @@
   .shop-card .cbtn:active{ transform: translateY(2px); box-shadow: 0 1px 0 var(--c-dark); }
   .shop-card .cbtn:disabled{ background:#8A83A0; color:#3A3550; box-shadow: 0 3px 0 #5C566E; cursor:default; }
   .shop-card .cbtn.selected{ background:#FFD966; color:#5C3D00; box-shadow: 0 3px 0 #C99A2E; }
+  .shop-tabs{ display:flex; gap:8px; }
+  .tab-btn{ border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:14px; padding:8px 18px; border-radius:12px; background: rgba(255,255,255,.12); color:#fff; }
+  .tab-btn.active{ background: var(--c); color:#0D3A24; }
 
   .touch-controls{
     display:flex; justify-content:space-between; align-items:flex-end;
@@ -130,7 +134,7 @@
     <div class="overlay" id="startScreen">
       <h2>🚙 טיפוס גבעות</h2>
       <p>
-      תיסעי על הג'יפ מעל גבעות משתלשלות, תשמרי על איזון כדי לא להתהפך, ותגיעי הכי רחוק שאפשר!<br><br>
+      תיסעי על הג'יפ מעל גבעות משתלשלות, תשמרי על איזון כדי לא להתהפך, ותגיעי עד הדגל בסוף השלב (2500 מ')!<br><br>
       🪙 אספי מטבעות - הן נשמרות גם אחרי הסוף וקונים איתן רכבים בחנות.<br>
       ⛽ אספי פחיות דלק לפני שנגמר לך הדלק.<br>
       🏔️ ככל שמתקדמים הגבעות נהיות תלולות יותר, ומדי פעם יש הר גדול וחד - אם דוהרים אליו בלי לבלום אפשר להתעופף ולהתהפך!<br>
@@ -145,9 +149,14 @@
     </div>
 
     <div class="overlay hidden" id="shopScreen">
-      <h2>🛒 חנות רכבים</h2>
+      <h2>🛒 חנות</h2>
       <p class="bank">🪙 יש לך <span id="shopBankLabel">0</span> מטבעות</p>
+      <div class="shop-tabs">
+        <button class="tab-btn active" id="carsTabBtn">🚙 רכבים</button>
+        <button class="tab-btn" id="tracksTabBtn">🗺️ מסלולים</button>
+      </div>
       <div class="shop-list" id="shopList"></div>
+      <div class="shop-list hidden" id="trackList"></div>
       <button class="btn secondary" id="closeShopBtn">→ חזרה</button>
     </div>
 
@@ -185,6 +194,9 @@
   const shopBankLabel = document.getElementById('shopBankLabel');
   const shopScreen = document.getElementById('shopScreen');
   const shopList = document.getElementById('shopList');
+  const trackList = document.getElementById('trackList');
+  const carsTabBtn = document.getElementById('carsTabBtn');
+  const tracksTabBtn = document.getElementById('tracksTabBtn');
 
   // ---- sound (WebAudio beeps, no assets) ----
   let actx = null;
@@ -205,6 +217,7 @@
     fuel: () => { [520,780,1040].forEach((f,i)=>setTimeout(()=>beep(f,.1,'square',.05), i*80)); },
     crash: () => { beep(140,.3,'sawtooth',.08); setTimeout(()=>beep(90,.35,'sawtooth',.07),90); },
     outoffuel: () => { beep(300,.2,'sine',.05); setTimeout(()=>beep(200,.3,'sine',.05),150); },
+    finish: () => { [660,880,1040,1320].forEach((f,i)=>setTimeout(()=>beep(f,.14,'square',.06), i*100)); },
   };
 
   // ---- constants ----
@@ -216,16 +229,23 @@
   const MIN_VX = -3.2;
   const CRASH_ANGLE = 1.65;
   const PX_PER_METER = 12;
+  const FINISH_METERS = 2500;
+  const FINISH_X = FINISH_METERS * PX_PER_METER;
 
   // ---- cars (shop) ----
   const CARS = {
     base: {
-      key:'base', name:'ג\'יפ בסיסי', cost:0, accel:0.32, maxVx:8.2, wheelR:15, halfWB:34,
+      key:'base', name:'ג\'יפ בסיסי', cost:0, accel:0.32, maxVx:8.2, wheelR:15, halfWB:34, stability:1,
       body:[-40,-32,80,26], cabin:[-8,-50,34,20], bumper:[[40,-22],[50,-14],[40,-8]],
       bodyColor:'#E8452C', bodyStroke:'#A32C17', cabinColor:'#BEE7FF', cabinStroke:'#4B7FA3', bumperColor:'#C93A22',
     },
+    royal: {
+      key:'royal', name:'הרכב המלכותי', cost:130, accel:0.34, maxVx:8.8, wheelR:16, halfWB:44, stability:1.35,
+      body:[-46,-33,84,27], cabin:[-9,-54,36,21], bumper:[[46,-25],[57,-16],[46,-9]],
+      bodyColor:'#8E44AD', bodyStroke:'#5B2C6F', cabinColor:'#F5D8FF', cabinStroke:'#6C3483', bumperColor:'#D4AF37',
+    },
     monster: {
-      key:'monster', name:'מפלצת ההרים', cost:250, accel:0.44, maxVx:11, wheelR:19, halfWB:42,
+      key:'monster', name:'מפלצת ההרים', cost:250, accel:0.44, maxVx:11, wheelR:19, halfWB:42, stability:1,
       body:[-50,-40,100,33], cabin:[-10,-63,43,25], bumper:[[50,-28],[62,-18],[50,-10]],
       bodyColor:'#2B6CB0', bodyStroke:'#1A4373', cabinColor:'#CFE8FF', cabinStroke:'#274B6B', bumperColor:'#1E4E86',
     },
@@ -248,6 +268,107 @@
   function saveOwned(){ try{ localStorage.setItem(OWNED_KEY, JSON.stringify(owned)); }catch(e){} }
   function saveSelected(){ try{ localStorage.setItem(SELECTED_KEY, selectedCarKey); }catch(e){} }
 
+  // ---- tracks (shop) ----
+  const TRACKS = {
+    green: {
+      key:'green', name:'כפר ירוק', cost:0,
+      sky:['#5EA9E8','#8FCFF5','#D8F1FF'], sun:'#FFEFA8', sunGlow:'255,247,196',
+      mountain1:'rgba(120,140,190,.45)', mountain2:'rgba(120,140,190,.65)',
+      dirtTop:'#8A5A34', dirtBottom:'#5E3B20', grass:'#6FBF4E', blade:'#4F9A38',
+    },
+    desert: {
+      key:'desert', name:'מדבר החול', cost:150,
+      sky:['#F2A65A','#F7CB80','#FFE9BE'], sun:'#FFF3C4', sunGlow:'255,240,190',
+      mountain1:'rgba(200,130,70,.35)', mountain2:'rgba(200,130,70,.55)',
+      dirtTop:'#C98A3F', dirtBottom:'#8C5A22', grass:'#E0B457', blade:'#C99A3E',
+    },
+    ice: {
+      key:'ice', name:'הרי הקרח', cost:300,
+      sky:['#7FB3D9','#BEE0F2','#EAF7FF'], sun:'#FFFFFF', sunGlow:'255,255,255',
+      mountain1:'rgba(140,170,210,.5)', mountain2:'rgba(160,190,225,.7)',
+      dirtTop:'#7A93A8', dirtBottom:'#4F6575', grass:'#EAF6FF', blade:'#CFE8F5',
+    },
+  };
+  const OWNED_TRACKS_KEY = 'hillClimb_ownedTracks', SELECTED_TRACK_KEY = 'hillClimb_selectedTrack';
+  let ownedTracks = ['green'];
+  try{
+    const storedT = JSON.parse(localStorage.getItem(OWNED_TRACKS_KEY) || '["green"]');
+    if(Array.isArray(storedT)) ownedTracks = storedT;
+  }catch(e){}
+  if(!ownedTracks.includes('green')) ownedTracks.push('green');
+  let selectedTrackKey = 'green';
+  try{ selectedTrackKey = localStorage.getItem(SELECTED_TRACK_KEY) || 'green'; }catch(e){}
+  if(!TRACKS[selectedTrackKey]) selectedTrackKey = 'green';
+  let track = TRACKS[selectedTrackKey];
+
+  function saveOwnedTracks(){ try{ localStorage.setItem(OWNED_TRACKS_KEY, JSON.stringify(ownedTracks)); }catch(e){} }
+  function saveSelectedTrack(){ try{ localStorage.setItem(SELECTED_TRACK_KEY, selectedTrackKey); }catch(e){} }
+
+  function renderTracks(){
+    trackList.innerHTML = '';
+    Object.values(TRACKS).forEach(t=>{
+      const isOwned = ownedTracks.includes(t.key);
+      const isSelected = selectedTrackKey === t.key;
+      const card = document.createElement('div');
+      card.className = 'shop-card';
+      const info = document.createElement('div');
+      info.className = 'info';
+      const cname = document.createElement('div');
+      cname.className = 'cname';
+      cname.textContent = t.name;
+      const cstats = document.createElement('div');
+      cstats.className = 'cstats';
+      cstats.textContent = 'נוף חדש למסלול';
+      info.appendChild(cname); info.appendChild(cstats);
+      const btn = document.createElement('button');
+      btn.className = 'cbtn';
+      if(isSelected){
+        btn.textContent = '✓ נבחר';
+        btn.classList.add('selected');
+        btn.disabled = true;
+      } else if(isOwned){
+        btn.textContent = 'בחרי';
+        btn.addEventListener('click', ()=>{
+          selectedTrackKey = t.key;
+          track = TRACKS[selectedTrackKey];
+          saveSelectedTrack();
+          renderTracks();
+          draw();
+        });
+      } else {
+        btn.textContent = 'קני ב-' + t.cost + ' 🪙';
+        if(bankCoins < t.cost) btn.disabled = true;
+        btn.addEventListener('click', ()=>{
+          if(bankCoins < t.cost) return;
+          bankCoins -= t.cost;
+          ownedTracks.push(t.key);
+          selectedTrackKey = t.key;
+          track = TRACKS[selectedTrackKey];
+          saveBank(); saveOwnedTracks(); saveSelectedTrack();
+          refreshBankLabels();
+          renderTracks();
+          draw();
+        });
+      }
+      card.appendChild(info); card.appendChild(btn);
+      trackList.appendChild(card);
+    });
+  }
+
+  carsTabBtn.addEventListener('click', ()=>{
+    carsTabBtn.classList.add('active');
+    tracksTabBtn.classList.remove('active');
+    shopList.classList.remove('hidden');
+    trackList.classList.add('hidden');
+  });
+  tracksTabBtn.addEventListener('click', ()=>{
+    tracksTabBtn.classList.add('active');
+    carsTabBtn.classList.remove('active');
+    trackList.classList.remove('hidden');
+    shopList.classList.add('hidden');
+    renderTracks();
+  });
+
   function refreshBankLabels(){
     bankLabel.textContent = bankCoins;
     shopBankLabel.textContent = bankCoins;
@@ -267,7 +388,7 @@
       cname.textContent = c.name;
       const cstats = document.createElement('div');
       cstats.className = 'cstats';
-      cstats.textContent = 'מהירות ' + c.maxVx.toFixed(1) + ' | האצה ' + c.accel.toFixed(2);
+      cstats.textContent = 'מהירות ' + c.maxVx.toFixed(1) + ' | האצה ' + c.accel.toFixed(2) + (c.stability > 1 ? ' | יציב יותר 🛡️' : '');
       info.appendChild(cname); info.appendChild(cstats);
       const btn = document.createElement('button');
       btn.className = 'cbtn';
@@ -302,12 +423,17 @@
 
   document.getElementById('openShopBtn').addEventListener('click', ()=>{
     startScreen.classList.add('hidden');
+    carsTabBtn.classList.add('active');
+    tracksTabBtn.classList.remove('active');
+    shopList.classList.remove('hidden');
+    trackList.classList.add('hidden');
     renderShop();
     shopScreen.classList.remove('hidden');
   });
   document.getElementById('closeShopBtn').addEventListener('click', ()=>{
     shopScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
+    draw();
   });
 
   function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
@@ -346,7 +472,7 @@
       const rise = 175 + Math.random()*95;
       const halfW = 85 + Math.random()*35;
       bigHills.push({x: nextBigHillX, rise, halfW});
-      nextBigHillX += 1700 + Math.random()*900;
+      nextBigHillX += 2200 + Math.random()*1100;
     }
   }
   function bigHillOffset(x){
@@ -445,6 +571,7 @@
 
   function resetGame(){
     vehicle = CARS[selectedCarKey] || CARS.base;
+    track = TRACKS[selectedTrackKey] || TRACKS.green;
     noise1 = [N1_BASE, N1_BASE];
     noise2 = [];
     bigHills = []; nextBigHillX = 1300;
@@ -458,7 +585,8 @@
 
   function updateHUD(){
     coinsEl.textContent = coinsCollected;
-    distEl.textContent = Math.max(0, Math.floor(car.x / PX_PER_METER));
+    const dist = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
+    distEl.textContent = dist + '/' + FINISH_METERS;
     const pct = clamp(fuel, 0, 100);
     fuelFill.style.width = pct + '%';
     fuelFill.classList.toggle('low', pct < 25);
@@ -466,8 +594,11 @@
 
   function endGame(reason){
     running = false;
-    const dist = Math.max(0, Math.floor(car.x / PX_PER_METER));
-    if(reason === 'fuel'){
+    const dist = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
+    if(reason === 'finish'){
+      gameOverTitle.textContent = '🏁 סיימת את השלב!';
+      sfx.finish();
+    } else if(reason === 'fuel'){
       gameOverTitle.textContent = '⛽ נגמר הדלק!';
       sfx.outoffuel();
     } else {
@@ -510,11 +641,13 @@
     const desiredAngle = Math.atan2(restFrontY - restRearY, frontX - rearX || 0.0001);
     const desiredCenterY = (restFrontY + restRearY) / 2;
 
+    const stab = vehicle.stability || 1;
+
     if(grounded){
       const posErr = desiredCenterY - car.y;
       car.vy += posErr*K_POS - car.vy*DAMP_POS;
       const angErr = normAngle(desiredAngle - car.angle);
-      car.angularVel += angErr*K_ANG - car.angularVel*DAMP_ANG;
+      car.angularVel += angErr*K_ANG*stab - car.angularVel*DAMP_ANG*stab;
 
       if(fuel > 0){
         if(gas) car.vx += vehicle.accel;
@@ -531,7 +664,7 @@
         if(gas) car.angularVel -= AIR_TORQUE;
         if(brake) car.angularVel += AIR_TORQUE;
       }
-      car.angularVel = clamp(car.angularVel, -MAX_ANGVEL, MAX_ANGVEL);
+      car.angularVel = clamp(car.angularVel, -MAX_ANGVEL/stab, MAX_ANGVEL/stab);
       wheelSpin += car.vx*0.14;
     }
 
@@ -577,6 +710,12 @@
     cameraX = car.x - W*0.32;
     if(cameraX < 0) cameraX = 0;
 
+    if(car.x >= FINISH_X){
+      car.x = FINISH_X;
+      endGame('finish');
+      return;
+    }
+
     if(graceFrames > 0){ graceFrames--; }
     else {
       // crash checks
@@ -607,6 +746,25 @@
     ctx.arc(cx-22,cy+6,16,0,Math.PI*2);
     ctx.fill();
   }
+  function drawFinishFlag(x){
+    const groundY = terrainHeight(x);
+    const poleH = 95;
+    ctx.strokeStyle = '#5C4A32';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, groundY);
+    ctx.lineTo(x, groundY-poleH);
+    ctx.stroke();
+    const cols = 6, rows = 4, fw = 36, fh = 22;
+    const cw = fw/cols, ch = fh/rows;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        ctx.fillStyle = ((r+c)%2===0) ? '#161616' : '#ffffff';
+        ctx.fillRect(x+3+c*cw, groundY-poleH+r*ch, cw+0.6, ch+0.6);
+      }
+    }
+  }
   function drawMountain(cx, baseY, w, h){
     ctx.beginPath();
     ctx.moveTo(cx - w/2, baseY);
@@ -619,20 +777,20 @@
   function draw(){
     // sky
     const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#5EA9E8'); g.addColorStop(.6,'#8FCFF5'); g.addColorStop(1,'#D8F1FF');
+    g.addColorStop(0,track.sky[0]); g.addColorStop(.6,track.sky[1]); g.addColorStop(1,track.sky[2]);
     ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
 
     const sunG = ctx.createRadialGradient(W-90,70,4,W-90,70,70);
-    sunG.addColorStop(0,'rgba(255,247,196,1)'); sunG.addColorStop(1,'rgba(255,247,196,0)');
+    sunG.addColorStop(0,'rgba('+track.sunGlow+',1)'); sunG.addColorStop(1,'rgba('+track.sunGlow+',0)');
     ctx.fillStyle = sunG; ctx.beginPath(); ctx.arc(W-90,70,70,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#FFEFA8'; ctx.beginPath(); ctx.arc(W-90,70,26,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = track.sun; ctx.beginPath(); ctx.arc(W-90,70,26,0,Math.PI*2); ctx.fill();
 
     ctx.save();
     ctx.translate(-cameraX*0.25, 0);
-    ctx.fillStyle = 'rgba(120,140,190,.45)';
+    ctx.fillStyle = track.mountain1;
     const mCount = Math.ceil((cameraX+W)/500)+2;
     for(let i=0;i<mCount;i++) drawMountain(i*500, H-60, 300, 140);
-    ctx.fillStyle = 'rgba(120,140,190,.65)';
+    ctx.fillStyle = track.mountain2;
     for(let i=0;i<mCount+1;i++) drawMountain(i*420+180, H-60, 220, 95);
     ctx.restore();
 
@@ -661,8 +819,8 @@
     ctx.lineTo(startX, H);
     ctx.closePath();
     const dirtG = ctx.createLinearGradient(0, H-140, 0, H);
-    dirtG.addColorStop(0, '#8A5A34');
-    dirtG.addColorStop(1, '#5E3B20');
+    dirtG.addColorStop(0, track.dirtTop);
+    dirtG.addColorStop(1, track.dirtBottom);
     ctx.fillStyle = dirtG;
     ctx.fill();
 
@@ -672,13 +830,13 @@
     for(let x = startX; x <= endX; x += 8){
       ctx.lineTo(x, terrainHeight(x));
     }
-    ctx.strokeStyle = '#6FBF4E';
+    ctx.strokeStyle = track.grass;
     ctx.lineWidth = 9;
     ctx.lineJoin = 'round';
     ctx.stroke();
 
     // grass blades
-    ctx.strokeStyle = '#4F9A38';
+    ctx.strokeStyle = track.blade;
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     for(let bx = startX; bx <= endX; bx += 10){
@@ -689,6 +847,11 @@
       ctx.moveTo(bx, by-4);
       ctx.lineTo(bx + lean, by - 4 - h);
       ctx.stroke();
+    }
+
+    // finish flag
+    if(FINISH_X >= cameraX-60 && FINISH_X <= cameraX+W+60){
+      drawFinishFlag(FINISH_X);
     }
 
     // coins
