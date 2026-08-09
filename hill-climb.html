@@ -706,8 +706,8 @@
 
     // fuel drain
     if(fuel > 0){
-      fuel -= 0.05;
-      if(gas) fuel -= 0.055;
+      fuel -= 0.02;
+      if(gas) fuel -= 0.05;
       if(fuel < 0) fuel = 0;
     }
 
@@ -726,10 +726,10 @@
     }
     for(const f of fuelCans){
       if(f.collected) continue;
-      const fb = {x:f.x-17, y:f.y-17, w:34, h:34};
+      const fb = {x:f.x-25, y:f.y-25, w:50, h:50};
       if(rectsOverlap(carBox, fb)){
         f.collected = true;
-        fuel = clamp(fuel + 32, 0, 100);
+        fuel = clamp(fuel + 35, 0, 100);
         sfx.fuel();
       }
     }
