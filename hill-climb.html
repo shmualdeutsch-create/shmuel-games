@@ -54,7 +54,7 @@
   }
   .hud span.pill{ background: rgba(0,0,0,.22); border-radius:10px; padding:3px 10px; display:inline-flex; align-items:center; gap:6px; }
   .fuel-wrap{ display:inline-block; width:60px; height:10px; background:rgba(255,255,255,.28); border-radius:6px; overflow:hidden; }
-  .fuel-fill{ height:100%; width:100%; background:#3FBF7F; transition: background .2s linear; }
+  .fuel-fill{ display:block; height:100%; width:100%; background:#3FBF7F; transition: background .2s linear, width .1s linear; }
   .fuel-fill.low{ background:#FF5A3C; animation: fuelPulse .6s ease-in-out infinite; }
   @keyframes fuelPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
 
