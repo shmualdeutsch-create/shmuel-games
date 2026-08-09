@@ -178,6 +178,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
   background: var(--c-family); color:#fff; font-weight:800; font-size:14px; font-family:inherit;
 }
 .add-btn:active{ transform: scale(.97); }
+.new-cat-box{ display:none; flex-wrap:wrap; gap:8px; width:100%; margin-top:4px; padding-top:10px; box-shadow: inset 0 1px 0 var(--line); }
+.new-cat-box.show{ display:flex; }
+.field-catname{ flex:1; min-width:140px; }
 .form-msg{ font-size:13px; font-weight:700; margin-top:8px; min-height:16px; }
 .form-msg.ok{ color: var(--good); }
 .form-msg.warn{ color: #C97A16; }
@@ -401,6 +404,35 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       localStorage.setItem(STORE_KEY, JSON.stringify(data));
     }catch(e){}
   }
+  var CAT_STORE_KEY = "fox_english_custom_cats_v1";
+  var CAT_PALETTE = ["#FF6B6B","#8E5CD9","#4EA8DE","#43B65A","#FF6FA0","#F5A623","#16A99A","#FF8A3D","#E63946","#06D6A0"];
+  function loadCustomCats(){
+    try{
+      var raw = localStorage.getItem(CAT_STORE_KEY);
+      if(!raw) return;
+      var arr = JSON.parse(raw);
+      arr.forEach(function(c){
+        CATS.push({ id:c.id, label:c.label, icon:c.icon, color:c.color, hex:0x8E5CD9, words:[], custom:true });
+      });
+    }catch(e){}
+  }
+  function saveCustomCat(cat){
+    try{
+      var raw = localStorage.getItem(CAT_STORE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      arr.push(cat);
+      localStorage.setItem(CAT_STORE_KEY, JSON.stringify(arr));
+    }catch(e){}
+  }
+  function addNewCategory(label, icon){
+    var newId = "custom_" + Date.now();
+    var color = CAT_PALETTE[CATS.length % CAT_PALETTE.length];
+    var cat = { id:newId, label:label, icon:icon || "⭐", color:color, hex:0x8E5CD9, words:[], custom:true };
+    CATS.push(cat);
+    saveCustomCat({ id:newId, label:label, icon:cat.icon, color:color });
+    return cat;
+  }
+  loadCustomCats();
   loadCustom();
   function allWords(){ return CATS.reduce(function(acc,c){ return acc.concat(c.words); }, []); }
   var ROUND_LEN = 8;
@@ -1103,7 +1135,11 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
     var sel = document.createElement("select");
     sel.className = "field-input";
-    CATS.forEach(function(c){ var o=document.createElement("option"); o.value=c.id; o.textContent=c.label; sel.appendChild(o); });
+    CATS.forEach(function(c){ var o=document.createElement("option"); o.value=c.id; o.textContent=c.icon + " " + c.label; sel.appendChild(o); });
+    var newCatOpt = document.createElement("option");
+    newCatOpt.value = "__new__";
+    newCatOpt.textContent = "➕ קטגוריה חדשה";
+    sel.appendChild(newCatOpt);
 
     var emojiIn = el("input","field-input field-emoji");
     emojiIn.placeholder = "🙂"; emojiIn.maxLength = 4;
@@ -1116,6 +1152,18 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
     var addBtn = el("button","add-btn","הוסיפי");
 
+    var newCatBox = el("div","new-cat-box");
+    var newCatNameIn = el("input","field-input field-catname");
+    newCatNameIn.placeholder = "שם הקטגוריה החדשה (למשל: ספורט)"; newCatNameIn.dir = "rtl";
+    var newCatIconIn = el("input","field-input field-emoji");
+    newCatIconIn.placeholder = "⭐"; newCatIconIn.maxLength = 4;
+    newCatBox.appendChild(newCatNameIn);
+    newCatBox.appendChild(newCatIconIn);
+
+    sel.addEventListener("change", function(){
+      newCatBox.classList.toggle("show", sel.value === "__new__");
+    });
+
     var msg = el("div","form-msg");
 
     addBtn.addEventListener("click", function(){
@@ -1125,19 +1173,29 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         msg.textContent = "צריך למלא גם מילה בעברית וגם באנגלית 🙂";
         return;
       }
-      var catId = sel.value;
-      var cat = CATS.filter(function(c){ return c.id === catId; })[0];
+      var cat;
+      if(sel.value === "__new__"){
+        var newLabel = newCatNameIn.value.trim();
+        if(!newLabel){
+          msg.className = "form-msg warn";
+          msg.textContent = "צריך לתת שם לקטגוריה החדשה 🙂";
+          return;
+        }
+        cat = addNewCategory(newLabel, newCatIconIn.value.trim());
+      } else {
+        cat = CATS.filter(function(c){ return c.id === sel.value; })[0];
+      }
       var newWord = { e: em, he: he, en: en };
       cat.words.push(newWord);
-      saveCustom(catId, newWord);
+      saveCustom(cat.id, newWord);
       heIn.value = ""; enIn.value = ""; emojiIn.value = "";
       msg.className = "form-msg ok";
-      msg.textContent = "המילה נוספה למאגר! 🎉";
-      state.filter = catId;
+      msg.textContent = sel.value === "__new__" ? "הקטגוריה \"" + cat.label + "\" נוצרה, והמילה נוספה! 🎉" : "המילה נוספה למאגר! 🎉";
+      state.filter = cat.id;
       render();
     });
 
-    form.appendChild(sel); form.appendChild(emojiIn); form.appendChild(heIn); form.appendChild(enIn); form.appendChild(addBtn);
+    form.appendChild(sel); form.appendChild(emojiIn); form.appendChild(heIn); form.appendChild(enIn); form.appendChild(addBtn); form.appendChild(newCatBox);
     addBox.appendChild(form);
     addBox.appendChild(msg);
     wrap.appendChild(addBox);
