@@ -225,6 +225,7 @@
   const K_POS = 0.16, DAMP_POS = 0.42;
   const K_ANG = 0.14, DAMP_ANG = 0.4;
   const AIR_TORQUE = 0.0055, MAX_ANGVEL = 0.09;
+  const LAUNCH_KICK_MAX = 0.085;
   const BRAKE_ACCEL = 0.42;
   const MIN_VX = -3.2;
   const CRASH_ANGLE = 1.65;
@@ -239,15 +240,35 @@
       body:[-40,-32,80,26], cabin:[-8,-50,34,20], bumper:[[40,-22],[50,-14],[40,-8]],
       bodyColor:'#E8452C', bodyStroke:'#A32C17', cabinColor:'#BEE7FF', cabinStroke:'#4B7FA3', bumperColor:'#C93A22',
     },
-    royal: {
-      key:'royal', name:'הרכב המלכותי', cost:130, accel:0.34, maxVx:8.8, wheelR:16, halfWB:44, stability:1.35,
-      body:[-46,-33,84,27], cabin:[-9,-54,36,21], bumper:[[46,-25],[57,-16],[46,-9]],
-      bodyColor:'#8E44AD', bodyStroke:'#5B2C6F', cabinColor:'#F5D8FF', cabinStroke:'#6C3483', bumperColor:'#D4AF37',
+    buggy: {
+      key:'buggy', name:'באגי המדבר', cost:80, accel:0.36, maxVx:9.0, wheelR:14, halfWB:30, stability:1,
+      body:[-38,-30,74,24], cabin:[-7,-46,30,18], bumper:[[38,-20],[47,-13],[38,-7]],
+      bodyColor:'#FFA733', bodyStroke:'#B5651D', cabinColor:'#FFF3D0', cabinStroke:'#B5651D', bumperColor:'#FF8C1A',
     },
     monster: {
       key:'monster', name:'מפלצת ההרים', cost:250, accel:0.44, maxVx:11, wheelR:19, halfWB:42, stability:1,
       body:[-50,-40,100,33], cabin:[-10,-63,43,25], bumper:[[50,-28],[62,-18],[50,-10]],
       bodyColor:'#2B6CB0', bodyStroke:'#1A4373', cabinColor:'#CFE8FF', cabinStroke:'#274B6B', bumperColor:'#1E4E86',
+    },
+    royal: {
+      key:'royal', name:'הרכב המלכותי', cost:400, accel:0.34, maxVx:8.8, wheelR:16, halfWB:44, stability:1.35,
+      body:[-46,-33,84,27], cabin:[-9,-54,36,21], bumper:[[46,-25],[57,-16],[46,-9]],
+      bodyColor:'#8E44AD', bodyStroke:'#5B2C6F', cabinColor:'#F5D8FF', cabinStroke:'#6C3483', bumperColor:'#D4AF37',
+    },
+    turbo: {
+      key:'turbo', name:'טורבו הבזק', cost:700, accel:0.5, maxVx:13, wheelR:16, halfWB:38, stability:1.1,
+      body:[-44,-31,86,25], cabin:[-9,-49,32,19], bumper:[[44,-23],[55,-15],[44,-8]],
+      bodyColor:'#E63946', bodyStroke:'#8B1E27', cabinColor:'#DCEBFF', cabinStroke:'#33475B', bumperColor:'#B71C2B',
+    },
+    tank: {
+      key:'tank', name:'הטנק הכבד', cost:1500, accel:0.3, maxVx:9.5, wheelR:22, halfWB:50, stability:1.6,
+      body:[-54,-42,108,35], cabin:[-11,-64,46,26], bumper:[[54,-30],[66,-19],[54,-11]],
+      bodyColor:'#4B5320', bodyStroke:'#2E3313', cabinColor:'#B5C99A', cabinStroke:'#2E3313', bumperColor:'#33390F',
+    },
+    ultimate: {
+      key:'ultimate', name:'מלך ההרים', cost:10000, accel:0.5, maxVx:15, wheelR:18, halfWB:48, stability:1.5,
+      body:[-48,-36,94,30], cabin:[-10,-58,40,23], bumper:[[48,-27],[60,-17],[48,-10]],
+      bodyColor:'#151515', bodyStroke:'#000000', cabinColor:'#FFD24C', cabinStroke:'#8A6D00', bumperColor:'#FFD24C',
     },
   };
   const BANK_KEY = 'hillClimb_bank', OWNED_KEY = 'hillClimb_owned', SELECTED_KEY = 'hillClimb_selectedCar';
@@ -388,7 +409,7 @@
       cname.textContent = c.name;
       const cstats = document.createElement('div');
       cstats.className = 'cstats';
-      cstats.textContent = 'מהירות ' + c.maxVx.toFixed(1) + ' | האצה ' + c.accel.toFixed(2) + (c.stability > 1 ? ' | יציב יותר 🛡️' : '');
+      cstats.textContent = 'מהירות ' + Math.round(c.maxVx*2) + ' קמ"ש | האצה ' + c.accel.toFixed(2) + (c.stability > 1 ? ' | יציב יותר 🛡️' : '');
       info.appendChild(cname); info.appendChild(cstats);
       const btn = document.createElement('button');
       btn.className = 'cbtn';
@@ -560,7 +581,7 @@
   bindHold(document.getElementById('brakeBtn'), ()=>touch.brake=true, ()=>touch.brake=false);
 
   // ---- state ----
-  let car, running = false, cameraX = 0, wheelSpin = 0, fuel = 100, coinsCollected = 0, graceFrames = 0;
+  let car, running = false, cameraX = 0, wheelSpin = 0, fuel = 100, coinsCollected = 0, graceFrames = 0, wasGrounded = true;
 
   function normAngle(a){
     a = a % (Math.PI*2);
@@ -578,7 +599,7 @@
     coins = []; fuelCans = [];
     nextCoinX = 480; nextFuelX = 800; coinGroupCounter = 0;
     car = { x: 90, y: terrainHeight(90) - 40, angle: 0, vx: 0, vy: 0, angularVel: 0 };
-    cameraX = 0; wheelSpin = 0; fuel = 100; coinsCollected = 0; graceFrames = 25;
+    cameraX = 0; wheelSpin = 0; fuel = 100; coinsCollected = 0; graceFrames = 25; wasGrounded = true;
     ensureItems(W + 400);
     updateHUD();
   }
@@ -642,6 +663,13 @@
     const desiredCenterY = (restFrontY + restRearY) / 2;
 
     const stab = vehicle.stability || 1;
+
+    if(!grounded && wasGrounded){
+      const speedRatio = clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1);
+      const kickMag = clamp((speedRatio-0.5)*2, 0, 1) * LAUNCH_KICK_MAX / stab;
+      car.angularVel += -Math.sign(car.vx || 1) * kickMag;
+    }
+    wasGrounded = grounded;
 
     if(grounded){
       const posErr = desiredCenterY - car.y;
