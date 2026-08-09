@@ -127,6 +127,7 @@
     <canvas id="game" width="900" height="450"></canvas>
     <div class="hud">
       <span class="pill">⛽ <span class="fuel-wrap"><span id="fuelFill" class="fuel-fill"></span></span></span>
+      <span class="pill">💨 <span id="speedEl">0</span> קמ"ש</span>
       <span class="pill">🪙 <span id="coinsEl">0</span></span>
       <span class="pill">🏁 <span id="distEl">0</span> מ'</span>
     </div>
@@ -184,6 +185,7 @@
   const fuelFill = document.getElementById('fuelFill');
   const coinsEl = document.getElementById('coinsEl');
   const distEl = document.getElementById('distEl');
+  const speedEl = document.getElementById('speedEl');
   const startScreen = document.getElementById('startScreen');
   const gameOverScreen = document.getElementById('gameOverScreen');
   const gameOverTitle = document.getElementById('gameOverTitle');
@@ -219,6 +221,43 @@
     outoffuel: () => { beep(300,.2,'sine',.05); setTimeout(()=>beep(200,.3,'sine',.05),150); },
     finish: () => { [660,880,1040,1320].forEach((f,i)=>setTimeout(()=>beep(f,.14,'square',.06), i*100)); },
   };
+
+  // ---- engine sound (continuous revving drone, pitch/volume follow speed+gas) ----
+  let engineOsc = null, engineGain = null, engineFilter = null;
+  function startEngine(){
+    try{
+      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      if(engineOsc) return;
+      engineOsc = actx.createOscillator();
+      engineFilter = actx.createBiquadFilter();
+      engineGain = actx.createGain();
+      engineOsc.type = 'sawtooth';
+      engineOsc.frequency.value = 45;
+      engineFilter.type = 'lowpass';
+      engineFilter.frequency.value = 500;
+      engineGain.gain.value = 0.0001;
+      engineOsc.connect(engineFilter);
+      engineFilter.connect(engineGain);
+      engineGain.connect(actx.destination);
+      engineOsc.start();
+    }catch(e){}
+  }
+  function stopEngine(){
+    if(!engineOsc) return;
+    try{
+      engineGain.gain.setTargetAtTime(0.0001, actx.currentTime, 0.05);
+      engineOsc.stop(actx.currentTime + 0.2);
+    }catch(e){}
+    engineOsc = null; engineGain = null; engineFilter = null;
+  }
+  function updateEngineSound(gas, speedRatio){
+    if(!engineOsc || !actx) return;
+    const revFreq = 42 + speedRatio*95 + (gas ? 40 : 0);
+    const revGain = clamp(0.035 + speedRatio*0.05 + (gas ? 0.03 : 0), 0, 0.12);
+    engineOsc.frequency.setTargetAtTime(revFreq, actx.currentTime, 0.06);
+    engineGain.gain.setTargetAtTime(revGain, actx.currentTime, 0.08);
+    engineFilter.frequency.setTargetAtTime(400 + speedRatio*900, actx.currentTime, 0.08);
+  }
 
   // ---- constants ----
   const GRAVITY = 0.5;
@@ -608,6 +647,7 @@
     coinsEl.textContent = coinsCollected;
     const dist = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
     distEl.textContent = dist + '/' + FINISH_METERS;
+    speedEl.textContent = Math.round(Math.max(0, car.vx)*2);
     const pct = clamp(fuel, 0, 100);
     fuelFill.style.width = pct + '%';
     fuelFill.classList.toggle('low', pct < 25);
@@ -615,6 +655,7 @@
 
   function endGame(reason){
     running = false;
+    stopEngine();
     const dist = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
     if(reason === 'finish'){
       gameOverTitle.textContent = '🏁 סיימת את השלב!';
@@ -663,6 +704,8 @@
     const desiredCenterY = (restFrontY + restRearY) / 2;
 
     const stab = vehicle.stability || 1;
+
+    updateEngineSound(gas, clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1));
 
     if(!grounded && wasGrounded){
       const speedRatio = clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1);
@@ -979,6 +1022,7 @@
     if(actx===null){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
     resetGame();
     running = true;
+    startEngine();
     requestAnimationFrame(loop);
   });
 
@@ -986,6 +1030,7 @@
     gameOverScreen.classList.add('hidden');
     resetGame();
     running = true;
+    startEngine();
     requestAnimationFrame(loop);
   });
 
