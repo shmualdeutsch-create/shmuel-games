@@ -653,10 +653,30 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     renderer.setSize(canvas.width, canvas.height, false);
     coasterRenderer = renderer;
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x445, 1.1));
-    var sun = new THREE.DirectionalLight(0xffffff, 0.7);
+    scene.add(new THREE.HemisphereLight(0xEAF5FF, 0x6B8F55, 1.15));
+    var sun = new THREE.DirectionalLight(0xFFF4D6, 0.9);
     sun.position.set(6, 12, 8);
     scene.add(sun);
+    var fillLight = new THREE.DirectionalLight(0xBFD9FF, 0.25);
+    fillLight.position.set(-8, 6, -6);
+    scene.add(fillLight);
+
+    function makeGradientTexture(top, bottom){
+      var gc = document.createElement("canvas");
+      gc.width = 2; gc.height = 256;
+      var gctx = gc.getContext("2d");
+      var grad = gctx.createLinearGradient(0,0,0,256);
+      grad.addColorStop(0, top);
+      grad.addColorStop(1, bottom);
+      gctx.fillStyle = grad;
+      gctx.fillRect(0,0,2,256);
+      return new THREE.CanvasTexture(gc);
+    }
+    var sky = new THREE.Mesh(
+      new THREE.SphereGeometry(300, 24, 16),
+      new THREE.MeshBasicMaterial({ map: makeGradientTexture("#7FC2FF", "#EAF6FF"), side: THREE.BackSide, fog:false })
+    );
+    scene.add(sky);
 
     var pts = [];
     for(var x=-10; x<=wordsEndX; x+=4){
@@ -683,6 +703,12 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var railMat = new THREE.MeshStandardMaterial({ color:0xF2F2F2, roughness:0.5, metalness:0.2 });
     scene.add(new THREE.Mesh(railGeo, railMat));
 
+    var accentGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 0.28, 6, false);
+    var accentMat = new THREE.MeshStandardMaterial({ color:catHex, roughness:0.35, metalness:0.4 });
+    var accentRail = new THREE.Mesh(accentGeo, accentMat);
+    accentRail.position.y = 0.95;
+    scene.add(accentRail);
+
     var bedGeo = new THREE.TubeGeometry(curve, Math.round(trackLength/2), 2.6, 8, false);
     var bedMat = new THREE.MeshStandardMaterial({ color:catHex, roughness:0.85 });
     var bedMesh = new THREE.Mesh(bedGeo, bedMat);
@@ -704,6 +730,19 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       return pos.clone().add(side.multiplyScalar(dist));
     }
 
+    var hillMat = new THREE.MeshStandardMaterial({ color:0x8FCB7A, roughness:1 });
+    var hillCount = 6;
+    for(var hi=0; hi<hillCount; hi++){
+      var hu = (hi+0.5)/hillCount;
+      [-1,1].forEach(function(dir){
+        var hp = sideOffset(hu, dir*(55 + Math.random()*35));
+        var hillR = 30 + Math.random()*22;
+        var hill = new THREE.Mesh(new THREE.SphereGeometry(hillR, 14, 10), hillMat);
+        hill.position.set(hp.x, GROUND_Y - hillR*0.55, hp.z);
+        scene.add(hill);
+      });
+    }
+
     var pillarMat = new THREE.MeshStandardMaterial({ color:0xD8D8DC, roughness:0.6 });
     var pillarStep = Math.max(1, Math.floor(curveLen / 18));
     for(var pi=0; pi<=pillarStep; pi++){
@@ -716,19 +755,21 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       scene.add(pillar);
     }
 
-    var TREE_EMOJI = ["🌲","🌳"];
-    var treeStep = Math.max(1, Math.floor(curveLen / 14));
+    var TREE_EMOJI = ["🌲","🌳","🌲","🌳","🌸","🌿","🌻"];
+    var treeStep = Math.max(1, Math.floor(curveLen / 12));
     for(var ti=0; ti<=treeStep; ti++){
       var tu = ti/treeStep;
       [-1, 1].forEach(function(dir){
-        var tp = sideOffset(tu, dir*(8 + Math.random()*6));
-        var tree = makeEmojiSprite(TREE_EMOJI[Math.floor(Math.random()*TREE_EMOJI.length)], 7 + Math.random()*3);
-        tree.position.set(tp.x, GROUND_Y + 3.5, tp.z);
+        var tp = sideOffset(tu, dir*(8 + Math.random()*8));
+        var pickEmoji = TREE_EMOJI[Math.floor(Math.random()*TREE_EMOJI.length)];
+        var isSmall = pickEmoji === "🌸" || pickEmoji === "🌿" || pickEmoji === "🌻";
+        var tree = makeEmojiSprite(pickEmoji, isSmall ? 3 + Math.random()*2 : 7 + Math.random()*3);
+        tree.position.set(tp.x, GROUND_Y + (isSmall ? 1.5 : 3.5), tp.z);
         scene.add(tree);
       });
     }
 
-    var cloudCount = 8;
+    var cloudCount = 9;
     for(var ci=0; ci<cloudCount; ci++){
       var cu = ci/(cloudCount-1);
       var cpos = curve.getPointAt(cu);
@@ -736,6 +777,10 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       cloud.position.set(cpos.x, cpos.y + 22 + Math.random()*10, cpos.z - 20 - Math.random()*20);
       scene.add(cloud);
     }
+
+    var sunSprite = makeEmojiSprite("☀️", 26);
+    sunSprite.position.set(90, 130, -110);
+    sky.add(sunSprite);
 
     function makeEmojiSprite(emoji, size){
       var c = document.createElement("canvas");
@@ -764,6 +809,7 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     }
     function draw(worldX){
       placeCart(worldX);
+      sky.position.copy(camera.position);
       renderer.render(scene, camera);
     }
     draw(state.worldX);
