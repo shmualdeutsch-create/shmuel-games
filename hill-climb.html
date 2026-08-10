@@ -274,6 +274,10 @@
   const K_ANG = 0.14, DAMP_ANG = 0.4;
   const AIR_TORQUE = 0.0055, MAX_ANGVEL = 0.09;
   const LAUNCH_KICK_MAX = 0.085;
+  const CREST_SAMPLE = 60, CREST_CURVATURE_MIN = 22, LAUNCH_MIN_SPEED_RATIO = 0.32;
+  const LAUNCH_LIFT_MIN = 4, LAUNCH_LIFT_MAX = 24;
+  const LAUNCH_VY_MIN = 2.5, LAUNCH_VY_MAX = 9.5;
+  const LAUNCH_COOLDOWN_FRAMES = 22;
   const BRAKE_ACCEL = 0.42;
   const MIN_VX = -3.2;
   const CRASH_ANGLE = 1.65;
@@ -731,7 +735,7 @@
     bigHills = []; nextBigHillX = 1300;
     coins = []; fuelCans = [];
     nextCoinX = 480; nextFuelX = 800; coinGroupCounter = 0;
-    car = { x: 90, y: terrainHeight(90) - 40, angle: 0, vx: 0, vy: 0, angularVel: 0 };
+    car = { x: 90, y: terrainHeight(90) - 40, angle: 0, vx: 0, vy: 0, angularVel: 0, launchCooldown: 0 };
     cameraX = 0; wheelSpin = 0; fuel = 100; coinsCollected = 0; graceFrames = 25; wasGrounded = true;
     ensureItems(W + 400);
     updateHUD();
@@ -792,12 +796,29 @@
 
     const groundedFront = frontY >= restFrontY - 3;
     const groundedRear = rearY >= restRearY - 3;
-    const grounded = groundedFront || groundedRear;
+    let grounded = groundedFront || groundedRear;
 
     const desiredAngle = Math.atan2(restFrontY - restRearY, frontX - rearX || 0.0001);
     const desiredCenterY = (restFrontY + restRearY) / 2;
 
     const stab = vehicle.stability || 1;
+
+    // crest / edge launch: flying off a sharp hilltop, higher the faster you go
+    if(car.launchCooldown > 0) car.launchCooldown--;
+    if(grounded && car.launchCooldown <= 0){
+      const hBehind = terrainHeight(frontX - CREST_SAMPLE);
+      const hNow = terrainHeight(frontX);
+      const hAhead = terrainHeight(frontX + CREST_SAMPLE);
+      const curvature = hBehind + hAhead - 2*hNow;
+      const speedRatio = clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1);
+      if(curvature > CREST_CURVATURE_MIN && speedRatio > LAUNCH_MIN_SPEED_RATIO){
+        const launchT = clamp((speedRatio-LAUNCH_MIN_SPEED_RATIO)/(1-LAUNCH_MIN_SPEED_RATIO), 0, 1);
+        car.y -= LAUNCH_LIFT_MIN + launchT*(LAUNCH_LIFT_MAX-LAUNCH_LIFT_MIN);
+        car.vy = -(LAUNCH_VY_MIN + launchT*(LAUNCH_VY_MAX-LAUNCH_VY_MIN));
+        car.launchCooldown = LAUNCH_COOLDOWN_FRAMES;
+        grounded = false;
+      }
+    }
 
     updateEngineSound(gas, clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1));
 
