@@ -125,6 +125,15 @@
   #brakeBtn{ background: var(--c-fuel); color:#4A0E00; box-shadow: 0 4px 0 #B3391F; }
   #brakeBtn:active{ box-shadow: 0 1px 0 #B3391F; }
 
+  .menu-btn{
+    position:absolute; top:54px; left:12px;
+    width:34px; height:34px; border-radius:50%; border:none;
+    background: rgba(0,0,0,.3); color:#fff; font-size:17px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .menu-btn:active{ transform: translateY(2px); }
+
   footer{ margin-top:26px; color: var(--ink-soft); font-size:13px; text-align:center; }
 </style>
 </head>
@@ -140,6 +149,7 @@
       <span class="pill">🪙 <span id="coinsEl">0</span></span>
       <span class="pill">🏁 <span id="distEl">0</span> מ'</span>
     </div>
+    <button class="menu-btn" id="menuBtn" title="תפריט ראשי">🏠</button>
 
     <div class="overlay" id="startScreen">
       <h2>🚙 טיפוס גבעות</h2>
@@ -175,6 +185,7 @@
       <p id="finalStats"></p>
       <p class="hiscore" id="gameOverHighScore"></p>
       <button class="btn" id="retryBtn">ננסה שוב</button>
+      <button class="btn secondary" id="gameOverMenuBtn">🏠 לתפריט הראשי</button>
     </div>
   </div>
 
@@ -272,7 +283,7 @@
   const GRAVITY = 0.5;
   const K_POS = 0.16, DAMP_POS = 0.42;
   const K_ANG = 0.14, DAMP_ANG = 0.4;
-  const AIR_TORQUE = 0.0055, MAX_ANGVEL = 0.09;
+  const AIR_TORQUE = 0.011, MAX_ANGVEL = 0.09;
   const LAUNCH_KICK_MAX = 0.085;
   const CREST_SAMPLE = 60, CREST_CURVATURE_MIN = 22, LAUNCH_MIN_SPEED_RATIO = 0.32;
   const LAUNCH_LIFT_MIN = 4, LAUNCH_LIFT_MAX = 24;
@@ -776,6 +787,21 @@
     gameOverScreen.classList.remove('hidden');
   }
 
+  function quitToMenu(){
+    if(!running) return;
+    running = false;
+    stopEngine();
+    const dist = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
+    checkAndSaveHighScore(dist);
+    refreshHighScoreLabels();
+    bankCoins += coinsCollected;
+    saveBank();
+    refreshBankLabels();
+    gameOverScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+    draw();
+  }
+
   function rectsOverlap(a,b){
     return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
   }
@@ -1160,6 +1186,13 @@
     running = true;
     startEngine();
     requestAnimationFrame(loop);
+  });
+
+  document.getElementById('menuBtn').addEventListener('click', quitToMenu);
+  document.getElementById('gameOverMenuBtn').addEventListener('click', ()=>{
+    gameOverScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+    draw();
   });
 
   document.getElementById('retryBtn').addEventListener('click', ()=>{
