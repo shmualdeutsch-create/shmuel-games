@@ -658,8 +658,9 @@
   }
 
   // ---- items ----
+  const FUEL_SPACING_PX = 500 * PX_PER_METER;
   let coins = [], fuelCans = [];
-  let nextCoinX = 480, nextFuelX = 800, coinGroupCounter = 0;
+  let nextCoinX = 480, nextFuelX = FUEL_SPACING_PX, coinGroupCounter = 0;
   function ensureItems(uptoX){
     ensureBigHills(uptoX);
     while(nextCoinX < uptoX){
@@ -676,7 +677,7 @@
     }
     while(nextFuelX < uptoX){
       fuelCans.push({x:nextFuelX, y:terrainHeight(nextFuelX)-32, collected:false});
-      nextFuelX += 800 + Math.random()*500;
+      nextFuelX += FUEL_SPACING_PX;
     }
   }
 
@@ -734,7 +735,7 @@
     noise2 = [];
     bigHills = []; nextBigHillX = 1300;
     coins = []; fuelCans = [];
-    nextCoinX = 480; nextFuelX = 800; coinGroupCounter = 0;
+    nextCoinX = 480; nextFuelX = FUEL_SPACING_PX; coinGroupCounter = 0;
     car = { x: 90, y: terrainHeight(90) - 40, angle: 0, vx: 0, vy: 0, angularVel: 0, launchCooldown: 0 };
     cameraX = 0; wheelSpin = 0; fuel = 100; coinsCollected = 0; graceFrames = 25; wasGrounded = true;
     ensureItems(W + 400);
