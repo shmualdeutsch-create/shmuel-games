@@ -113,16 +113,24 @@
     width:100%; max-width:900px; margin-top:14px; padding:0 4px;
   }
   .tbtn{
-    width:84px; height:84px; border-radius:50%; border:none;
-    background: var(--card-bg); color: var(--ink);
+    width:88px; height:88px; border-radius:20px; border:none;
+    background-color: var(--card-bg); color: var(--ink);
+    background-image:
+      radial-gradient(circle at 28% 32%, rgba(0,0,0,.22) 0 5px, transparent 5.5px),
+      radial-gradient(circle at 50% 32%, rgba(0,0,0,.22) 0 5px, transparent 5.5px),
+      radial-gradient(circle at 72% 32%, rgba(0,0,0,.22) 0 5px, transparent 5.5px),
+      radial-gradient(circle at 28% 52%, rgba(0,0,0,.22) 0 5px, transparent 5.5px),
+      radial-gradient(circle at 50% 52%, rgba(0,0,0,.22) 0 5px, transparent 5.5px),
+      radial-gradient(circle at 72% 52%, rgba(0,0,0,.22) 0 5px, transparent 5.5px);
     box-shadow: 0 4px 0 var(--line), inset 0 0 0 2px var(--line);
-    font-size:30px; display:flex; align-items:center; justify-content:center;
+    display:flex; align-items:flex-end; justify-content:center; padding-bottom:9px;
     cursor:pointer;
   }
+  .tbtn-label{ font-size:13px; font-weight:800; letter-spacing:.5px; }
   .tbtn:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--line), inset 0 0 0 2px var(--line); }
-  #gasBtn{ background: var(--c); color:#0D3A24; box-shadow: 0 4px 0 var(--c-dark); }
+  #gasBtn{ background-color: var(--c); color:#0D3A24; box-shadow: 0 4px 0 var(--c-dark); }
   #gasBtn:active{ box-shadow: 0 1px 0 var(--c-dark); }
-  #brakeBtn{ background: var(--c-fuel); color:#4A0E00; box-shadow: 0 4px 0 #B3391F; }
+  #brakeBtn{ background-color: var(--c-fuel); color:#4A0E00; box-shadow: 0 4px 0 #B3391F; }
   #brakeBtn:active{ box-shadow: 0 1px 0 #B3391F; }
 
   .dashboard{ display:flex; align-items:center; gap:10px; padding-bottom:6px; }
@@ -200,7 +208,7 @@
       🏔️ ככל שמתקדמים הגבעות נהיות תלולות יותר, ומדי פעם יש הר גדול וחד - אם דוהרים אליו בלי לבלום אפשר להתעופף ולהתהפך!<br>
       🪂 בקפיצות באוויר - החזקת גז מרימה את החרטום, בלימה מורידה אותו. תנחתי ישר כדי לא להתהפך!<br><br>
       מקלדת: חץ ימינה / D / W = גז, חץ שמאלה / A / S = בלימה.<br>
-      במסך מגע: כפתור ▶ לגז, כפתור ◀ לבלימה.
+      במסך מגע: כפתור גז, כפתור בלימה.
       </p>
       <p class="hiscore" id="startHighScore"></p>
       <p class="bank">🪙 יש לך <span id="bankLabel">0</span> מטבעות בבנק</p>
@@ -231,7 +239,7 @@
   </div>
 
   <div class="touch-controls">
-    <button class="tbtn" id="brakeBtn">◀</button>
+    <button class="tbtn" id="brakeBtn"><span class="tbtn-label">בלימה</span></button>
     <div class="dashboard">
       <div class="gauge" id="rpmGauge">
         <div class="gauge-face"></div>
@@ -248,7 +256,7 @@
         <div class="gauge-label">קמ"ש</div>
       </div>
     </div>
-    <button class="tbtn" id="gasBtn">▶</button>
+    <button class="tbtn" id="gasBtn"><span class="tbtn-label">גז</span></button>
   </div>
   </div>
 
@@ -751,7 +759,7 @@
   }
 
   // ---- items ----
-  const FUEL_SPACING_PX = 500 * PX_PER_METER;
+  const FUEL_SPACING_PX = 1000 * PX_PER_METER;
   let coins = [], fuelCans = [];
   let nextCoinX = 480, nextFuelX = FUEL_SPACING_PX, coinGroupCounter = 0;
   function ensureItems(uptoX){
