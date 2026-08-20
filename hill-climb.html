@@ -166,6 +166,7 @@
       <p class="bank">🪙 יש לך <span id="bankLabel">0</span> מטבעות בבנק</p>
       <button class="btn" id="startBtn">בואי ניסע!</button>
       <button class="btn secondary" id="openShopBtn">🛒 חנות רכבים</button>
+      <button class="btn secondary" id="devSettingsBtn">⚙️ הגדרות</button>
     </div>
 
     <div class="overlay hidden" id="shopScreen">
@@ -603,6 +604,23 @@
     shopScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     draw();
+  });
+
+  document.getElementById('devSettingsBtn').addEventListener('click', ()=>{
+    const code = prompt('הכניסי קוד:');
+    if(code === null) return;
+    if(code.trim() !== '34613'){
+      alert('קוד שגוי');
+      return;
+    }
+    const amountStr = prompt('בדיקת מערכת: כמה נקודות (מטבעות) להוסיף?');
+    if(amountStr === null) return;
+    const amount = parseInt(amountStr, 10);
+    if(isNaN(amount)) return;
+    bankCoins = Math.max(0, bankCoins + amount);
+    saveBank();
+    refreshBankLabels();
+    alert('נוספו ' + amount + ' מטבעות! יש לך עכשיו ' + bankCoins + ' מטבעות.');
   });
 
   function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
