@@ -310,18 +310,27 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 .coaster-check-btn:active{ transform: scale(.97); }
 .coaster-canvas-wrap{ position:relative; width:100%; }
 .coaster-hud{
-  position:absolute; top:14px; left:14px; z-index:5;
-  background: rgba(255,255,255,.94); border-radius:18px; padding:8px 16px 8px 10px;
-  display:flex; align-items:center; gap:10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.2);
+  position:absolute; top:0; left:0; z-index:5; direction:ltr;
+  width:42%; min-width:200px; max-width:320px;
+  border-radius: 0 0 20px 0; overflow:hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
+}
+.coaster-hud-top{
+  background: rgba(35,35,40,.55);
+  padding:8px 12px; display:flex; align-items:center; justify-content:flex-end;
 }
 .coaster-hud-speaker{
-  border:none; background:#fff; box-shadow: inset 0 0 0 2px #E9E2F7;
+  border:none; background: rgba(255,255,255,.18); color:#fff;
   width:32px; height:32px; border-radius:50%; font-size:15px; cursor:pointer;
   display:flex; align-items:center; justify-content:center; flex-shrink:0;
 }
+.coaster-hud-speaker:hover{ background: rgba(255,255,255,.3); }
 .coaster-hud-speaker:active{ transform: scale(.92); }
-.coaster-hud-word{ font-size:20px; font-weight:800; color:#C6303E; white-space:nowrap; }
+.coaster-hud-wordbar{
+  background: rgba(224,224,224,.92);
+  padding:14px 12px; text-align:center;
+}
+.coaster-hud-word{ font-size:26px; font-weight:800; color:#8B1E1E; }
 .coaster-nav-hud{ position:absolute; top:14px; right:14px; z-index:5; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
 .coaster-nav-btn{
   border:none; background:#FCE38A; color:#5C4A0E; font-weight:700; font-size:13px;
@@ -712,11 +721,15 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     canvasWrap.appendChild(canvas);
 
     var hud = el("div","coaster-hud");
+    var hudTop = el("div","coaster-hud-top");
     var speakerBtn = el("button","coaster-hud-speaker","🔊");
     speakerBtn.setAttribute("aria-label","השמעה");
     speakerBtn.addEventListener("click", function(){ speakHebrew(q.he); });
-    hud.appendChild(speakerBtn);
-    hud.appendChild(el("div","coaster-hud-word", q.he));
+    hudTop.appendChild(speakerBtn);
+    var hudWordBar = el("div","coaster-hud-wordbar");
+    hudWordBar.appendChild(el("div","coaster-hud-word", q.he));
+    hud.appendChild(hudTop);
+    hud.appendChild(hudWordBar);
     canvasWrap.appendChild(hud);
 
     var navHud = el("div","coaster-nav-hud");
