@@ -133,6 +133,14 @@
     cursor:pointer;
   }
   .menu-btn:active{ transform: translateY(2px); }
+  #fsBtn{ left:auto; right:12px; }
+
+  .game-wrap{ display:flex; flex-direction:column; align-items:center; width:100%; max-width:900px; }
+  .game-wrap:fullscreen, .game-wrap:-webkit-full-screen{
+    max-width:none; width:100vw; height:100vh;
+    background:#000; justify-content:center; gap:10px; padding:10px;
+  }
+  .game-wrap:fullscreen .stage, .game-wrap:-webkit-full-screen .stage{ max-width:none; }
 
   footer{ margin-top:26px; color: var(--ink-soft); font-size:13px; text-align:center; }
 </style>
@@ -141,6 +149,7 @@
   <a class="back" href="index.html">→ חזרה למשחקים</a>
   <h1>🚙 טיפוס גבעות</h1>
 
+  <div class="game-wrap" id="gameWrap">
   <div class="stage">
     <canvas id="game" width="900" height="450"></canvas>
     <div class="hud">
@@ -150,6 +159,7 @@
       <span class="pill">🏁 <span id="distEl">0</span> מ'</span>
     </div>
     <button class="menu-btn" id="menuBtn" title="תפריט ראשי">🏠</button>
+    <button class="menu-btn" id="fsBtn" title="מסך מלא">⛶</button>
 
     <div class="overlay" id="startScreen">
       <h2>🚙 טיפוס גבעות</h2>
@@ -193,6 +203,7 @@
   <div class="touch-controls">
     <button class="tbtn" id="brakeBtn">◀</button>
     <button class="tbtn" id="gasBtn">▶</button>
+  </div>
   </div>
 
   <footer>נוצר באהבה לשמואל ❤️</footer>
@@ -1207,6 +1218,38 @@
   });
 
   document.getElementById('menuBtn').addEventListener('click', quitToMenu);
+
+  // ---- fullscreen ----
+  const gameWrap = document.getElementById('gameWrap');
+  const stageEl = document.querySelector('.stage');
+  const fsBtn = document.getElementById('fsBtn');
+  function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function sizeStage(){
+    if(!isFullscreen()){ stageEl.style.width=''; stageEl.style.height=''; return; }
+    const touchH = document.querySelector('.touch-controls').offsetHeight + 20;
+    const availW = window.innerWidth - 20;
+    const availH = window.innerHeight - touchH - 20;
+    const ratio = W / H;
+    let w = availW, h = w / ratio;
+    if(h > availH){ h = availH; w = h * ratio; }
+    stageEl.style.width = w + 'px';
+    stageEl.style.height = h + 'px';
+  }
+  function updateFsBtn(){
+    fsBtn.textContent = isFullscreen() ? '⤡' : '⛶';
+    sizeStage();
+  }
+  fsBtn.addEventListener('click', ()=>{
+    if(isFullscreen()){
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      const req = gameWrap.requestFullscreen || gameWrap.webkitRequestFullscreen;
+      if(req) req.call(gameWrap);
+    }
+  });
+  document.addEventListener('fullscreenchange', updateFsBtn);
+  document.addEventListener('webkitfullscreenchange', updateFsBtn);
+  window.addEventListener('resize', sizeStage);
   document.getElementById('gameOverMenuBtn').addEventListener('click', ()=>{
     gameOverScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
