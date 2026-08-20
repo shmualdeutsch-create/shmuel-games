@@ -66,6 +66,7 @@
   .overlay::before, .overlay::after{ content:""; margin:auto 0; }
   .overlay.hidden{ display:none; }
   .shop-list.hidden{ display:none; }
+  .hidden{ display:none; }
   .overlay h2{ font-size: clamp(22px,5vw,30px); margin:0; }
   .overlay p{ margin:0; color:#E7E0FF; font-size:15px; max-width:460px; line-height:1.7; text-align:right; }
   .btn{
@@ -206,6 +207,7 @@
       במסך מגע: כפתור גז, כפתור בלימה.
       </p>
       <p class="hiscore" id="startHighScore"></p>
+      <p class="hiscore hidden" id="wonBadge">🏆 ניצחת את המשחק!</p>
       <p class="bank">🪙 יש לך <span id="bankLabel">0</span> מטבעות בבנק</p>
       <button class="btn" id="startBtn">בואי ניסע!</button>
       <button class="btn secondary" id="openShopBtn">🛒 חנות רכבים</button>
@@ -273,6 +275,7 @@
   const gameOverTitle = document.getElementById('gameOverTitle');
   const finalStats = document.getElementById('finalStats');
   const startHighScore = document.getElementById('startHighScore');
+  const wonBadge = document.getElementById('wonBadge');
   const gameOverHighScore = document.getElementById('gameOverHighScore');
   const bankLabel = document.getElementById('bankLabel');
   const shopBankLabel = document.getElementById('shopBankLabel');
@@ -372,9 +375,10 @@
       bodyColor:'#FFA733', bodyStroke:'#B5651D', cabinColor:'#FFF3D0', cabinStroke:'#7A4B12', bumperColor:'#FF8C1A',
     },
     moto: {
-      key:'moto', name:'האופנוע המהיר', cost:180, accel:0.46, maxVx:10.8, wheelR:14, halfWB:28, stability:0.75,
-      body:[-24,-15,48,10], cabin:[-2,-29,18,15], bumper:[[24,-11],[33,-6],[24,-3]],
-      bodyColor:'#1B1B1B', bodyStroke:'#000000', cabinColor:'#E63946', cabinStroke:'#8B1E27', bumperColor:'#1B1B1B',
+      key:'moto', name:'האופנוע המהיר', cost:180, accel:0.46, maxVx:10.8, wheelR:15, halfWB:30, stability:0.75,
+      shape:'moto',
+      body:[-26,-44,52,10], cabin:[-22,-30,18,7], bumper:[[30,-30],[35,-24],[30,-20]],
+      bodyColor:'#7A1F2B', bodyStroke:'#4A0F17', cabinColor:'#2B2118', cabinStroke:'#161109', bumperColor:'#C9A227',
     },
     monster: {
       key:'monster', name:'מפלצת ההרים', cost:250, accel:0.44, maxVx:11, wheelR:19, halfWB:42, stability:1,
@@ -418,8 +422,14 @@
     },
   };
   const BANK_KEY = 'hillClimb_bank', OWNED_KEY = 'hillClimb_owned', SELECTED_KEY = 'hillClimb_selectedCar';
+  const TOTAL_COINS_KEY = 'hillClimb_totalCoinsEarned', WON_KEY = 'hillClimb_hasWon';
+  const WIN_GOAL = 2000;
   let bankCoins = 0;
   try{ bankCoins = parseInt(localStorage.getItem(BANK_KEY) || '0', 10) || 0; }catch(e){}
+  let totalCoinsEarned = 0;
+  try{ totalCoinsEarned = parseInt(localStorage.getItem(TOTAL_COINS_KEY) || '0', 10) || 0; }catch(e){}
+  let hasWon = false;
+  try{ hasWon = localStorage.getItem(WON_KEY) === '1'; }catch(e){}
   let owned = ['base'];
   try{
     const stored = JSON.parse(localStorage.getItem(OWNED_KEY) || '["base"]');
@@ -432,6 +442,18 @@
   let vehicle = CARS[selectedCarKey];
 
   function saveBank(){ try{ localStorage.setItem(BANK_KEY, String(bankCoins)); }catch(e){} }
+  function saveTotalCoins(){ try{ localStorage.setItem(TOTAL_COINS_KEY, String(totalCoinsEarned)); }catch(e){} }
+  function saveWon(){ try{ localStorage.setItem(WON_KEY, '1'); }catch(e){} }
+  function addCoinsEarned(amount){
+    totalCoinsEarned += amount;
+    saveTotalCoins();
+    if(!hasWon && totalCoinsEarned >= WIN_GOAL){
+      hasWon = true;
+      saveWon();
+      return true;
+    }
+    return false;
+  }
   function saveOwned(){ try{ localStorage.setItem(OWNED_KEY, JSON.stringify(owned)); }catch(e){} }
   function saveSelected(){ try{ localStorage.setItem(SELECTED_KEY, selectedCarKey); }catch(e){} }
 
@@ -782,6 +804,7 @@
   try{ highScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || '0', 10) || 0; }catch(e){}
   function refreshHighScoreLabels(){
     startHighScore.textContent = highScore > 0 ? ('🏆 השיא שלך: ' + highScore + ' מ\'') : '';
+    wonBadge.classList.toggle('hidden', !hasWon);
   }
   function checkAndSaveHighScore(dist){
     if(dist > highScore){
@@ -876,6 +899,12 @@
     bankCoins += coinsCollected;
     saveBank();
     refreshBankLabels();
+    const justWon = addCoinsEarned(coinsCollected);
+    if(justWon){
+      gameOverTitle.textContent = '🏆 ניצחת את המשחק!';
+      finalStats.textContent = 'אספת ' + WIN_GOAL + ' מטבעות בסך הכול! ' + finalStats.textContent;
+      sfx.finish();
+    }
     gameOverScreen.classList.remove('hidden');
   }
 
@@ -889,6 +918,16 @@
     bankCoins += coinsCollected;
     saveBank();
     refreshBankLabels();
+    const justWon = addCoinsEarned(coinsCollected);
+    if(justWon){
+      gameOverTitle.textContent = '🏆 ניצחת את המשחק!';
+      finalStats.textContent = 'אספת ' + WIN_GOAL + ' מטבעות בסך הכול!';
+      gameOverHighScore.textContent = '';
+      sfx.finish();
+      gameOverScreen.classList.remove('hidden');
+      draw();
+      return;
+    }
     gameOverScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     draw();
@@ -1208,47 +1247,101 @@
       ctx.restore();
     }
 
-    // chassis
-    ctx.fillStyle = vehicle.bodyColor;
-    ctx.strokeStyle = vehicle.bodyStroke;
-    ctx.lineWidth = 2;
-    roundRectPath(vehicle.body[0], vehicle.body[1], vehicle.body[2], vehicle.body[3], 8);
-    ctx.fill(); ctx.stroke();
+    if(vehicle.shape === 'moto'){
+      const hw = vehicle.halfWB;
 
-    // cabin
-    if(vehicle.shape === 'buggy'){
-      const [cx,cy,cw,ch] = vehicle.cabin;
-      ctx.strokeStyle = vehicle.cabinStroke;
-      ctx.lineWidth = 4;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(cx, cy+ch);
-      ctx.lineTo(cx, cy);
-      ctx.lineTo(cx+cw, cy);
-      ctx.lineTo(cx+cw, cy+ch);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx, cy+ch*0.5);
-      ctx.lineTo(cx+cw, cy);
-      ctx.stroke();
-      ctx.fillStyle = vehicle.cabinColor;
-      ctx.fillRect(cx+cw*0.15, cy+ch*0.55, cw*0.7, ch*0.45);
-    } else {
-      ctx.fillStyle = vehicle.cabinColor;
-      ctx.strokeStyle = vehicle.cabinStroke;
-      roundRectPath(vehicle.cabin[0], vehicle.cabin[1], vehicle.cabin[2], vehicle.cabin[3], 6);
+      // exhaust pipe
+      ctx.fillStyle = '#C9CDD3'; ctx.strokeStyle = '#6B6F76'; ctx.lineWidth = 1.5;
+      roundRectPath(-hw+4, -4, hw*0.9, 6, 3);
       ctx.fill(); ctx.stroke();
-    }
 
-    // front bumper wedge
-    ctx.fillStyle = vehicle.bumperColor;
-    ctx.beginPath();
-    ctx.moveTo(vehicle.bumper[0][0], vehicle.bumper[0][1]);
-    ctx.lineTo(vehicle.bumper[1][0], vehicle.bumper[1][1]);
-    ctx.lineTo(vehicle.bumper[2][0], vehicle.bumper[2][1]);
-    ctx.closePath();
-    ctx.fill();
+      // engine block
+      ctx.fillStyle = '#3A3A40'; ctx.strokeStyle = '#1C1C20'; ctx.lineWidth = 2;
+      roundRectPath(-13, -22, 24, 16, 5);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#585860';
+      ctx.beginPath(); ctx.arc(-6,-19,3.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(4,-19,3.2,0,Math.PI*2); ctx.fill();
+
+      // main frame
+      ctx.strokeStyle = vehicle.bodyStroke; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-hw+4, -8);
+      ctx.lineTo(-hw*0.55, -26);
+      ctx.lineTo(hw*0.55, -32);
+      ctx.lineTo(hw-4, -8);
+      ctx.stroke();
+
+      // front fork
+      ctx.strokeStyle = '#8A8E96'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(hw*0.55, -32);
+      ctx.lineTo(hw, -2);
+      ctx.stroke();
+
+      // handlebar
+      ctx.strokeStyle = '#3A3A40'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(hw*0.4, -38);
+      ctx.lineTo(hw*0.72, -42);
+      ctx.stroke();
+
+      // seat (drawn first so the tank overlaps it cleanly)
+      ctx.fillStyle = vehicle.cabinColor; ctx.strokeStyle = vehicle.cabinStroke; ctx.lineWidth = 2;
+      roundRectPath(-hw+2, -28, 18, 8, 3);
+      ctx.fill(); ctx.stroke();
+
+      // fuel tank
+      ctx.fillStyle = vehicle.bodyColor; ctx.strokeStyle = vehicle.bodyStroke; ctx.lineWidth = 2;
+      roundRectPath(-hw*0.5, -38, hw*0.85, 14, 6);
+      ctx.fill(); ctx.stroke();
+
+      // headlight
+      ctx.fillStyle = '#FFF6DC'; ctx.strokeStyle = vehicle.bumperColor; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(hw+2, -28, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    } else {
+      // chassis
+      ctx.fillStyle = vehicle.bodyColor;
+      ctx.strokeStyle = vehicle.bodyStroke;
+      ctx.lineWidth = 2;
+      roundRectPath(vehicle.body[0], vehicle.body[1], vehicle.body[2], vehicle.body[3], 8);
+      ctx.fill(); ctx.stroke();
+
+      // cabin
+      if(vehicle.shape === 'buggy'){
+        const [cx,cy,cw,ch] = vehicle.cabin;
+        ctx.strokeStyle = vehicle.cabinStroke;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy+ch);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx+cw, cy);
+        ctx.lineTo(cx+cw, cy+ch);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy+ch*0.5);
+        ctx.lineTo(cx+cw, cy);
+        ctx.stroke();
+        ctx.fillStyle = vehicle.cabinColor;
+        ctx.fillRect(cx+cw*0.15, cy+ch*0.55, cw*0.7, ch*0.45);
+      } else {
+        ctx.fillStyle = vehicle.cabinColor;
+        ctx.strokeStyle = vehicle.cabinStroke;
+        roundRectPath(vehicle.cabin[0], vehicle.cabin[1], vehicle.cabin[2], vehicle.cabin[3], 6);
+        ctx.fill(); ctx.stroke();
+      }
+
+      // front bumper wedge
+      ctx.fillStyle = vehicle.bumperColor;
+      ctx.beginPath();
+      ctx.moveTo(vehicle.bumper[0][0], vehicle.bumper[0][1]);
+      ctx.lineTo(vehicle.bumper[1][0], vehicle.bumper[1][1]);
+      ctx.lineTo(vehicle.bumper[2][0], vehicle.bumper[2][1]);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     ctx.restore();
 
