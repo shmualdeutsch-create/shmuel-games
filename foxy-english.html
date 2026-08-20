@@ -750,9 +750,9 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
     var scene = new THREE.Scene();
     scene.background = new THREE.Color(0xBFE3FF);
-    scene.fog = new THREE.Fog(0xBFE3FF, 60, 220);
+    scene.fog = new THREE.Fog(0xBFE3FF, 90, 260);
 
-    var camera = new THREE.PerspectiveCamera(58, canvas.width/canvas.height, 0.1, 500);
+    var camera = new THREE.PerspectiveCamera(62, canvas.width/canvas.height, 0.1, 500);
 
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias:true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -921,10 +921,14 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       var u = Math.max(0, Math.min(1, worldX/trackLength));
       var pos = curve.getPointAt(u);
       var tangent = curve.getTangentAt(u).normalize();
+      var side = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0,1,0)).normalize();
       cart.position.copy(pos).add(new THREE.Vector3(0, 1.8, 0));
-      var camPos = pos.clone().add(new THREE.Vector3(0, 3.6, 0)).sub(tangent.clone().multiplyScalar(10));
+      var camPos = pos.clone()
+        .add(new THREE.Vector3(0, 7, 0))
+        .sub(tangent.clone().multiplyScalar(17))
+        .add(side.clone().multiplyScalar(6));
       camera.position.copy(camPos);
-      camera.lookAt(pos.clone().add(tangent.clone().multiplyScalar(12)).add(new THREE.Vector3(0, 1.6, 0)));
+      camera.lookAt(pos.clone().add(tangent.clone().multiplyScalar(16)).add(new THREE.Vector3(0, 1.2, 0)));
     }
     function placeRiders(worldX){
       riderSprites.forEach(function(rs, i){
