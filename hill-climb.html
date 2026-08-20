@@ -125,6 +125,36 @@
   #brakeBtn{ background: var(--c-fuel); color:#4A0E00; box-shadow: 0 4px 0 #B3391F; }
   #brakeBtn:active{ box-shadow: 0 1px 0 #B3391F; }
 
+  .dashboard{ display:flex; align-items:center; gap:10px; padding-bottom:6px; }
+  .gauge{ position:relative; width:60px; height:60px; }
+  .gauge-face{
+    position:absolute; inset:0; border-radius:50%;
+    background: radial-gradient(circle at 50% 42%, #3a2f22 0%, #1c140c 68%, #0b0705 100%);
+    box-shadow: 0 3px 7px rgba(0,0,0,.45), inset 0 0 0 3px #4a3620, inset 0 0 9px rgba(0,0,0,.65);
+  }
+  .gauge-ring{
+    position:absolute; inset:6px; border-radius:50%;
+    background: conic-gradient(from -120deg, #3FBF7F 0deg, #F2C94C 140deg, #FF5A3C 240deg, transparent 240deg, transparent 360deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+  }
+  .gauge-needle{
+    position:absolute; left:50%; top:50%; width:3px; height:20px;
+    background: linear-gradient(#fff,#ccc);
+    border-radius:2px; transform-origin:50% 100%;
+    transform: translate(-50%,-100%) rotate(-120deg);
+    box-shadow:0 0 3px rgba(0,0,0,.7);
+  }
+  .gauge-hub{
+    position:absolute; left:50%; top:50%; width:9px; height:9px;
+    background:#eee; border-radius:50%; transform:translate(-50%,-50%);
+    box-shadow:0 0 2px rgba(0,0,0,.8), inset 0 0 0 1px #999;
+  }
+  .gauge-label{
+    position:absolute; left:0; right:0; bottom:8px; text-align:center;
+    font-size:8px; font-weight:800; color:#E7DFC8; letter-spacing:.5px;
+  }
+
   .menu-btn{
     position:absolute; top:54px; left:12px;
     width:34px; height:34px; border-radius:50%; border:none;
@@ -202,6 +232,22 @@
 
   <div class="touch-controls">
     <button class="tbtn" id="brakeBtn">◀</button>
+    <div class="dashboard">
+      <div class="gauge" id="rpmGauge">
+        <div class="gauge-face"></div>
+        <div class="gauge-ring"></div>
+        <div class="gauge-needle" id="rpmNeedle"></div>
+        <div class="gauge-hub"></div>
+        <div class="gauge-label">האצה</div>
+      </div>
+      <div class="gauge" id="spdGauge">
+        <div class="gauge-face"></div>
+        <div class="gauge-ring"></div>
+        <div class="gauge-needle" id="spdNeedle"></div>
+        <div class="gauge-hub"></div>
+        <div class="gauge-label">קמ"ש</div>
+      </div>
+    </div>
     <button class="tbtn" id="gasBtn">▶</button>
   </div>
   </div>
@@ -218,6 +264,8 @@
   const coinsEl = document.getElementById('coinsEl');
   const distEl = document.getElementById('distEl');
   const speedEl = document.getElementById('speedEl');
+  const rpmNeedle = document.getElementById('rpmNeedle');
+  const spdNeedle = document.getElementById('spdNeedle');
   const startScreen = document.getElementById('startScreen');
   const gameOverScreen = document.getElementById('gameOverScreen');
   const gameOverTitle = document.getElementById('gameOverTitle');
@@ -792,6 +840,16 @@
     fuelFill.classList.toggle('low', pct < 25);
   }
 
+  function setNeedle(el, ratio){
+    const deg = -120 + clamp(ratio, 0, 1) * 240;
+    el.style.transform = 'translate(-50%,-100%) rotate(' + deg + 'deg)';
+  }
+  function updateGauges(gas, brake, speedRatio){
+    setNeedle(spdNeedle, speedRatio);
+    const effort = clamp(speedRatio*0.7 + (gas ? 0.3 : 0) - (brake ? 0.15 : 0), 0, 1);
+    setNeedle(rpmNeedle, effort);
+  }
+
   function endGame(reason){
     running = false;
     stopEngine();
@@ -877,6 +935,7 @@
     }
 
     updateEngineSound(gas, clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1));
+    updateGauges(gas, brake, clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1));
 
     if(!grounded && wasGrounded){
       const speedRatio = clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1);
