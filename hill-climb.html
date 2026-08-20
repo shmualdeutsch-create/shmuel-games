@@ -47,13 +47,13 @@
   canvas{ display:block; width:100%; height:auto; }
 
   .hud{
-    position:absolute; top:10px; left:0; right:0;
-    display:flex; justify-content:space-between; padding: 0 14px;
-    font-weight:800; font-size: clamp(13px,2.6vw,17px); color:#fff;
+    position:absolute; top:10px; left:14px;
+    display:flex; flex-direction:column; align-items:flex-start; gap:5px;
+    font-weight:800; font-size: clamp(12px,2.4vw,15px); color:#fff;
     text-shadow: 0 2px 4px rgba(0,0,0,.35); pointer-events:none;
   }
   .hud span.pill{ background: rgba(0,0,0,.22); border-radius:10px; padding:3px 10px; display:inline-flex; align-items:center; gap:6px; }
-  .fuel-wrap{ display:inline-block; width:60px; height:10px; background:rgba(255,255,255,.28); border-radius:6px; overflow:hidden; }
+  .fuel-wrap{ display:inline-block; width:80px; height:10px; background:rgba(255,255,255,.28); border-radius:6px; overflow:hidden; }
   .fuel-fill{ display:block; height:100%; width:100%; background:#3FBF7F; transition: background .2s linear, width .1s linear; }
   .fuel-fill.low{ background:#FF5A3C; animation: fuelPulse .6s ease-in-out infinite; }
   @keyframes fuelPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
@@ -128,10 +128,6 @@
   }
   .tbtn-label{ font-size:13px; font-weight:800; letter-spacing:.5px; }
   .tbtn:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--line), inset 0 0 0 2px var(--line); }
-  #gasBtn{ background-color: var(--c); color:#0D3A24; box-shadow: 0 4px 0 var(--c-dark); }
-  #gasBtn:active{ box-shadow: 0 1px 0 var(--c-dark); }
-  #brakeBtn{ background-color: var(--c-fuel); color:#4A0E00; box-shadow: 0 4px 0 #B3391F; }
-  #brakeBtn:active{ box-shadow: 0 1px 0 #B3391F; }
 
   .dashboard{ display:flex; align-items:center; gap:10px; padding-bottom:6px; }
   .gauge{ position:relative; width:60px; height:60px; }
@@ -192,9 +188,8 @@
     <canvas id="game" width="900" height="450"></canvas>
     <div class="hud">
       <span class="pill">⛽ <span class="fuel-wrap"><span id="fuelFill" class="fuel-fill"></span></span></span>
-      <span class="pill">💨 <span id="speedEl">0</span> קמ"ש</span>
       <span class="pill">🪙 <span id="coinsEl">0</span></span>
-      <span class="pill">🏁 <span id="distEl">0</span> מ'</span>
+      <span class="pill">💰 <span id="moneyEl">0</span></span>
     </div>
     <button class="menu-btn" id="menuBtn" title="תפריט ראשי">🏠</button>
     <button class="menu-btn" id="fsBtn" title="מסך מלא">⛶</button>
@@ -270,8 +265,7 @@
 
   const fuelFill = document.getElementById('fuelFill');
   const coinsEl = document.getElementById('coinsEl');
-  const distEl = document.getElementById('distEl');
-  const speedEl = document.getElementById('speedEl');
+  const moneyEl = document.getElementById('moneyEl');
   const rpmNeedle = document.getElementById('rpmNeedle');
   const spdNeedle = document.getElementById('spdNeedle');
   const startScreen = document.getElementById('startScreen');
@@ -845,9 +839,7 @@
 
   function updateHUD(){
     coinsEl.textContent = coinsCollected;
-    const dist = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
-    distEl.textContent = dist + '/' + FINISH_METERS;
-    speedEl.textContent = Math.round(Math.max(0, car.vx)*2);
+    moneyEl.textContent = bankCoins + coinsCollected;
     const pct = clamp(fuel, 0, 100);
     fuelFill.style.width = pct + '%';
     fuelFill.classList.toggle('low', pct < 25);
