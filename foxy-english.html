@@ -308,6 +308,34 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
   background: var(--cat-color, var(--c-house)); color:#fff; font-weight:800; font-size:16px; font-family:inherit;
 }
 .coaster-check-btn:active{ transform: scale(.97); }
+.coaster-canvas-wrap{ position:relative; width:100%; }
+.coaster-hud{
+  position:absolute; top:14px; left:14px; z-index:5;
+  background: rgba(255,255,255,.94); border-radius:18px; padding:8px 16px 8px 10px;
+  display:flex; align-items:center; gap:10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.2);
+}
+.coaster-hud-speaker{
+  border:none; background:#fff; box-shadow: inset 0 0 0 2px #E9E2F7;
+  width:32px; height:32px; border-radius:50%; font-size:15px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.coaster-hud-speaker:active{ transform: scale(.92); }
+.coaster-hud-word{ font-size:20px; font-weight:800; color:#C6303E; white-space:nowrap; }
+.coaster-nav-hud{ position:absolute; top:14px; right:14px; z-index:5; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+.coaster-nav-btn{
+  border:none; background:#FCE38A; color:#5C4A0E; font-weight:700; font-size:13px;
+  padding:8px 14px; border-radius:99px; cursor:pointer; white-space:nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2); font-family:inherit;
+}
+.coaster-nav-btn:active{ transform: scale(.96); }
+.coaster-help-pop{
+  position:absolute; top:60px; right:14px; z-index:6; max-width:220px;
+  background:#fff; color:#2B2140; font-size:13px; font-weight:600; line-height:1.5;
+  padding:12px 14px; border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.22);
+  display:none; text-align:right;
+}
+.coaster-help-pop.show{ display:block; }
 
 /* ---------- RESULT ---------- */
 .result{ width:100%; max-width:480px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; }
@@ -458,6 +486,16 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       var u = new SpeechSynthesisUtterance(text);
       u.lang = "en-US";
       u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  function speakHebrew(text){
+    try{
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "he-IL";
+      u.rate = 0.9;
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
@@ -662,11 +700,34 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     top.appendChild(back); top.appendChild(track); top.appendChild(counter);
     wrap.appendChild(top);
 
+    var q = state.words[state.index];
+
+    var canvasWrap = el("div","coaster-canvas-wrap");
+    wrap.appendChild(canvasWrap);
+
     var canvas = document.createElement("canvas");
     canvas.className = "coaster-canvas";
     canvas.width = 680;
     canvas.height = 380;
-    wrap.appendChild(canvas);
+    canvasWrap.appendChild(canvas);
+
+    var hud = el("div","coaster-hud");
+    var speakerBtn = el("button","coaster-hud-speaker","🔊");
+    speakerBtn.setAttribute("aria-label","השמעה");
+    speakerBtn.addEventListener("click", function(){ speakHebrew(q.he); });
+    hud.appendChild(speakerBtn);
+    hud.appendChild(el("div","coaster-hud-word", q.he));
+    canvasWrap.appendChild(hud);
+
+    var navHud = el("div","coaster-nav-hud");
+    var homeBtn = el("button","coaster-nav-btn","🏠 יציאה לעמוד הבית");
+    homeBtn.addEventListener("click", function(){ stopCoasterAnim(); goHome(); });
+    var helpBtn = el("button","coaster-nav-btn","❓ הוראות");
+    var helpPop = el("div","coaster-help-pop","הקלידי למטה את המילה באנגלית - כשעונים נכון הקרון מטפס במסלול! 🎢");
+    helpBtn.addEventListener("click", function(){ helpPop.classList.toggle("show"); });
+    navHud.appendChild(homeBtn); navHud.appendChild(helpBtn);
+    canvasWrap.appendChild(navHud);
+    canvasWrap.appendChild(helpPop);
 
     var CHUNK = 90;
     var wordsEndX = state.words.length * CHUNK + 60;
@@ -830,6 +891,19 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
     var cart = makeEmojiSprite("🚋", 4.5);
     scene.add(cart);
 
+    var RIDER_EMOJI = ["🦖","🐵","🦄","🐸","🐙","🦕","🐲"];
+    var RIDER_COUNT = 4, RIDER_GAP = 7;
+    var riderSprites = [];
+    for(var rci=0; rci<RIDER_COUNT; rci++){
+      var rspr = makeEmojiSprite(RIDER_EMOJI[Math.floor(Math.random()*RIDER_EMOJI.length)], 4);
+      scene.add(rspr);
+      riderSprites.push(rspr);
+    }
+    function trackPointAt(worldX){
+      var u = Math.max(0, Math.min(1, worldX/trackLength));
+      return curve.getPointAt(u);
+    }
+
     function placeCart(worldX){
       var u = Math.max(0, Math.min(1, worldX/trackLength));
       var pos = curve.getPointAt(u);
@@ -839,14 +913,21 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
       camera.position.copy(camPos);
       camera.lookAt(pos.clone().add(tangent.clone().multiplyScalar(12)).add(new THREE.Vector3(0, 1.6, 0)));
     }
+    function placeRiders(worldX){
+      riderSprites.forEach(function(rs, i){
+        var rx = Math.max(0, worldX - RIDER_GAP*(i+1));
+        var rpos = trackPointAt(rx);
+        rs.position.copy(rpos).add(new THREE.Vector3(0, 1.7, 0));
+      });
+    }
     function draw(worldX){
       placeCart(worldX);
+      placeRiders(worldX);
       sky.position.copy(camera.position);
       renderer.render(scene, camera);
     }
     draw(state.worldX);
 
-    var q = state.words[state.index];
     var card = el("div","q-card");
     card.appendChild(el("div","q-emoji", q.e));
     card.appendChild(el("div","q-word", q.he));
