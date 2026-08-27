@@ -66,7 +66,6 @@
   .overlay::before, .overlay::after{ content:""; margin:auto 0; }
   .overlay.hidden{ display:none; }
   .shop-list.hidden{ display:none; }
-  .hidden{ display:none; }
   .overlay h2{ font-size: clamp(22px,5vw,30px); margin:0; }
   .overlay p{ margin:0; color:#E7E0FF; font-size:15px; max-width:460px; line-height:1.7; text-align:right; }
   .btn{
@@ -79,6 +78,8 @@
   .btn.secondary{ background: transparent; color:#fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
   .btn.secondary:active{ box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
   .bank{ color:#FFD966; font-weight:800; font-size:15px; }
+  /* the car list is long now - keep the way out reachable without scrolling to the end */
+  #closeShopBtn{ position:sticky; bottom:6px; z-index:3; background:rgba(24,17,46,.9); backdrop-filter: blur(4px); }
   .shop-list{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:420px; }
   .shop-card{
     display:flex; flex-direction:column; gap:8px;
@@ -86,7 +87,8 @@
     text-align:right;
   }
   .shop-card .top-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .shop-card .info{ display:flex; flex-direction:column; gap:2px; }
+  .shop-card .cprev{ width:74px; height:74px; flex:0 0 74px; }
+  .shop-card .info{ display:flex; flex-direction:column; gap:2px; flex:1 1 auto; text-align:right; }
   .shop-card .cname{ font-weight:800; font-size:15px; }
   .shop-card .cstats{ font-size:12px; color:#E7E0FF; }
   .shop-card .cbtn{
@@ -207,7 +209,6 @@
       במסך מגע: כפתור גז, כפתור בלימה.
       </p>
       <p class="hiscore" id="startHighScore"></p>
-      <p class="hiscore hidden" id="wonBadge">🏆 ניצחת את המשחק!</p>
       <p class="bank">🪙 יש לך <span id="bankLabel">0</span> מטבעות בבנק</p>
       <button class="btn" id="startBtn">בואי ניסע!</button>
       <button class="btn secondary" id="openShopBtn">🛒 חנות רכבים</button>
@@ -275,7 +276,6 @@
   const gameOverTitle = document.getElementById('gameOverTitle');
   const finalStats = document.getElementById('finalStats');
   const startHighScore = document.getElementById('startHighScore');
-  const wonBadge = document.getElementById('wonBadge');
   const gameOverHighScore = document.getElementById('gameOverHighScore');
   const bankLabel = document.getElementById('bankLabel');
   const shopBankLabel = document.getElementById('shopBankLabel');
@@ -363,97 +363,244 @@
 
   // ---- cars (shop) ----
   const CARS = {
-    base: {
-      key:'base', name:'ג\'יפ בסיסי', cost:0, accel:0.32, maxVx:8.2, wheelR:15, halfWB:34, stability:1,
-      body:[-40,-32,80,26], cabin:[-8,-50,34,20], bumper:[[40,-22],[50,-14],[40,-8]],
+    hill_climber: {
+      key:'hill_climber', name:'מטפס הגבעות', cost:0, accel:0.35, maxVx:9.45, wheelR:14, halfWB:35, stability:1.34, fuelBurn:0.06,
+      body:[-41,-31,81,25], cabin:[-8,-48,35,19], bumper:[[40,-21],[50,-13],[40,-8]],
       bodyColor:'#E8452C', bodyStroke:'#A32C17', cabinColor:'#BEE7FF', cabinStroke:'#4B7FA3', bumperColor:'#C93A22',
     },
-    buggy: {
-      key:'buggy', name:'באגי המדבר', cost:80, accel:0.4, maxVx:9.4, wheelR:16, halfWB:32, stability:0.9,
-      shape:'buggy',
-      body:[-34,-22,68,20], cabin:[-6,-40,26,14], bumper:[[34,-14],[43,-9],[34,-5]],
-      bodyColor:'#FFA733', bodyStroke:'#B5651D', cabinColor:'#FFF3D0', cabinStroke:'#7A4B12', bumperColor:'#FF8C1A',
+    used_car: {
+      key:'used_car', name:'מכונית משומשת', cost:30, accel:0.3, maxVx:8.22, wheelR:14, halfWB:35, stability:1.34, fuelBurn:0.064,
+      body:[-41,-31,81,25], cabin:[-8,-48,35,19], bumper:[[40,-21],[50,-13],[40,-8]],
+      bodyColor:'#8D6E63', bodyStroke:'#4E342E', cabinColor:'#D7CCC8', cabinStroke:'#4E342E', bumperColor:'#A1887F',
     },
-    moto: {
-      key:'moto', name:'האופנוע המהיר', cost:180, accel:0.46, maxVx:10.8, wheelR:15, halfWB:30, stability:0.75,
-      shape:'moto',
-      body:[-26,-44,52,10], cabin:[-22,-30,18,7], bumper:[[30,-30],[35,-24],[30,-20]],
-      bodyColor:'#7A1F2B', bodyStroke:'#4A0F17', cabinColor:'#2B2118', cabinStroke:'#161109', bumperColor:'#C9A227',
+    family_car: {
+      key:'family_car', name:'מכונית משפחתית', cost:30, accel:0.35, maxVx:9.45, wheelR:14, halfWB:35, stability:1.5, fuelBurn:0.053,
+      body:[-41,-31,81,25], cabin:[-8,-48,35,19], bumper:[[40,-21],[50,-13],[40,-8]],
+      bodyColor:'#4FC3F7', bodyStroke:'#0277BD', cabinColor:'#E1F5FE', cabinStroke:'#0277BD', bumperColor:'#0288D1',
     },
-    monster: {
-      key:'monster', name:'מפלצת ההרים', cost:250, accel:0.44, maxVx:11, wheelR:19, halfWB:42, stability:1,
-      body:[-50,-40,100,33], cabin:[-10,-63,43,25], bumper:[[50,-28],[62,-18],[50,-10]],
+    motocross_bike: {
+      key:'motocross_bike', name:'אופנוע מוטוקרוס', cost:300, accel:0.47, maxVx:10.8, wheelR:15, halfWB:28, stability:0.84, fuelBurn:0.061, shape:'moto',
+      body:[-27,-32,53,26], cabin:[-5,-50,23,20], bumper:[[26,-22],[32,-14],[26,-8]],
+      bodyColor:'#2E86DE', bodyStroke:'#14527F', cabinColor:'#2B2118', cabinStroke:'#161109', bumperColor:'#F1F1F1',
+    },
+    monster_truck: {
+      key:'monster_truck', name:'משאית מפלצת', cost:400, accel:0.41, maxVx:9.45, wheelR:27, halfWB:47, stability:1.5, fuelBurn:0.056,
+      body:[-54,-49,108,38], cabin:[-11,-76,46,29], bumper:[[54,-35],[67,-22],[54,-14]],
       bodyColor:'#2B6CB0', bodyStroke:'#1A4373', cabinColor:'#CFE8FF', cabinStroke:'#274B6B', bumperColor:'#1E4E86',
     },
-    royal: {
-      key:'royal', name:'הרכב המלכותי', cost:400, accel:0.34, maxVx:8.8, wheelR:16, halfWB:44, stability:1.35,
-      body:[-46,-33,84,27], cabin:[-9,-54,36,21], bumper:[[46,-25],[57,-16],[46,-9]],
-      bodyColor:'#8E44AD', bodyStroke:'#5B2C6F', cabinColor:'#F5D8FF', cabinStroke:'#6C3483', bumperColor:'#D4AF37',
+    tractor: {
+      key:'tractor', name:'טרקטור', cost:400, accel:0.3, maxVx:6.4, wheelR:26, wheelRF:14, halfWB:36, stability:1.01, fuelBurn:0.045,
+      body:[-42,-48,83,38], cabin:[-8,-75,36,29], bumper:[[41,-34],[51,-21],[41,-13]],
+      bodyColor:'#2E9E4F', bodyStroke:'#1B5F2F', cabinColor:'#DFF5D8', cabinStroke:'#1B5F2F', bumperColor:'#F5C518',
     },
-    bus: {
-      key:'bus', name:'האוטובוס הגדול', cost:550, accel:0.26, maxVx:8.0, wheelR:17, halfWB:56, stability:1.7,
-      body:[-58,-38,116,30], cabin:[-52,-58,108,22], bumper:[[58,-26],[68,-18],[58,-10]],
+    carantula: {
+      key:'carantula', name:'קראנטולה', cost:400, accel:0.24, maxVx:6.4, wheelR:16, halfWB:39, stability:1.67, fuelBurn:0.075, wheelStyle:'leg',
+      body:[-45,-34,90,28], cabin:[-9,-53,39,21], bumper:[[45,-23],[56,-14],[45,-8]],
+      bodyColor:'#5D4037', bodyStroke:'#33201A', cabinColor:'#FFB74D', cabinStroke:'#33201A', bumperColor:'#8D6E63',
+    },
+    hippie_van: {
+      key:'hippie_van', name:'ואן היפי', cost:480, accel:0.3, maxVx:8.22, wheelR:13, halfWB:45, stability:1.17, fuelBurn:0.045,
+      body:[-52,-29,103,24], cabin:[-47,-47,95,20], bumper:[[51,-20],[63,-12],[51,-7]],
+      bodyColor:'#F26DA0', bodyStroke:'#A63C67', cabinColor:'#FFF0D0', cabinStroke:'#A63C67', bumperColor:'#7ED6C1',
+    },
+    onewheeler: {
+      key:'onewheeler', name:'חד-גלגלי', cost:600, accel:0.47, maxVx:10.8, wheelR:24, halfWB:20, stability:0.68, fuelBurn:0.061, wheelCount:1,
+      body:[-20,-47,40,38], cabin:[-4,-74,17,29], bumper:[[20,-33],[25,-20],[20,-12]],
+      bodyColor:'#8E44AD', bodyStroke:'#5B2C6F', cabinColor:'#F5D8FF', cabinStroke:'#6C3483', bumperColor:'#D6A5EC',
+    },
+    quad_bike: {
+      key:'quad_bike', name:'טרקטורון', cost:700, accel:0.47, maxVx:10.8, wheelR:17, halfWB:26, stability:1.34, fuelBurn:0.061, shape:'buggy',
+      body:[-30,-37,60,30], cabin:[-5,-58,24,23], bumper:[[30,-26],[37,-16],[30,-9]],
+      bodyColor:'#FF6B35', bodyStroke:'#A83B14', cabinColor:'#FFE4C4', cabinStroke:'#7A2E0E', bumperColor:'#FFA733',
+    },
+    trophy_truck: {
+      key:'trophy_truck', name:'משאית טרופי', cost:800, accel:0.47, maxVx:12.25, wheelR:27, halfWB:47, stability:1.67, fuelBurn:0.041, shape:'buggy',
+      body:[-54,-49,108,38], cabin:[-10,-76,43,29], bumper:[[54,-35],[67,-22],[54,-14]],
+      bodyColor:'#FF9F1C', bodyStroke:'#B26A0A', cabinColor:'#FFF3D0', cabinStroke:'#7A4B12', bumperColor:'#E85D04',
+    },
+    tourist_bus: {
+      key:'tourist_bus', name:'אוטובוס תיירים', cost:800, accel:0.24, maxVx:8.22, wheelR:17, halfWB:60, stability:0.84, fuelBurn:0.047,
+      body:[-69,-39,138,32], cabin:[-63,-64,127,27], bumper:[[69,-27],[86,-17],[69,-10]],
       bodyColor:'#FFC93C', bodyStroke:'#B8860B', cabinColor:'#FFF6DC', cabinStroke:'#B8860B', bumperColor:'#E8A93C',
     },
-    turbo: {
-      key:'turbo', name:'טורבו הבזק', cost:700, accel:0.5, maxVx:13, wheelR:16, halfWB:38, stability:1.1,
-      body:[-44,-31,86,25], cabin:[-9,-49,32,19], bumper:[[44,-23],[55,-15],[44,-8]],
-      bodyColor:'#E63946', bodyStroke:'#8B1E27', cabinColor:'#DCEBFF', cabinStroke:'#33475B', bumperColor:'#B71C2B',
-    },
-    pickup: {
-      key:'pickup', name:'הטנדר השטחי', cost:1000, accel:0.4, maxVx:10, wheelR:18, halfWB:44, stability:1.2,
-      body:[-48,-34,94,28], cabin:[-16,-52,32,20], bumper:[[48,-24],[59,-15],[48,-8]],
-      bodyColor:'#556B2F', bodyStroke:'#33401B', cabinColor:'#D9E4C8', cabinStroke:'#33401B', bumperColor:'#3E4D22',
-    },
-    tank: {
-      key:'tank', name:'הטנק הכבד', cost:1500, accel:0.3, maxVx:9.5, wheelR:22, halfWB:50, stability:1.6,
-      body:[-54,-42,108,35], cabin:[-11,-64,46,26], bumper:[[54,-30],[66,-19],[54,-11]],
-      bodyColor:'#4B5320', bodyStroke:'#2E3313', cabinColor:'#B5C99A', cabinStroke:'#2E3313', bumperColor:'#33390F',
-    },
-    racer: {
-      key:'racer', name:'מכונית המרוץ', cost:3000, accel:0.58, maxVx:14, wheelR:14, halfWB:36, stability:0.9,
-      body:[-46,-26,90,20], cabin:[-8,-38,28,14], bumper:[[46,-19],[58,-13],[46,-8]],
+    race_car: {
+      key:'race_car', name:'מכונית מרוץ', cost:1000, accel:0.58, maxVx:15.4, wheelR:14, halfWB:41, stability:1.01, fuelBurn:0.045,
+      body:[-50,-26,100,20], cabin:[-10,-38,43,14], bumper:[[50,-18],[62,-12],[50,-8]],
       bodyColor:'#E10600', bodyStroke:'#7A0300', cabinColor:'#F2F2F2', cabinStroke:'#333333', bumperColor:'#F2F2F2',
     },
-    ultimate: {
-      key:'ultimate', name:'מלך ההרים', cost:10000, accel:0.5, maxVx:15, wheelR:18, halfWB:48, stability:1.5,
-      body:[-48,-36,94,30], cabin:[-10,-58,40,23], bumper:[[48,-27],[60,-17],[48,-10]],
-      bodyColor:'#151515', bodyStroke:'#000000', cabinColor:'#FFD24C', cabinStroke:'#8A6D00', bumperColor:'#FFD24C',
+    finger_screw: {
+      key:'finger_screw', name:'פינגר סקרו', cost:1200, accel:0.41, maxVx:9.45, wheelR:21, halfWB:42, stability:1.5, fuelBurn:0.039,
+      body:[-49,-45,97,37], cabin:[-10,-71,42,28], bumper:[[48,-31],[60,-19],[48,-11]],
+      bodyColor:'#F5A623', bodyStroke:'#A86A0C', cabinColor:'#3A3A40', cabinStroke:'#16161A', bumperColor:'#C9CDD3',
+    },
+    police_car: {
+      key:'police_car', name:'ניידת משטרה', cost:1400, accel:0.47, maxVx:12.25, wheelR:16, halfWB:35, stability:1.34, fuelBurn:0.046,
+      body:[-43,-28,86,22], cabin:[-9,-41,37,15], bumper:[[43,-20],[53,-13],[43,-8]],
+      bodyColor:'#1B4F9C', bodyStroke:'#0D2C5C', cabinColor:'#E8F1FF', cabinStroke:'#2C4A70', bumperColor:'#F2F2F2',
+    },
+    ambulance: {
+      key:'ambulance', name:'אמבולנס', cost:1600, accel:0.35, maxVx:9.45, wheelR:15, halfWB:45, stability:1.34, fuelBurn:0.042,
+      body:[-52,-33,103,27], cabin:[-47,-54,95,23], bumper:[[51,-23],[63,-14],[51,-8]],
+      bodyColor:'#F7F7F7', bodyStroke:'#B03030', cabinColor:'#DCEBFF', cabinStroke:'#8C9AA8', bumperColor:'#E03131',
+    },
+    electric_car: {
+      key:'electric_car', name:'מכונית חשמלית', cost:1800, accel:0.52, maxVx:10.8, wheelR:14, halfWB:39, stability:1.5, fuelBurn:0.038,
+      body:[-48,-26,96,20], cabin:[-10,-38,41,14], bumper:[[48,-18],[60,-12],[48,-8]],
+      bodyColor:'#00C48C', bodyStroke:'#00795A', cabinColor:'#DFFFF5', cabinStroke:'#00795A', bumperColor:'#B9F6E4',
+    },
+    super_diesel_4x4: {
+      key:'super_diesel_4x4', name:'סופר דיזל 4X4', cost:2000, accel:0.47, maxVx:12.25, wheelR:27, halfWB:47, stability:1.67, fuelBurn:0.041,
+      body:[-54,-49,108,38], cabin:[-11,-76,46,29], bumper:[[54,-35],[67,-22],[54,-14]],
+      bodyColor:'#3E4A59', bodyStroke:'#222A33', cabinColor:'#C3D3E0', cabinStroke:'#222A33', bumperColor:'#C0392B',
+    },
+    super_hill_climber: {
+      key:'super_hill_climber', name:'סופר מטפס הגבעות', cost:2200, accel:0.47, maxVx:12.25, wheelR:16, halfWB:35, stability:1.67, fuelBurn:0.046,
+      body:[-41,-34,81,28], cabin:[-8,-53,35,21], bumper:[[40,-23],[50,-14],[40,-8]],
+      bodyColor:'#FFB300', bodyStroke:'#B37300', cabinColor:'#FFF3C4', cabinStroke:'#8A5A00', bumperColor:'#D4AF37',
+    },
+    rally_car: {
+      key:'rally_car', name:'מכונית ראלי', cost:3000, accel:0.52, maxVx:13.79, wheelR:16, halfWB:38, stability:1.67, fuelBurn:0.049,
+      body:[-47,-28,93,22], cabin:[-9,-41,40,15], bumper:[[46,-20],[57,-13],[46,-8]],
+      bodyColor:'#1565C0', bodyStroke:'#0B3D74', cabinColor:'#E3F2FD', cabinStroke:'#0B3D74', bumperColor:'#FFEB3B',
+    },
+    car_car: {
+      key:'car_car', name:'מכונית מכונית', cost:3000, accel:0.35, maxVx:9.45, wheelR:14, halfWB:38, stability:1.17, fuelBurn:0.06,
+      body:[-44,-31,87,25], cabin:[-9,-48,37,19], bumper:[[43,-21],[53,-13],[43,-8]],
+      bodyColor:'#FF80AB', bodyStroke:'#B0134D', cabinColor:'#FFF0F5', cabinStroke:'#B0134D', bumperColor:'#FFD24C',
+    },
+    dragster: {
+      key:'dragster', name:'דראגסטר', cost:3200, accel:0.58, maxVx:15.4, wheelR:24, wheelRF:13, halfWB:60, stability:0.68, fuelBurn:0.039,
+      body:[-69,-48,138,38], cabin:[-14,-75,59,29], bumper:[[69,-34],[86,-21],[69,-13]],
+      bodyColor:'#9B1B30', bodyStroke:'#5A0D1C', cabinColor:'#2B2118', cabinStroke:'#120C07', bumperColor:'#C9A227',
+    },
+    fire_truck: {
+      key:'fire_truck', name:'כבאית', cost:3200, accel:0.41, maxVx:9.45, wheelR:24, halfWB:47, stability:1.5, fuelBurn:0.039,
+      body:[-54,-50,108,40], cabin:[-50,-82,99,34], bumper:[[54,-35],[67,-22],[54,-13]],
+      bodyColor:'#D32F2F', bodyStroke:'#7F1717', cabinColor:'#FFE0B2', cabinStroke:'#7F1717', bumperColor:'#F5F5F5',
+    },
+    dune_buggy: {
+      key:'dune_buggy', name:'באגי דיונות', cost:3200, accel:0.52, maxVx:12.25, wheelR:22, halfWB:35, stability:1.5, fuelBurn:0.043, shape:'buggy',
+      body:[-41,-47,81,38], cabin:[-7,-74,32,29], bumper:[[40,-33],[50,-20],[40,-12]],
+      bodyColor:'#FFA733', bodyStroke:'#B5651D', cabinColor:'#FFF3D0', cabinStroke:'#7A4B12', bumperColor:'#FF8C1A',
+    },
+    chopper: {
+      key:'chopper', name:'צ\'ופר', cost:4000, accel:0.41, maxVx:10.8, wheelR:14, halfWB:28, stability:1.01, fuelBurn:0.049, shape:'moto',
+      body:[-27,-31,53,25], cabin:[-5,-48,23,19], bumper:[[26,-21],[32,-13],[26,-8]],
+      bodyColor:'#1C1C22', bodyStroke:'#000000', cabinColor:'#4A3728', cabinStroke:'#241A11', bumperColor:'#D9D9D9',
+    },
+    lowrider: {
+      key:'lowrider', name:'לואוריידר', cost:4000, accel:0.41, maxVx:12.25, wheelR:15, halfWB:35, stability:1.17, fuelBurn:0.056,
+      body:[-43,-26,86,20], cabin:[-9,-38,37,14], bumper:[[43,-18],[53,-12],[43,-8]],
+      bodyColor:'#7D3C98', bodyStroke:'#4A1F5E', cabinColor:'#F0D9FF', cabinStroke:'#4A1F5E', bumperColor:'#D4AF37',
+    },
+    tank: {
+      key:'tank', name:'טנק', cost:4000, accel:0.41, maxVx:8.22, wheelR:16, halfWB:45, stability:1.83, fuelBurn:0.044, wheelStyle:'track',
+      body:[-52,-34,103,28], cabin:[-10,-53,44,21], bumper:[[51,-23],[63,-14],[51,-8]],
+      bodyColor:'#4B5320', bodyStroke:'#2E3313', cabinColor:'#7A8442', cabinStroke:'#2E3313', bumperColor:'#33390F',
+    },
+    snow_mobile: {
+      key:'snow_mobile', name:'אופנוע שלג', cost:4000, accel:0.47, maxVx:10.8, wheelR:13, halfWB:33, stability:1.34, fuelBurn:0.041, wheelStyle:'ski',
+      body:[-38,-28,76,23], cabin:[-8,-43,33,17], bumper:[[38,-19],[47,-12],[38,-7]],
+      bodyColor:'#00B8D9', bodyStroke:'#00707F', cabinColor:'#E6FBFF', cabinStroke:'#00707F', bumperColor:'#FFFFFF',
+    },
+    super_offroad: {
+      key:'super_offroad', name:'סופר אופ-רואד', cost:4000, accel:0.58, maxVx:13.79, wheelR:16, halfWB:45, stability:1.83, fuelBurn:0.039, wheelStyle:'track',
+      body:[-52,-34,103,28], cabin:[-10,-53,44,21], bumper:[[51,-23],[63,-14],[51,-8]],
+      bodyColor:'#E76F00', bodyStroke:'#8F4200', cabinColor:'#FFD9A8', cabinStroke:'#8F4200', bumperColor:'#3E4A59',
+    },
+    truck: {
+      key:'truck', name:'משאית', cost:4000, accel:0.41, maxVx:10.8, wheelR:25, halfWB:47, stability:1.5, fuelBurn:0.039,
+      body:[-54,-50,108,40], cabin:[-50,-82,99,34], bumper:[[54,-35],[67,-22],[54,-13]],
+      bodyColor:'#607D8B', bodyStroke:'#37474F', cabinColor:'#CFD8DC', cabinStroke:'#37474F', bumperColor:'#B0BEC5',
+    },
+    hovercraft: {
+      key:'hovercraft', name:'רחפת', cost:4000, accel:0.47, maxVx:15.4, wheelR:13, halfWB:38, stability:1.34, fuelBurn:0.053, wheelStyle:'hover',
+      body:[-44,-28,87,23], cabin:[-9,-43,37,17], bumper:[[43,-19],[53,-12],[43,-7]],
+      bodyColor:'#00A8E8', bodyStroke:'#00669B', cabinColor:'#D9F4FF', cabinStroke:'#00669B', bumperColor:'#FFFFFF',
+    },
+    minibike: {
+      key:'minibike', name:'מיני אופנוע', cost:4000, accel:0.58, maxVx:12.25, wheelR:15, halfWB:28, stability:0.84, fuelBurn:0.038, shape:'moto',
+      body:[-27,-32,53,26], cabin:[-5,-50,23,20], bumper:[[26,-22],[32,-14],[26,-8]],
+      bodyColor:'#FF4081', bodyStroke:'#A3134A', cabinColor:'#2B2118', cabinStroke:'#161109', bumperColor:'#FFD24C',
+    },
+    sleigh: {
+      key:'sleigh', name:'מזחלת', cost:4000, accel:0.41, maxVx:10.8, wheelR:13, halfWB:36, stability:1.34, fuelBurn:0.039, wheelStyle:'ski',
+      body:[-42,-28,83,23], cabin:[-8,-43,36,17], bumper:[[41,-19],[51,-12],[41,-7]],
+      bodyColor:'#C62828', bodyStroke:'#7A1414', cabinColor:'#2E7D32', cabinStroke:'#14461A', bumperColor:'#FFD54F',
+    },
+    big_finger: {
+      key:'big_finger', name:'ביג פינגר', cost:4800, accel:0.47, maxVx:10.8, wheelR:27, halfWB:50, stability:1.67, fuelBurn:0.038,
+      body:[-58,-49,115,38], cabin:[-12,-76,49,29], bumper:[[57,-35],[71,-22],[57,-14]],
+      bodyColor:'#43A047', bodyStroke:'#24632A', cabinColor:'#DCFFD9', cabinStroke:'#24632A', bumperColor:'#FFEB3B',
+    },
+    kiddie_express: {
+      key:'kiddie_express', name:'רכבת ילדים', cost:6000, accel:0.41, maxVx:10.8, wheelR:15, halfWB:60, stability:1.5, fuelBurn:0.039, wheelCount:3,
+      body:[-69,-32,138,26], cabin:[-63,-52,127,22], bumper:[[69,-22],[86,-14],[69,-8]],
+      bodyColor:'#C62828', bodyStroke:'#7A1414', cabinColor:'#FFE082', cabinStroke:'#7A1414', bumperColor:'#FFD54F',
+    },
+    moonlander: {
+      key:'moonlander', name:'רכב ירח', cost:6000, accel:0.58, maxVx:12.25, wheelR:16, halfWB:33, stability:1.67, fuelBurn:0.045, shape:'buggy',
+      body:[-38,-34,76,28], cabin:[-7,-53,30,21], bumper:[[38,-23],[47,-14],[38,-8]],
+      bodyColor:'#E0E4EA', bodyStroke:'#8C93A0', cabinColor:'#2B2E38', cabinStroke:'#12141A', bumperColor:'#FFC107',
+    },
+    hot_rod: {
+      key:'hot_rod', name:'הוט רוד', cost:6000, accel:0.58, maxVx:13.79, wheelR:15, halfWB:38, stability:1.17, fuelBurn:0.045,
+      body:[-47,-26,93,20], cabin:[-9,-38,40,14], bumper:[[46,-18],[57,-12],[46,-8]],
+      bodyColor:'#FF5722', bodyStroke:'#9C2A00', cabinColor:'#FFE0B2', cabinStroke:'#9C2A00', bumperColor:'#FFC107',
+    },
+    the_rocket: {
+      key:'the_rocket', name:'הרקטה', cost:6000, accel:0.58, maxVx:15.4, wheelR:13, halfWB:33, stability:0.84, fuelBurn:0.045,
+      body:[-41,-23,81,18], cabin:[-8,-33,35,12], bumper:[[40,-16],[50,-10],[40,-6]],
+      bodyColor:'#ECEFF1', bodyStroke:'#B71C1C', cabinColor:'#B3E5FC', cabinStroke:'#455A64', bumperColor:'#E53935',
+    },
+    mutant: {
+      key:'mutant', name:'מוטנט', cost:6000, accel:0.47, maxVx:12.25, wheelR:19, halfWB:38, stability:1.5, fuelBurn:0.053,
+      body:[-44,-41,87,33], cabin:[-9,-64,37,25], bumper:[[43,-28],[53,-18],[43,-11]],
+      bodyColor:'#7CB342', bodyStroke:'#3E6B14', cabinColor:'#C6FF00', cabinStroke:'#3E6B14', bumperColor:'#4E342E',
+    },
+    fast_car: {
+      key:'fast_car', name:'מכונית מהירה', cost:6000, accel:0.58, maxVx:15.4, wheelR:15, halfWB:39, stability:1.34, fuelBurn:0.045,
+      body:[-48,-26,96,20], cabin:[-10,-38,41,14], bumper:[[48,-18],[60,-12],[48,-8]],
+      bodyColor:'#00E5FF', bodyStroke:'#00798C', cabinColor:'#E0FBFF', cabinStroke:'#00798C', bumperColor:'#0D1B2A',
+    },
+    air_car: {
+      key:'air_car', name:'מכונית אוויר', cost:6000, accel:0.52, maxVx:13.79, wheelR:13, halfWB:38, stability:1.5, fuelBurn:0.043, wheelStyle:'hover',
+      body:[-44,-28,87,23], cabin:[-9,-43,37,17], bumper:[[43,-19],[53,-12],[43,-7]],
+      bodyColor:'#5C6BC0', bodyStroke:'#2E3A7A', cabinColor:'#E8EAF6', cabinStroke:'#2E3A7A', bumperColor:'#FFD24C',
+    },
+    ufo: {
+      key:'ufo', name:'עב״ם', cost:6000, accel:0.52, maxVx:13.79, wheelR:13, halfWB:30, stability:1.83, fuelBurn:0.043, wheelStyle:'hover',
+      body:[-35,-28,69,23], cabin:[-7,-43,30,17], bumper:[[34,-19],[42,-12],[34,-7]],
+      bodyColor:'#B0BEC5', bodyStroke:'#607D8B', cabinColor:'#76FF03', cabinStroke:'#33691E', bumperColor:'#E0E0E0',
+    },
+    luxury_car: {
+      key:'luxury_car', name:'מכונית יוקרה', cost:8000, accel:0.47, maxVx:13.79, wheelR:15, halfWB:44, stability:1.5, fuelBurn:0.053,
+      body:[-54,-26,108,20], cabin:[-11,-38,46,14], bumper:[[54,-18],[67,-12],[54,-8]],
+      bodyColor:'#101014', bodyStroke:'#000000', cabinColor:'#3C3C46', cabinStroke:'#000000', bumperColor:'#D4AF37',
+    },
+    fast_bike: {
+      key:'fast_bike', name:'אופנוע מהיר', cost:12000, accel:0.58, maxVx:15.4, wheelR:15, halfWB:28, stability:0.84, fuelBurn:0.045, shape:'moto',
+      body:[-27,-32,53,26], cabin:[-5,-50,23,20], bumper:[[26,-22],[32,-14],[26,-8]],
+      bodyColor:'#39FF14', bodyStroke:'#1B7A08', cabinColor:'#12140F', cabinStroke:'#000000', bumperColor:'#FFFFFF',
     },
   };
   const BANK_KEY = 'hillClimb_bank', OWNED_KEY = 'hillClimb_owned', SELECTED_KEY = 'hillClimb_selectedCar';
-  const TOTAL_COINS_KEY = 'hillClimb_totalCoinsEarned', WON_KEY = 'hillClimb_hasWon';
-  const WIN_GOAL = 2000;
   let bankCoins = 0;
   try{ bankCoins = parseInt(localStorage.getItem(BANK_KEY) || '0', 10) || 0; }catch(e){}
-  let totalCoinsEarned = 0;
-  try{ totalCoinsEarned = parseInt(localStorage.getItem(TOTAL_COINS_KEY) || '0', 10) || 0; }catch(e){}
-  let hasWon = false;
-  try{ hasWon = localStorage.getItem(WON_KEY) === '1'; }catch(e){}
-  let owned = ['base'];
+  const DEFAULT_CAR = 'hill_climber';
+  let owned = [DEFAULT_CAR];
   try{
-    const stored = JSON.parse(localStorage.getItem(OWNED_KEY) || '["base"]');
-    if(Array.isArray(stored)) owned = stored;
+    const stored = JSON.parse(localStorage.getItem(OWNED_KEY) || 'null');
+    // drop keys left over from an older car list
+    if(Array.isArray(stored)) owned = stored.filter(k => CARS[k]);
   }catch(e){}
-  if(!owned.includes('base')) owned.push('base');
-  let selectedCarKey = 'base';
-  try{ selectedCarKey = localStorage.getItem(SELECTED_KEY) || 'base'; }catch(e){}
-  if(!CARS[selectedCarKey]) selectedCarKey = 'base';
+  if(!owned.includes(DEFAULT_CAR)) owned.push(DEFAULT_CAR);
+  let selectedCarKey = DEFAULT_CAR;
+  try{ selectedCarKey = localStorage.getItem(SELECTED_KEY) || DEFAULT_CAR; }catch(e){}
+  if(!CARS[selectedCarKey]) selectedCarKey = DEFAULT_CAR;
   let vehicle = CARS[selectedCarKey];
 
   function saveBank(){ try{ localStorage.setItem(BANK_KEY, String(bankCoins)); }catch(e){} }
-  function saveTotalCoins(){ try{ localStorage.setItem(TOTAL_COINS_KEY, String(totalCoinsEarned)); }catch(e){} }
-  function saveWon(){ try{ localStorage.setItem(WON_KEY, '1'); }catch(e){} }
-  function addCoinsEarned(amount){
-    totalCoinsEarned += amount;
-    saveTotalCoins();
-    if(!hasWon && totalCoinsEarned >= WIN_GOAL){
-      hasWon = true;
-      saveWon();
-      return true;
-    }
-    return false;
-  }
   function saveOwned(){ try{ localStorage.setItem(OWNED_KEY, JSON.stringify(owned)); }catch(e){} }
   function saveSelected(){ try{ localStorage.setItem(SELECTED_KEY, selectedCarKey); }catch(e){} }
 
@@ -470,7 +617,7 @@
     return Math.round((30 + car.cost*0.08) * level);
   }
   function effectiveVehicle(carKey){
-    const base = CARS[carKey] || CARS.base;
+    const base = CARS[carKey] || CARS[DEFAULT_CAR];
     const u = getUpgrade(carKey);
     return Object.assign({}, base, {
       accel: base.accel + u.engine*0.025,
@@ -597,6 +744,24 @@
     shopBankLabel.textContent = bankCoins;
   }
 
+  // small drawing of a car, so 44 shop rows stay easy to tell apart
+  function carPreview(c){
+    const cv = document.createElement('canvas');
+    cv.className = 'cprev';
+    const size = 74, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = size*dpr; cv.height = size*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    // fit the widest part of the vehicle into the thumbnail
+    const reach = Math.max(c.halfWB + c.wheelR, Math.abs(c.body[0]), c.body[0] + c.body[2]) + 4;
+    const tall = c.wheelR + Math.abs(c.cabin[1]) + 6;
+    const scale = Math.min(size/(reach*2), size/tall);
+    g.translate(size/2, size/2 + (tall/2 - c.wheelR)*scale);
+    g.scale(scale, scale);
+    drawVehicleBody(g, c, 0.6);
+    return cv;
+  }
+
   function renderShop(){
     shopList.innerHTML = '';
     Object.values(CARS).forEach(c=>{
@@ -607,6 +772,7 @@
       card.className = 'shop-card';
       const topRow = document.createElement('div');
       topRow.className = 'top-row';
+      topRow.appendChild(carPreview(c));
       const info = document.createElement('div');
       info.className = 'info';
       const cname = document.createElement('div');
@@ -614,7 +780,8 @@
       cname.textContent = c.name;
       const cstats = document.createElement('div');
       cstats.className = 'cstats';
-      cstats.textContent = 'מהירות ' + Math.round(eff.maxVx*2) + ' קמ"ש | האצה ' + eff.accel.toFixed(2) + (eff.stability > 1 ? ' | יציב יותר 🛡️' : '');
+      cstats.textContent = '🚀 ' + Math.round(eff.maxVx*2) + ' קמ"ש | ⚡ ' + eff.accel.toFixed(2) +
+        ' | 🛡️ ' + Math.min(100, Math.round((eff.stability/1.83)*100)) + '% | ⛽ ' + Math.round(0.06/(c.fuelBurn||0.06)*100) + '%';
       info.appendChild(cname); info.appendChild(cstats);
       const btn = document.createElement('button');
       btn.className = 'cbtn';
@@ -804,7 +971,6 @@
   try{ highScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || '0', 10) || 0; }catch(e){}
   function refreshHighScoreLabels(){
     startHighScore.textContent = highScore > 0 ? ('🏆 השיא שלך: ' + highScore + ' מ\'') : '';
-    wonBadge.classList.toggle('hidden', !hasWon);
   }
   function checkAndSaveHighScore(dist){
     if(dist > highScore){
@@ -899,12 +1065,6 @@
     bankCoins += coinsCollected;
     saveBank();
     refreshBankLabels();
-    const justWon = addCoinsEarned(coinsCollected);
-    if(justWon){
-      gameOverTitle.textContent = '🏆 ניצחת את המשחק!';
-      finalStats.textContent = 'אספת ' + WIN_GOAL + ' מטבעות בסך הכול! ' + finalStats.textContent;
-      sfx.finish();
-    }
     gameOverScreen.classList.remove('hidden');
   }
 
@@ -918,16 +1078,6 @@
     bankCoins += coinsCollected;
     saveBank();
     refreshBankLabels();
-    const justWon = addCoinsEarned(coinsCollected);
-    if(justWon){
-      gameOverTitle.textContent = '🏆 ניצחת את המשחק!';
-      finalStats.textContent = 'אספת ' + WIN_GOAL + ' מטבעות בסך הכול!';
-      gameOverHighScore.textContent = '';
-      sfx.finish();
-      gameOverScreen.classList.remove('hidden');
-      draw();
-      return;
-    }
     gameOverScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
     draw();
@@ -949,7 +1099,7 @@
 
     const groundFront = terrainHeight(frontX);
     const groundRear = terrainHeight(rearX);
-    const restFrontY = groundFront - vehicle.wheelR;
+    const restFrontY = groundFront - (vehicle.wheelRF || vehicle.wheelR);
     const restRearY = groundRear - vehicle.wheelR;
 
     const groundedFront = frontY >= restFrontY - 3;
@@ -1023,7 +1173,7 @@
 
     // fuel drain - only while actually holding gas, never just from sitting idle
     if(fuel > 0 && gas){
-      fuel -= 0.06;
+      fuel -= (vehicle.fuelBurn || 0.06);
       if(fuel < 0) fuel = 0;
     }
 
@@ -1226,136 +1376,247 @@
     ctx.save();
     ctx.translate(car.x, car.y);
     ctx.rotate(car.angle);
-
-    // wheels
-    const wheelR = vehicle.wheelR;
-    for(const wx of [-vehicle.halfWB, vehicle.halfWB]){
-      ctx.save();
-      ctx.translate(wx, 0);
-      ctx.fillStyle = '#2B2130';
-      ctx.beginPath(); ctx.arc(0,0,wheelR,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#8A83A0';
-      ctx.beginPath(); ctx.arc(0,0,wheelR*0.47,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#2B2130';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-wheelR*0.7*Math.cos(wheelSpin), -wheelR*0.7*Math.sin(wheelSpin));
-      ctx.lineTo(wheelR*0.7*Math.cos(wheelSpin), wheelR*0.7*Math.sin(wheelSpin));
-      ctx.moveTo(-wheelR*0.7*Math.cos(wheelSpin+Math.PI/2), -wheelR*0.7*Math.sin(wheelSpin+Math.PI/2));
-      ctx.lineTo(wheelR*0.7*Math.cos(wheelSpin+Math.PI/2), wheelR*0.7*Math.sin(wheelSpin+Math.PI/2));
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if(vehicle.shape === 'moto'){
-      const hw = vehicle.halfWB;
-
-      // exhaust pipe
-      ctx.fillStyle = '#C9CDD3'; ctx.strokeStyle = '#6B6F76'; ctx.lineWidth = 1.5;
-      roundRectPath(-hw+4, -4, hw*0.9, 6, 3);
-      ctx.fill(); ctx.stroke();
-
-      // engine block
-      ctx.fillStyle = '#3A3A40'; ctx.strokeStyle = '#1C1C20'; ctx.lineWidth = 2;
-      roundRectPath(-13, -22, 24, 16, 5);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#585860';
-      ctx.beginPath(); ctx.arc(-6,-19,3.2,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(4,-19,3.2,0,Math.PI*2); ctx.fill();
-
-      // main frame
-      ctx.strokeStyle = vehicle.bodyStroke; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-hw+4, -8);
-      ctx.lineTo(-hw*0.55, -26);
-      ctx.lineTo(hw*0.55, -32);
-      ctx.lineTo(hw-4, -8);
-      ctx.stroke();
-
-      // front fork
-      ctx.strokeStyle = '#8A8E96'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(hw*0.55, -32);
-      ctx.lineTo(hw, -2);
-      ctx.stroke();
-
-      // handlebar
-      ctx.strokeStyle = '#3A3A40'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(hw*0.4, -38);
-      ctx.lineTo(hw*0.72, -42);
-      ctx.stroke();
-
-      // seat (drawn first so the tank overlaps it cleanly)
-      ctx.fillStyle = vehicle.cabinColor; ctx.strokeStyle = vehicle.cabinStroke; ctx.lineWidth = 2;
-      roundRectPath(-hw+2, -28, 18, 8, 3);
-      ctx.fill(); ctx.stroke();
-
-      // fuel tank
-      ctx.fillStyle = vehicle.bodyColor; ctx.strokeStyle = vehicle.bodyStroke; ctx.lineWidth = 2;
-      roundRectPath(-hw*0.5, -38, hw*0.85, 14, 6);
-      ctx.fill(); ctx.stroke();
-
-      // headlight
-      ctx.fillStyle = '#FFF6DC'; ctx.strokeStyle = vehicle.bumperColor; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(hw+2, -28, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    } else {
-      // chassis
-      ctx.fillStyle = vehicle.bodyColor;
-      ctx.strokeStyle = vehicle.bodyStroke;
-      ctx.lineWidth = 2;
-      roundRectPath(vehicle.body[0], vehicle.body[1], vehicle.body[2], vehicle.body[3], 8);
-      ctx.fill(); ctx.stroke();
-
-      // cabin
-      if(vehicle.shape === 'buggy'){
-        const [cx,cy,cw,ch] = vehicle.cabin;
-        ctx.strokeStyle = vehicle.cabinStroke;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy+ch);
-        ctx.lineTo(cx, cy);
-        ctx.lineTo(cx+cw, cy);
-        ctx.lineTo(cx+cw, cy+ch);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(cx, cy+ch*0.5);
-        ctx.lineTo(cx+cw, cy);
-        ctx.stroke();
-        ctx.fillStyle = vehicle.cabinColor;
-        ctx.fillRect(cx+cw*0.15, cy+ch*0.55, cw*0.7, ch*0.45);
-      } else {
-        ctx.fillStyle = vehicle.cabinColor;
-        ctx.strokeStyle = vehicle.cabinStroke;
-        roundRectPath(vehicle.cabin[0], vehicle.cabin[1], vehicle.cabin[2], vehicle.cabin[3], 6);
-        ctx.fill(); ctx.stroke();
-      }
-
-      // front bumper wedge
-      ctx.fillStyle = vehicle.bumperColor;
-      ctx.beginPath();
-      ctx.moveTo(vehicle.bumper[0][0], vehicle.bumper[0][1]);
-      ctx.lineTo(vehicle.bumper[1][0], vehicle.bumper[1][1]);
-      ctx.lineTo(vehicle.bumper[2][0], vehicle.bumper[2][1]);
-      ctx.closePath();
-      ctx.fill();
-    }
-
+    drawVehicleBody(ctx, vehicle, wheelSpin);
     ctx.restore();
 
     ctx.restore();
   }
 
-  function roundRectPath(x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath();
+// draws one vehicle at the current origin - used by the game and by the shop previews
+  function drawVehicleBody(g, v, spin){
+    // wheels / tracks / skis / hover pads / legs
+    const wheelR = v.wheelR;
+    const wheelRF = v.wheelRF || wheelR;
+    const style = v.wheelStyle || 'wheel';
+    const hwb = v.halfWB;
+    const wheelSpots = v.wheelCount === 1 ? [[0, wheelR]]
+      : v.wheelCount === 3 ? [[-hwb, wheelR], [0, wheelR], [hwb, wheelRF]]
+      : [[-hwb, wheelR], [hwb, wheelRF]];
+
+    if(style === 'track'){
+      drawTrack(g, -hwb, hwb, wheelR, spin);
+    } else if(style === 'hover'){
+      drawHoverPad(g, hwb, wheelR, spin);
+    } else {
+      for(const [wx, r] of wheelSpots){
+        g.save();
+        g.translate(wx, 0);
+        if(style === 'ski') drawSki(g, r);
+        else if(style === 'leg') drawLeg(g, r, wx, spin);
+        else drawWheel(g, r, spin);
+        g.restore();
+      }
+    }
+
+    if(v.shape === 'moto'){
+      const hw = v.halfWB;
+
+      // exhaust pipe
+      g.fillStyle = '#C9CDD3'; g.strokeStyle = '#6B6F76'; g.lineWidth = 1.5;
+      roundRectPath(g, -hw+4, -4, hw*0.9, 6, 3);
+      g.fill(); g.stroke();
+
+      // engine block
+      g.fillStyle = '#3A3A40'; g.strokeStyle = '#1C1C20'; g.lineWidth = 2;
+      roundRectPath(g, -13, -22, 24, 16, 5);
+      g.fill(); g.stroke();
+      g.fillStyle = '#585860';
+      g.beginPath(); g.arc(-6,-19,3.2,0,Math.PI*2); g.fill();
+      g.beginPath(); g.arc(4,-19,3.2,0,Math.PI*2); g.fill();
+
+      // main frame
+      g.strokeStyle = v.bodyStroke; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round';
+      g.beginPath();
+      g.moveTo(-hw+4, -8);
+      g.lineTo(-hw*0.55, -26);
+      g.lineTo(hw*0.55, -32);
+      g.lineTo(hw-4, -8);
+      g.stroke();
+
+      // front fork
+      g.strokeStyle = '#8A8E96'; g.lineWidth = 3.5; g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(hw*0.55, -32);
+      g.lineTo(hw, -2);
+      g.stroke();
+
+      // handlebar
+      g.strokeStyle = '#3A3A40'; g.lineWidth = 3; g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(hw*0.4, -38);
+      g.lineTo(hw*0.72, -42);
+      g.stroke();
+
+      // seat (drawn first so the tank overlaps it cleanly)
+      g.fillStyle = v.cabinColor; g.strokeStyle = v.cabinStroke; g.lineWidth = 2;
+      roundRectPath(g, -hw+2, -28, 18, 8, 3);
+      g.fill(); g.stroke();
+
+      // fuel tank
+      g.fillStyle = v.bodyColor; g.strokeStyle = v.bodyStroke; g.lineWidth = 2;
+      roundRectPath(g, -hw*0.5, -38, hw*0.85, 14, 6);
+      g.fill(); g.stroke();
+
+      // headlight
+      g.fillStyle = '#FFF6DC'; g.strokeStyle = v.bumperColor; g.lineWidth = 2.5;
+      g.beginPath(); g.arc(hw+2, -28, 6, 0, Math.PI*2); g.fill(); g.stroke();
+    } else {
+      // chassis
+      g.fillStyle = v.bodyColor;
+      g.strokeStyle = v.bodyStroke;
+      g.lineWidth = 2;
+      roundRectPath(g, v.body[0], v.body[1], v.body[2], v.body[3], 8);
+      g.fill(); g.stroke();
+
+      // cabin
+      if(v.shape === 'buggy'){
+        const [cx,cy,cw,ch] = v.cabin;
+        g.strokeStyle = v.cabinStroke;
+        g.lineWidth = 4;
+        g.lineCap = 'round';
+        g.lineJoin = 'round';
+        g.beginPath();
+        g.moveTo(cx, cy+ch);
+        g.lineTo(cx, cy);
+        g.lineTo(cx+cw, cy);
+        g.lineTo(cx+cw, cy+ch);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(cx, cy+ch*0.5);
+        g.lineTo(cx+cw, cy);
+        g.stroke();
+        g.fillStyle = v.cabinColor;
+        g.fillRect(cx+cw*0.15, cy+ch*0.55, cw*0.7, ch*0.45);
+      } else {
+        g.fillStyle = v.cabinColor;
+        g.strokeStyle = v.cabinStroke;
+        roundRectPath(g, v.cabin[0], v.cabin[1], v.cabin[2], v.cabin[3], 6);
+        g.fill(); g.stroke();
+      }
+
+      // front bumper wedge
+      g.fillStyle = v.bumperColor;
+      g.beginPath();
+      g.moveTo(v.bumper[0][0], v.bumper[0][1]);
+      g.lineTo(v.bumper[1][0], v.bumper[1][1]);
+      g.lineTo(v.bumper[2][0], v.bumper[2][1]);
+      g.closePath();
+      g.fill();
+    }
+  }
+
+  // ---- ways a vehicle can touch the ground ----
+  function drawWheel(g, r, spin){
+    g.fillStyle = '#2B2130';
+    g.beginPath(); g.arc(0,0,r,0,Math.PI*2); g.fill();
+    g.fillStyle = '#8A83A0';
+    g.beginPath(); g.arc(0,0,r*0.47,0,Math.PI*2); g.fill();
+    g.strokeStyle = '#2B2130';
+    g.lineWidth = 2.5;
+    g.beginPath();
+    g.moveTo(-r*0.7*Math.cos(spin), -r*0.7*Math.sin(spin));
+    g.lineTo(r*0.7*Math.cos(spin), r*0.7*Math.sin(spin));
+    g.moveTo(-r*0.7*Math.cos(spin+Math.PI/2), -r*0.7*Math.sin(spin+Math.PI/2));
+    g.lineTo(r*0.7*Math.cos(spin+Math.PI/2), r*0.7*Math.sin(spin+Math.PI/2));
+    g.stroke();
+  }
+
+  // tank / super off-road: one long rubber tread wrapped around the road wheels
+  function drawTrack(g, x1, x2, r, spin){
+    g.fillStyle = '#22212A';
+    g.strokeStyle = '#0E0D12';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(x1, -r);
+    g.lineTo(x2, -r);
+    g.arc(x2, 0, r, -Math.PI/2, Math.PI/2);
+    g.lineTo(x1, r);
+    g.arc(x1, 0, r, Math.PI/2, -Math.PI/2);
+    g.closePath();
+    g.fill(); g.stroke();
+
+    // tread cleats scrolling with the wheels
+    g.strokeStyle = '#4A4757';
+    g.lineWidth = 3;
+    const step = 14;
+    const shift = ((spin*r) % step + step) % step;
+    for(let x = x1 + shift; x < x2; x += step){
+      g.beginPath();
+      g.moveTo(x, r-1); g.lineTo(x, r-6);
+      g.moveTo(x, -r+1); g.lineTo(x, -r+6);
+      g.stroke();
+    }
+
+    // road wheels
+    g.fillStyle = '#6E6A7D';
+    for(const wx of [x1, (x1+x2)/2, x2]){
+      g.beginPath(); g.arc(wx, 0, r*0.42, 0, Math.PI*2); g.fill();
+    }
+  }
+
+  // snowmobile / sleigh: curled runners instead of wheels
+  function drawSki(g, r){
+    g.strokeStyle = '#B9C7D6';
+    g.lineWidth = 5;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(-r*1.5, r);
+    g.lineTo(r*0.9, r);
+    g.quadraticCurveTo(r*1.9, r, r*1.9, r-7);
+    g.stroke();
+    g.strokeStyle = '#6B7A88';
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(-r*0.6, r); g.lineTo(-r*0.6, 0);
+    g.moveTo(r*0.5, r); g.lineTo(r*0.5, 0);
+    g.stroke();
+  }
+
+  // carantula: jointed spider legs, stepping as the vehicle rolls
+  function drawLeg(g, r, wx, spin){
+    const phase = spin + (wx < 0 ? 0 : Math.PI);
+    const swing = Math.sin(phase) * 5;
+    g.strokeStyle = '#3E2A22';
+    g.lineWidth = 4;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    for(const side of [-1, 1]){
+      g.beginPath();
+      g.moveTo(0, -r*0.3);
+      g.lineTo(side*r*0.9, -r*0.9);
+      g.lineTo(side*r*0.7 + swing, r);
+      g.stroke();
+    }
+  }
+
+  // hovercraft / UFO / air car: an air cushion, no wheels at all
+  function drawHoverPad(g, hwb, r, spin){
+    g.save();
+    g.fillStyle = '#3A3F4A';
+    g.strokeStyle = '#1E222A';
+    g.lineWidth = 2;
+    roundRectPath(g, -hwb-6, -r*0.5, hwb*2+12, r, r*0.5);
+    g.fill(); g.stroke();
+
+    const puff = 0.6 + 0.4*Math.sin(spin*2);
+    const grad = g.createLinearGradient(0, r*0.5, 0, r*1.9);
+    grad.addColorStop(0, 'rgba(190,235,255,' + (0.55*puff) + ')');
+    grad.addColorStop(1, 'rgba(190,235,255,0)');
+    g.fillStyle = grad;
+    g.beginPath();
+    g.ellipse(0, r*0.9, hwb+10, r*1.1, 0, 0, Math.PI*2);
+    g.fill();
+    g.restore();
+  }
+
+  function roundRectPath(g, x,y,w,h,r){
+    g.beginPath();
+    g.moveTo(x+r,y);
+    g.arcTo(x+w,y,x+w,y+h,r);
+    g.arcTo(x+w,y+h,x,y+h,r);
+    g.arcTo(x,y+h,x,y,r);
+    g.arcTo(x,y,x+w,y,r);
+    g.closePath();
   }
 
   function loop(){
