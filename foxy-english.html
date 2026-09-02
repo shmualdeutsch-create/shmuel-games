@@ -230,12 +230,35 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 .alphabet{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:16px; }
 .alpha-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(64px,1fr)); gap:10px; direction:ltr; }
 .alpha-tile{
+  position:relative;
   display:flex; flex-direction:column; align-items:center; gap:6px;
   background: var(--card-bg); border-radius:16px; padding:12px 4px 10px;
   box-shadow: inset 0 0 0 2px var(--line);
   transition: box-shadow .15s ease, background .15s ease;
 }
 .alpha-tile.known{ box-shadow: inset 0 0 0 2px var(--good); background: color-mix(in srgb, var(--good) 14%, var(--card-bg)); }
+@keyframes vowelGlow{
+  0%,100%{ box-shadow: inset 0 0 0 2px #ff4fc3, 0 0 8px 2px rgba(255,79,195,.55); }
+  50%{ box-shadow: inset 0 0 0 3px #ff8ade, 0 0 18px 6px rgba(255,79,195,.9); }
+}
+.alpha-tile.vowel{
+  background: linear-gradient(160deg, color-mix(in srgb, #ff4fc3 20%, var(--card-bg)), var(--card-bg));
+  animation: vowelGlow 1.6s ease-in-out infinite;
+}
+.alpha-tile.vowel.known{
+  background: linear-gradient(160deg, color-mix(in srgb, #ff4fc3 20%, var(--card-bg)), color-mix(in srgb, var(--good) 14%, var(--card-bg)));
+}
+.alpha-vowel-badge{
+  position:absolute; top:-9px; inset-inline-end:-6px;
+  background:#ff2fb0; color:#fff; font-size:9px; font-weight:800;
+  padding:2px 6px; border-radius:99px; box-shadow:0 2px 4px rgba(0,0,0,.25);
+  white-space:nowrap; direction:rtl;
+}
+.alpha-vowel-note{
+  background: color-mix(in srgb, #ff4fc3 12%, var(--card-bg));
+  border: 2px dashed #ff4fc3; border-radius:14px; padding:10px 14px;
+  font-size:14px; line-height:1.5; text-align:center;
+}
 .alpha-letter-btn{
   font-family:inherit; font-weight:800; font-size:24px; border:none; background:transparent;
   color: var(--ink); cursor:pointer; width:100%; padding:2px 0;
@@ -1370,10 +1393,12 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
 
     wrap.appendChild(el("p","subtitle","לחצי על אות כדי לשמוע איך אומרים אותה, ולחצי על העיגול כדי לסמן שאת יודעת אותה!"));
 
+    var VOWELS = ["A","E","I","O","U"];
     var grid = el("div","alpha-grid");
     ALPHABET.forEach(function(L){
       var known = !!knownLetters[L];
-      var tile = el("div","alpha-tile" + (known ? " known" : ""));
+      var isVowel = VOWELS.indexOf(L) !== -1;
+      var tile = el("div","alpha-tile" + (known ? " known" : "") + (isVowel ? " vowel" : ""));
       var letterBtn = el("button","alpha-letter-btn", L);
       letterBtn.addEventListener("click", function(){ speakLetterSound(L); });
       var knownBtn = el("button","alpha-known-btn", known ? "✓" : "");
@@ -1382,11 +1407,15 @@ p.subtitle{ color: var(--ink-soft); font-size:16px; margin: 0 0 18px; }
         saveKnownLetters();
         render();
       });
+      if(isVowel){ tile.appendChild(el("div","alpha-vowel-badge","ניקוד")); }
       tile.appendChild(letterBtn);
       tile.appendChild(knownBtn);
       grid.appendChild(tile);
     });
     wrap.appendChild(grid);
+
+    wrap.appendChild(el("div","alpha-vowel-note",
+      "✨ האותיות הוורודות והנוצצות A E I O U נקראות \"אותיות ניקוד\" (Vowels) - הן האותיות שנותנות למילה את הצליל שלה, וכל מילה באנגלית חייבת לפחות אות ניקוד אחת!"));
 
     return wrap;
   }
