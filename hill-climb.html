@@ -612,16 +612,29 @@
   Object.keys(VEHICLE_IMG_SRC).forEach(key=>{
     const img = new Image();
     img.onload = function(){
-      // the photos have a plain white background - key it out to transparent
+      const w = img.naturalWidth, h = img.naturalHeight;
       const c = document.createElement('canvas');
-      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.width = w; c.height = h;
       const cx = c.getContext('2d');
       cx.drawImage(img, 0, 0);
-      const data = cx.getImageData(0, 0, c.width, c.height);
+      // the photos have a plain white background - key it out to transparent
+      const data = cx.getImageData(0, 0, w, h);
       const px = data.data;
       for(let i=0; i<px.length; i+=4){
         if(px[i] > 235 && px[i+1] > 235 && px[i+2] > 235) px[i+3] = 0;
       }
+      // the source photos were cropped from a shared sheet and each one kept a
+      // thin leftover grid line near an edge - a real vehicle silhouette never fills
+      // an entire row/column near the border, so strip any that does
+      const BAND = 10, SOLID_FRAC = 0.8;
+      const colOpaque = x => { let n=0; for(let y=0;y<h;y++) if(px[(y*w+x)*4+3] > 0) n++; return n/h; };
+      const rowOpaque = y => { let n=0; for(let x=0;x<w;x++) if(px[(y*w+x)*4+3] > 0) n++; return n/w; };
+      const clearCol = x => { for(let y=0;y<h;y++) px[(y*w+x)*4+3] = 0; };
+      const clearRow = y => { for(let x=0;x<w;x++) px[(y*w+x)*4+3] = 0; };
+      for(let x=0; x<BAND; x++) if(colOpaque(x) > SOLID_FRAC) clearCol(x);
+      for(let x=w-BAND; x<w; x++) if(colOpaque(x) > SOLID_FRAC) clearCol(x);
+      for(let y=0; y<BAND; y++) if(rowOpaque(y) > SOLID_FRAC) clearRow(y);
+      for(let y=h-BAND; y<h; y++) if(rowOpaque(y) > SOLID_FRAC) clearRow(y);
       cx.putImageData(data, 0, 0);
       vehicleImgReady[key] = c;
       if(shopList.children.length) renderShop();
