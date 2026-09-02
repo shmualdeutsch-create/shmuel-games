@@ -592,19 +592,21 @@
 
   // ---- real vehicle photos (for the shop preview only) ----
   // only vehicles with an accurate matching picture get one; the rest keep the drawn icon
+  // vehicles with a moving undercarriage (tracks/hover pad/skis) are skipped on purpose -
+  // a still photo can't show that movement, so they'd look stuck. those stay hand-drawn.
   const VEHICLE_IMG_SRC = {
     hill_climber:'assets/vehicles/hill_climber.png', ambulance:'assets/vehicles/ambulance.png',
     fire_truck:'assets/vehicles/fire_truck.png', monster_truck:'assets/vehicles/monster_truck.png',
     chopper:'assets/vehicles/chopper.png', tractor:'assets/vehicles/tractor.png',
-    hippie_van:'assets/vehicles/hippie_van.png', super_offroad:'assets/vehicles/super_offroad.png',
+    hippie_van:'assets/vehicles/hippie_van.png',
     race_car:'assets/vehicles/race_car.png', trophy_truck:'assets/vehicles/trophy_truck.png',
-    big_finger:'assets/vehicles/big_finger.png', hovercraft:'assets/vehicles/hovercraft.png',
+    big_finger:'assets/vehicles/big_finger.png',
     super_diesel_4x4:'assets/vehicles/super_diesel_4x4.png', lowrider:'assets/vehicles/lowrider.png',
     hot_rod:'assets/vehicles/hot_rod.png', luxury_car:'assets/vehicles/luxury_car.png',
-    tank:'assets/vehicles/tank.png', dune_buggy:'assets/vehicles/dune_buggy.png',
+    dune_buggy:'assets/vehicles/dune_buggy.png',
     fast_car:'assets/vehicles/fast_car.png', dragster:'assets/vehicles/dragster.png',
     electric_car:'assets/vehicles/electric_car.png', moonlander:'assets/vehicles/moonlander.png',
-    rally_car:'assets/vehicles/rally_car.png', snow_mobile:'assets/vehicles/snow_mobile.png',
+    rally_car:'assets/vehicles/rally_car.png',
   };
   const vehicleImgReady = {};
   Object.keys(VEHICLE_IMG_SRC).forEach(key=>{
