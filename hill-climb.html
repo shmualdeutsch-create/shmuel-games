@@ -191,6 +191,8 @@
     <canvas id="game" width="900" height="450"></canvas>
     <div class="hud">
       <span class="pill">⛽ <span class="fuel-wrap"><span id="fuelFill" class="fuel-fill"></span></span></span>
+      <span class="pill">🚀 <span id="speedEl">0</span> קמ"ש</span>
+      <span class="pill">📏 <span id="distEl">0</span> מ'</span>
       <span class="pill">🪙 <span id="coinsEl">0</span></span>
       <span class="pill">💰 <span id="moneyEl">0</span></span>
     </div>
@@ -267,6 +269,8 @@
   const W = canvas.width, H = canvas.height;
 
   const fuelFill = document.getElementById('fuelFill');
+  const speedEl = document.getElementById('speedEl');
+  const distEl = document.getElementById('distEl');
   const coinsEl = document.getElementById('coinsEl');
   const moneyEl = document.getElementById('moneyEl');
   const rpmNeedle = document.getElementById('rpmNeedle');
@@ -584,6 +588,7 @@
       bodyColor:'#39FF14', bodyStroke:'#1B7A08', cabinColor:'#12140F', cabinStroke:'#000000', bumperColor:'#FFFFFF',
     },
   };
+  Object.values(CARS).forEach(c=>{ c.fuelBurn = (c.fuelBurn || 0.06) * 3; });
 
   // ---- real vehicle photos (for the shop preview only) ----
   // only vehicles with an accurate matching picture get one; the rest keep the drawn icon
@@ -1178,6 +1183,8 @@
 
     updateEngineSound(gas, clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1));
     updateGauges(gas, brake, clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1));
+    speedEl.textContent = Math.round(Math.abs(car.vx) * 2);
+    distEl.textContent = Math.min(FINISH_METERS, Math.max(0, Math.floor(car.x / PX_PER_METER)));
 
     if(!grounded && wasGrounded){
       const speedRatio = clamp(Math.abs(car.vx) / vehicle.maxVx, 0, 1);
@@ -1432,6 +1439,15 @@
 
 // draws one vehicle at the current origin - used by the game and by the shop previews
   function drawVehicleBody(g, v, spin){
+    const photo = vehicleImgReady[v.key];
+    if(photo){
+      const reach = Math.max(v.halfWB + v.wheelR, Math.abs(v.body[0]), v.body[0] + v.body[2]) + 4;
+      const scale = (reach*2) / photo.width;
+      const w = photo.width*scale, h = photo.height*scale;
+      const groundY = v.wheelR*2;
+      g.drawImage(photo, -w/2, groundY - h, w, h);
+      return;
+    }
     // wheels / tracks / skis / hover pads / legs
     const wheelR = v.wheelR;
     const wheelRF = v.wheelRF || wheelR;
