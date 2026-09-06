@@ -17,6 +17,7 @@
     --c-english: #FF6FA0;
     --c-jump: #FF9F45;
     --c-hill: #3FBF7F;
+    --c-movie: #9B5DE5;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -41,6 +42,7 @@
   @keyframes bob{ 0%,100%{ transform: translateY(0) rotate(-2deg);} 50%{ transform: translateY(-8px) rotate(2deg);} }
   h1{ font-size: clamp(28px,6vw,40px); font-weight:800; margin: 10px 0 4px; text-align:center; }
   p.subtitle{ color: var(--ink-soft); font-size:17px; margin: 0 0 34px; text-align:center; }
+  h2.section-title{ width:100%; max-width:640px; font-size:15px; font-weight:800; color: var(--ink-soft); text-align:center; margin: 46px 0 18px; letter-spacing:.02em; }
   .cards{ width:100%; max-width:640px; display:grid; gap:20px; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
   a.game-card{
     --c: var(--c-trivia);
@@ -88,6 +90,15 @@
       <div class="g-emoji">🚙</div>
       <div class="g-title">טיפוס גבעות</div>
       <div class="g-desc">משחק נהיגה על גבעות</div>
+    </a>
+  </div>
+
+  <h2 class="section-title">🛠️ התוכנות של שמואל</h2>
+  <div class="cards">
+    <a class="game-card" href="movie-studio.html" style="--c: var(--c-movie);">
+      <div class="g-emoji">🎬</div>
+      <div class="g-title">אולפן הסרטים</div>
+      <div class="g-desc">יוצרים סרטונים, אנימציה ועריכת וידאו</div>
     </a>
   </div>
 
