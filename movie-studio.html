@@ -1242,11 +1242,19 @@ function makeRecorder(canvas,includeAudio){
         clip.duration=clamp(origDur+dt,0.2,maxDur);
         if(isVideo||isAudio)clip.trimOut=clip.trimIn+clip.duration;
       }
-      renderAllTracks();
+      el.style.left=(clip.start*pxPerSec)+'px';
+      el.style.width=Math.max(6,clip.duration*pxPerSec)+'px';
+      updateStatus();
     });
     el.addEventListener('pointerup',function(){
-      if(mode&&!moved)selectClip(type,clip.id);
+      var wasMode=mode, wasMoved=moved;
       mode=null;
+      if(wasMode&&!wasMoved){
+        selectClip(type,clip.id);
+      }else if(wasMode){
+        renderAllTracks();
+        if(selection&&selection.type===type&&selection.id===clip.id)renderInspector();
+      }
     });
   }
 
