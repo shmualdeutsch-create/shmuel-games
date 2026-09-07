@@ -109,7 +109,7 @@
   .tab .ic{font-size:16px;}
 
   .workspace{display:none;}
-  .workspace.active{display:grid;grid-template-columns:1.1fr 1.4fr;gap:18px;align-items:start;}
+  .workspace.active{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr);gap:18px;align-items:start;}
   @media (max-width:860px){
     .workspace.active{grid-template-columns:1fr;}
     .tabs{margin-inline-start:0;}
@@ -240,6 +240,37 @@
 
   .inspector{margin-top:10px;}
   .inspector.hidden{display:none;}
+
+  .tl-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .tl-zoom{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);margin-inline-start:auto;}
+  .tl-zoom input[type="range"]{width:100px;}
+  .tl-body{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .tl-labels{display:flex;flex-direction:column;flex-shrink:0;width:84px;background:var(--surface-2);}
+  .tl-label-spacer{height:24px;border-bottom:1px solid var(--border);}
+  .tl-track-label{height:52px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:700;color:var(--text-muted);border-bottom:1px solid var(--border);padding:0 4px;line-height:1.3;}
+  .tl-track-label:last-child{border-bottom:none;}
+  .tl-scroll{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;background:var(--surface-2);}
+  .tl-inner{position:relative;height:180px;}
+  .tl-ruler{height:24px;position:relative;border-bottom:1px solid var(--border);}
+  .tl-ruler .tick{position:absolute;top:0;bottom:0;border-inline-start:1px solid var(--border);}
+  .tl-ruler .tick span{position:absolute;top:3px;left:4px;font-size:10px;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .tl-track{height:52px;border-bottom:1px solid var(--border);}
+  .tl-track:last-child{border-bottom:none;}
+  .tl-track-lane{position:relative;height:100%;}
+  .tl-clip{position:absolute;top:5px;bottom:5px;border-radius:8px;cursor:grab;border:2px solid transparent;display:flex;align-items:center;padding:0 10px;font-size:11.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:none;}
+  .tl-clip:active{cursor:grabbing;}
+  .tl-clip.selected{border-color:#fff;box-shadow:0 0 0 2px var(--accent);}
+  .tl-clip .handle{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;}
+  .tl-clip .handle.left{left:-2px;}
+  .tl-clip .handle.right{right:-2px;}
+  .tl-clip.video-clip{background:linear-gradient(135deg,#3f7fd6,#2c5aa0);}
+  .tl-clip.image-clip{background:linear-gradient(135deg,#3fbf7f,#2a9160);}
+  .tl-clip.text-clip{background:linear-gradient(135deg,#ff9f45,#d97a1f);}
+  .tl-clip.audio-clip{background:linear-gradient(135deg,#9b5de5,#6f34b8);}
+  .tl-playhead-line{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);z-index:5;pointer-events:none;}
+  .tl-playhead-line::before{content:'';position:absolute;top:0;right:-4px;width:10px;height:10px;background:var(--danger);border-radius:2px;}
+  .tl-pool-add{flex-shrink:0;}
+  select.tl-select{background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:14px;width:100%;}
 
   @media (prefers-reduced-motion:reduce){
     .badge-rec .dot{animation:none;}
@@ -374,7 +405,7 @@
       <div class="panel-controls">
         <div class="panel">
           <h2>📂 קבצים</h2>
-          <p class="hint">העלה תמונות או קטעי וידאו, ואז גרור אותם לציר הזמן למטה.</p>
+          <p class="hint">העלה תמונות או קטעי וידאו. לחץ ➕ כדי להוסיף לציר הזמן, או גרור בעצמך למקום מדויק.</p>
           <button class="btn primary block filebtn">
             ➕ הוסף קבצים
             <input type="file" id="tlAddMedia" accept="image/*,video/*" multiple>
@@ -386,23 +417,7 @@
 
         <div class="panel inspector hidden" id="tlInspector">
           <h2>⚙️ הגדרות לקטע הנבחר</h2>
-          <div class="field">
-            <label>כיתוב על הקטע</label>
-            <input type="text" id="tlClipCaption" placeholder="לדוגמה: החתול שלי 🐱">
-          </div>
-          <div class="field" id="tlDurationField">
-            <label>משך (שניות): <span id="tlDurationVal">3</span></label>
-            <input type="range" id="tlDurationRange" min="0.5" max="15" step="0.5" value="3">
-          </div>
-          <div class="field" id="tlTrimField" style="display:none;">
-            <label>חיתוך וידאו (שניות מתוך <span id="tlClipFullLen">0</span>)</label>
-            <div class="row">
-              <input type="number" id="tlTrimIn" min="0" step="0.1" style="width:80px;">
-              <span>עד</span>
-              <input type="number" id="tlTrimOut" min="0" step="0.1" style="width:80px;">
-            </div>
-          </div>
-          <button class="btn danger block" id="tlRemoveClipBtn">🗑️ הסר קטע מהטיימליין</button>
+          <div id="tlInspectorBody"></div>
         </div>
       </div>
 
@@ -419,10 +434,34 @@
         </div>
 
         <div class="panel" style="margin-top:14px;">
-          <h2>🎞️ ציר הזמן</h2>
-          <p class="hint">גרור קבצים מהרשימה לכאן, וסדר אותם בגרירה.</p>
-          <div class="dropzone" id="tlDropzone">גרור לכאן קבצים מהרשימה משמאל</div>
-          <div class="list" id="tlTimelineList" style="margin-top:10px;"></div>
+          <div class="tl-toolbar">
+            <button class="btn" id="tlAddCaptionBtn">➕ הוסף כיתוב</button>
+            <button class="btn filebtn">
+              🎵 הוסף מוזיקה
+              <input type="file" id="tlAddMusic" accept="audio/*">
+            </button>
+            <button class="btn" id="tlSplitBtn" disabled>✂️ חתוך כאן</button>
+            <button class="btn danger" id="tlDeleteClipBtn" disabled>🗑️ מחק קטע</button>
+            <div class="tl-zoom">🔍 <input type="range" id="tlZoom" min="20" max="200" value="70"></div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-labels">
+              <div class="tl-label-spacer"></div>
+              <div class="tl-track-label">🎬<br>וידאו</div>
+              <div class="tl-track-label">💬<br>כתוביות</div>
+              <div class="tl-track-label">🎵<br>מוזיקה</div>
+            </div>
+            <div class="tl-scroll" id="tlScroll" dir="ltr">
+              <div class="tl-inner" id="tlInner">
+                <div class="tl-ruler" id="tlRuler"></div>
+                <div class="tl-track"><div class="tl-track-lane" id="tlLaneVideo"></div></div>
+                <div class="tl-track"><div class="tl-track-lane" id="tlLaneText"></div></div>
+                <div class="tl-track"><div class="tl-track-lane" id="tlLaneAudio"></div></div>
+                <div class="tl-playhead-line" id="tlPlayheadLine"></div>
+              </div>
+            </div>
+          </div>
+          <p class="hint" style="margin-top:8px;">גרור קטע כדי להזיז אותו, משוך מהקצה כדי לשנות אורך, ולחץ עליו לבחור. הזז את הראש האדום למקום הרצוי ולחץ "חתוך כאן" כדי לפצל קטע לשניים.</p>
         </div>
 
         <div class="panel" style="margin-top:14px;">
@@ -488,7 +527,7 @@ function drawCover(ctx,img,x,y,w,h){
   else{sw=iw;sh=iw/tr;sx=0;sy=(ih-sh)/2;}
   ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
 }
-function drawCaption(ctx,text,W,H){
+function drawCaption(ctx,text,W,H,position){
   if(!text)return;
   ctx.save();
   ctx.font='700 30px Rubik, Assistant, sans-serif';
@@ -497,13 +536,14 @@ function drawCaption(ctx,text,W,H){
   var lines=wrapText(ctx,text,maxW);
   var lh=40, padY=18;
   var boxH=lines.length*lh+padY*2;
+  var boxY = position==='top' ? 0 : (position==='center' ? (H-boxH)/2 : H-boxH);
   ctx.fillStyle='rgba(10,8,5,0.55)';
-  ctx.fillRect(0,H-boxH,W,boxH);
+  ctx.fillRect(0,boxY,W,boxH);
   ctx.fillStyle='#ffffff';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   lines.forEach(function(line,i){
-    ctx.fillText(line,W/2,H-boxH+padY+lh*i+lh/2);
+    ctx.fillText(line,W/2,boxY+padY+lh*i+lh/2);
   });
   ctx.restore();
 }
@@ -961,21 +1001,32 @@ function makeRecorder(canvas,includeAudio){
 })();
 
 /* ===================================================================
-   MODE 3: TIMELINE EDITOR
+   MODE 3: TIMELINE EDITOR (multi-track)
    =================================================================== */
 (function(){
-  var pool=[]; // {id,type,name,url,el(img/video),duration,thumb}
-  var clips=[]; // {id,mediaId,duration,trimIn,trimOut,caption}
+  var pool=[]; // visual media: {id,type('image'|'video'),name,url,el,duration,thumb}
+  var audioPool=[]; // {id,name,url,el,duration}
+  var videoClips=[]; // {id,mediaId,start,duration,trimIn,trimOut(video only)}
+  var textClips=[]; // {id,start,duration,text,position}
+  var audioClips=[]; // {id,mediaId,start,duration,trimIn,trimOut,volume}
+
   var poolEl=$('#tlPool'), poolEmpty=$('#tlPoolEmpty');
-  var tlListEl=$('#tlTimelineList'), dropzone=$('#tlDropzone');
   var canvas=$('#tlCanvas'), ctx=canvas.getContext('2d');
   var statusEl=$('#tlStatus'), timeEl=$('#tlTime'), playBtn=$('#tlPlayBtn'), recBadge=$('#tlRecBadge');
-  var inspector=$('#tlInspector');
-  var selectedClipId=null;
+  var inspector=$('#tlInspector'), inspectorBody=$('#tlInspectorBody');
+  var laneVideo=$('#tlLaneVideo'), laneText=$('#tlLaneText'), laneAudio=$('#tlLaneAudio');
+  var tlScroll=$('#tlScroll'), tlInner=$('#tlInner'), tlRuler=$('#tlRuler'), tlPlayheadLine=$('#tlPlayheadLine');
+  var splitBtn=$('#tlSplitBtn'), deleteBtn=$('#tlDeleteClipBtn');
+
+  var pxPerSec=70;
+  var selection=null; // {type:'video'|'text'|'audio', id}
 
   function mediaById(id){return pool.find(function(m){return m.id===id;});}
-  function clipById(id){return clips.find(function(c){return c.id===id;});}
+  function audioById(id){return audioPool.find(function(m){return m.id===id;});}
+  function arrOf(type){return type==='video'?videoClips:(type==='text'?textClips:audioClips);}
+  function clipOf(type,id){return arrOf(type).find(function(c){return c.id===id;});}
 
+  /* ---------- media pool ---------- */
   $('#tlAddMedia').addEventListener('change',function(e){
     var files=Array.from(e.target.files||[]);
     files.forEach(addMediaFile);
@@ -1011,6 +1062,19 @@ function makeRecorder(canvas,includeAudio){
     }
   }
 
+  function addClipToVideoTrack(m,desiredStart){
+    var duration=m.type==='image'?3:Math.min(5,m.duration);
+    var end=videoClips.reduce(function(s,c){return Math.max(s,c.start+c.duration);},0);
+    var start=desiredStart==null?end:desiredStart;
+    var overlaps=videoClips.some(function(c){return start<c.start+c.duration && start+duration>c.start;});
+    if(overlaps)start=end;
+    videoClips.push({
+      id:uid(), mediaId:m.id, start:start, duration:duration,
+      trimIn:0, trimOut:m.type==='video'?duration:undefined
+    });
+    renderAllTracks();
+  }
+
   function renderPool(){
     poolEmpty.style.display=pool.length?'none':'block';
     poolEl.innerHTML='';
@@ -1023,136 +1087,395 @@ function makeRecorder(canvas,includeAudio){
         '<span class="grip">⠿</span>'+
         '<img class="thumb" src="'+(m.thumb||'')+'">'+
         '<div class="meta"><div class="name">'+(m.type==='video'?'🎥 ':'🖼️ ')+m.name+'</div>'+
-        '<div class="cap">'+m.duration.toFixed(1)+' שניות</div></div>';
+        '<div class="cap">'+m.duration.toFixed(1)+' שניות</div></div>'+
+        '<div class="acts"><button class="btn icon primary tl-pool-add" title="הוסף לציר הזמן">➕</button></div>';
       el.addEventListener('dragstart',function(e){
         e.dataTransfer.setData('text/plain',m.id);
       });
+      el.querySelector('.tl-pool-add').addEventListener('click',function(){addClipToVideoTrack(m,null);});
       poolEl.appendChild(el);
     });
   }
 
-  dropzone.addEventListener('dragover',function(e){e.preventDefault();dropzone.classList.add('over');});
-  dropzone.addEventListener('dragleave',function(){dropzone.classList.remove('over');});
-  dropzone.addEventListener('drop',function(e){
-    e.preventDefault(); dropzone.classList.remove('over');
+  laneVideo.addEventListener('dragover',function(e){e.preventDefault();});
+  laneVideo.addEventListener('drop',function(e){
+    e.preventDefault();
     var mediaId=e.dataTransfer.getData('text/plain');
     var m=mediaById(mediaId);
     if(!m)return;
-    clips.push({
-      id:uid(), mediaId:m.id,
-      duration:m.type==='image'?3:Math.min(5,m.duration),
-      trimIn:0, trimOut:m.type==='video'?Math.min(5,m.duration):null,
-      caption:''
-    });
-    renderTimeline();
+    var rect=laneVideo.getBoundingClientRect();
+    var start=Math.max(0,(e.clientX-rect.left)/pxPerSec);
+    addClipToVideoTrack(m,start);
   });
 
-  function renderTimeline(){
-    tlListEl.innerHTML='';
-    clips.forEach(function(c,idx){
-      var m=mediaById(c.mediaId);
-      if(!m)return;
-      var len=m.type==='video'?(c.trimOut-c.trimIn):c.duration;
-      var el=document.createElement('div');
-      el.className='card-item'+(c.id===selectedClipId?' selected':'');
-      el.draggable=true;
-      el.innerHTML=
-        '<span class="grip">⠿</span>'+
-        '<img class="thumb" src="'+(m.thumb||'')+'">'+
-        '<div class="meta"><div class="name">'+(idx+1)+'. '+m.name+'</div>'+
-        '<div class="cap">'+(c.caption||'ללא כיתוב')+'</div></div>'+
-        '<span class="pill">'+len.toFixed(1)+'&nbsp;ש\'</span>';
-      el.addEventListener('click',function(){selectClip(c.id);});
-      tlListEl.appendChild(el);
+  /* ---------- music ---------- */
+  $('#tlAddMusic').addEventListener('change',function(e){
+    var file=e.target.files[0];
+    if(!file)return;
+    var url=URL.createObjectURL(file);
+    var a=new Audio(); a.src=url; a.crossOrigin='anonymous';
+    a.addEventListener('loadedmetadata',function(){
+      var item={id:uid(),name:file.name,url:url,el:a,duration:a.duration||10};
+      audioPool.push(item);
+      routeElement(a);
+      var end=audioClips.reduce(function(s,c){return Math.max(s,c.start+c.duration);},0);
+      var dur=Math.min(10,item.duration);
+      audioClips.push({id:uid(),mediaId:item.id,start:end,duration:dur,trimIn:0,trimOut:dur,volume:1});
+      renderAllTracks();
     });
-    enableReorder(tlListEl,clips,renderTimeline);
+    e.target.value='';
+  });
+
+  /* ---------- caption ---------- */
+  $('#tlAddCaptionBtn').addEventListener('click',function(){
+    var start=Math.min(playhead,Math.max(0,totalDuration()));
+    var overlaps=textClips.some(function(c){return start<c.start+c.duration && start+3>c.start;});
+    if(overlaps)start=textClips.reduce(function(s,c){return Math.max(s,c.start+c.duration);},0);
+    var clip={id:uid(),start:start,duration:3,text:'כתוב כאן משהו',position:'bottom'};
+    textClips.push(clip);
+    renderAllTracks();
+    selectClip('text',clip.id);
+  });
+
+  /* ---------- ruler & zoom ---------- */
+  $('#tlZoom').addEventListener('input',function(e){
+    pxPerSec=Number(e.target.value);
+    renderAllTracks();
+  });
+
+  function timelineViewSeconds(){return Math.max(30,totalDuration()+6);}
+
+  function renderRuler(){
+    var totalPx=timelineViewSeconds()*pxPerSec;
+    tlInner.style.width=totalPx+'px';
+    tlRuler.style.width=totalPx+'px';
+    tlRuler.innerHTML='';
+    var labelStep=pxPerSec>=90?1:(pxPerSec>=45?2:5);
+    var n=Math.ceil(timelineViewSeconds());
+    for(var i=0;i<=n;i++){
+      var tick=document.createElement('div');
+      tick.className='tick';
+      tick.style.left=(i*pxPerSec)+'px';
+      if(i%labelStep===0){
+        tick.innerHTML='<span>'+fmtTime(i)+'</span>';
+      }
+      tlRuler.appendChild(tick);
+    }
+  }
+
+  function scrubTo(clientX){
+    var rect=tlInner.getBoundingClientRect();
+    var t=clamp((clientX-rect.left)/pxPerSec,0,timelineViewSeconds());
+    playhead=t;
+    updatePlayheadLine();
+    renderPreviewAt(playhead,true);
     updateStatus();
   }
+  tlRuler.addEventListener('pointerdown',function(e){
+    if(playing)stopPlayback();
+    scrubTo(e.clientX);
+    function onMove(ev){scrubTo(ev.clientX);}
+    function onUp(){document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp);}
+    document.addEventListener('pointermove',onMove);
+    document.addEventListener('pointerup',onUp);
+  });
 
-  function selectClip(id){
-    selectedClipId=id;
-    var c=clipById(id), m=c&&mediaById(c.mediaId);
-    if(!c||!m){inspector.classList.add('hidden');renderTimeline();return;}
-    inspector.classList.remove('hidden');
-    $('#tlClipCaption').value=c.caption||'';
-    if(m.type==='image'){
-      $('#tlDurationField').style.display='flex';
-      $('#tlTrimField').style.display='none';
-      $('#tlDurationRange').value=c.duration;
-      $('#tlDurationVal').textContent=c.duration;
-    }else{
-      $('#tlDurationField').style.display='none';
-      $('#tlTrimField').style.display='block';
-      $('#tlClipFullLen').textContent=m.duration.toFixed(1);
-      $('#tlTrimIn').value=c.trimIn.toFixed(1);
-      $('#tlTrimOut').value=c.trimOut.toFixed(1);
-      $('#tlTrimIn').max=m.duration;
-      $('#tlTrimOut').max=m.duration;
+  function updatePlayheadLine(){
+    tlPlayheadLine.style.left=(playhead*pxPerSec)+'px';
+  }
+
+  /* ---------- clip rendering + drag/resize ---------- */
+  function labelFor(type,clip){
+    if(type==='video'){var m=mediaById(clip.mediaId); return m?((m.type==='video'?'🎥 ':'🖼️ ')+m.name):'?';}
+    if(type==='text')return '💬 '+clip.text;
+    var am=audioById(clip.mediaId); return '🎵 '+(am?am.name:'?');
+  }
+  function classFor(type,clip){
+    if(type==='video'){var m=mediaById(clip.mediaId); return m&&m.type==='video'?'video-clip':'image-clip';}
+    if(type==='text')return 'text-clip';
+    return 'audio-clip';
+  }
+
+  function calcBounds(arr,clip){
+    var prevEnd=0, nextStart=Infinity;
+    arr.forEach(function(o){
+      if(o===clip)return;
+      if(o.start<clip.start)prevEnd=Math.max(prevEnd,o.start+o.duration);
+      else nextStart=Math.min(nextStart,o.start);
+    });
+    return {prevEnd:prevEnd,nextStart:nextStart};
+  }
+
+  function attachClipInteractions(el,type,clip){
+    var mode=null,startX=0,origStart=0,origDur=0,origTrimIn=0,bounds=null,moved=false;
+    function begin(e,m){
+      mode=m; startX=e.clientX; origStart=clip.start; origDur=clip.duration;
+      origTrimIn=clip.trimIn||0; bounds=calcBounds(arrOf(type),clip); moved=false;
+      try{el.setPointerCapture(e.pointerId);}catch(err){}
+      e.stopPropagation();
     }
-    renderTimeline();
+    var leftH=el.querySelector('.handle.left'), rightH=el.querySelector('.handle.right');
+    if(leftH)leftH.addEventListener('pointerdown',function(e){begin(e,'left');});
+    if(rightH)rightH.addEventListener('pointerdown',function(e){begin(e,'right');});
+    el.addEventListener('pointerdown',function(e){
+      if(e.target===leftH||e.target===rightH)return;
+      begin(e,'move');
+    });
+    el.addEventListener('pointermove',function(e){
+      if(!mode)return;
+      var dx=e.clientX-startX; var dt=dx/pxPerSec;
+      if(Math.abs(dx)>3)moved=true;
+      var m=type==='video'?mediaById(clip.mediaId):(type==='audio'?audioById(clip.mediaId):null);
+      var isVideo=type==='video'&&m&&m.type==='video';
+      var isAudio=type==='audio';
+      if(mode==='move'){
+        var maxStart=bounds.nextStart===Infinity?9999:bounds.nextStart-origDur;
+        clip.start=clamp(origStart+dt,bounds.prevEnd,Math.max(bounds.prevEnd,maxStart));
+      }else if(mode==='left'){
+        var newStart=clamp(origStart+dt,bounds.prevEnd,origStart+origDur-0.2);
+        var deltaApplied=newStart-origStart;
+        clip.start=newStart; clip.duration=origDur-deltaApplied;
+        if(isVideo||isAudio)clip.trimIn=Math.max(0,origTrimIn+deltaApplied);
+      }else if(mode==='right'){
+        var maxDur=bounds.nextStart===Infinity?9999:bounds.nextStart-origStart;
+        if(isVideo||isAudio)maxDur=Math.min(maxDur,m.duration-origTrimIn);
+        clip.duration=clamp(origDur+dt,0.2,maxDur);
+        if(isVideo||isAudio)clip.trimOut=clip.trimIn+clip.duration;
+      }
+      renderAllTracks();
+    });
+    el.addEventListener('pointerup',function(){
+      if(mode&&!moved)selectClip(type,clip.id);
+      mode=null;
+    });
   }
 
-  $('#tlClipCaption').addEventListener('input',function(e){
-    var c=clipById(selectedClipId); if(c){c.caption=e.target.value; renderTimeline();}
-  });
-  $('#tlDurationRange').addEventListener('input',function(e){
-    var c=clipById(selectedClipId); if(c){c.duration=Number(e.target.value); $('#tlDurationVal').textContent=c.duration; updateStatus();}
-  });
-  $('#tlTrimIn').addEventListener('input',function(e){
-    var c=clipById(selectedClipId); if(c){c.trimIn=clamp(Number(e.target.value)||0,0,c.trimOut-0.1); updateStatus();}
-  });
-  $('#tlTrimOut').addEventListener('input',function(e){
-    var c=clipById(selectedClipId); var m=c&&mediaById(c.mediaId);
-    if(c){c.trimOut=clamp(Number(e.target.value)||1,c.trimIn+0.1,m.duration); updateStatus();}
-  });
-  $('#tlRemoveClipBtn').addEventListener('click',function(){
-    clips=clips.filter(function(c){return c.id!==selectedClipId;});
-    selectedClipId=null;
+  function renderLane(laneEl,type,arr){
+    laneEl.innerHTML='';
+    arr.forEach(function(clip){
+      var el=document.createElement('div');
+      el.className='tl-clip '+classFor(type,clip)+(selection&&selection.type===type&&selection.id===clip.id?' selected':'');
+      el.style.left=(clip.start*pxPerSec)+'px';
+      el.style.width=Math.max(6,clip.duration*pxPerSec)+'px';
+      el.innerHTML='<span class="handle left"></span><span class="lbl">'+labelFor(type,clip)+'</span><span class="handle right"></span>';
+      laneEl.appendChild(el);
+      attachClipInteractions(el,type,clip);
+    });
+  }
+
+  function renderAllTracks(){
+    renderRuler();
+    renderLane(laneVideo,'video',videoClips);
+    renderLane(laneText,'text',textClips);
+    renderLane(laneAudio,'audio',audioClips);
+    updatePlayheadLine();
+    updateStatus();
+    if(!playing)renderPreviewAt(playhead,false);
+  }
+
+  /* ---------- selection & inspector ---------- */
+  function selectClip(type,id){
+    selection={type:type,id:id};
+    renderAllTracks();
+    renderInspector();
+    splitBtn.disabled=false;
+    deleteBtn.disabled=false;
+  }
+  function clearSelection(){
+    selection=null;
     inspector.classList.add('hidden');
-    renderTimeline();
+    splitBtn.disabled=true;
+    deleteBtn.disabled=true;
+    renderAllTracks();
+  }
+
+  function renderInspector(){
+    if(!selection){inspector.classList.add('hidden');return;}
+    var clip=clipOf(selection.type,selection.id);
+    if(!clip){clearSelection();return;}
+    inspector.classList.remove('hidden');
+    if(selection.type==='video'){
+      var m=mediaById(clip.mediaId);
+      var isVideo=m&&m.type==='video';
+      inspectorBody.innerHTML=
+        '<div class="field"><label>משך (שניות)</label>'+
+        '<input type="number" id="insDuration" min="0.2" step="0.1" value="'+clip.duration.toFixed(1)+'"></div>'+
+        (isVideo?(
+          '<div class="field"><label>חיתוך מתוך '+m.duration.toFixed(1)+' שניות</label>'+
+          '<div class="row"><input type="number" id="insTrimIn" min="0" step="0.1" value="'+clip.trimIn.toFixed(1)+'" style="width:80px;">'+
+          '<span>עד</span><input type="number" id="insTrimOut" min="0" step="0.1" value="'+clip.trimOut.toFixed(1)+'" style="width:80px;"></div></div>'
+        ):'');
+      $('#insDuration').addEventListener('input',function(e){
+        clip.duration=Math.max(0.2,Number(e.target.value)||0.2);
+        if(isVideo)clip.trimOut=clip.trimIn+clip.duration;
+        renderAllTracks();
+      });
+      if(isVideo){
+        $('#insTrimIn').addEventListener('input',function(e){
+          clip.trimIn=clamp(Number(e.target.value)||0,0,clip.trimOut-0.1);
+          clip.duration=clip.trimOut-clip.trimIn;
+          renderAllTracks();
+        });
+        $('#insTrimOut').addEventListener('input',function(e){
+          clip.trimOut=clamp(Number(e.target.value)||0.1,clip.trimIn+0.1,m.duration);
+          clip.duration=clip.trimOut-clip.trimIn;
+          renderAllTracks();
+        });
+      }
+    }else if(selection.type==='text'){
+      inspectorBody.innerHTML=
+        '<div class="field"><label>טקסט הכיתוב</label><input type="text" id="insText" value="'+clip.text.replace(/"/g,'&quot;')+'"></div>'+
+        '<div class="field"><label>מיקום על המסך</label>'+
+        '<select class="tl-select" id="insPos">'+
+        '<option value="bottom"'+(clip.position==='bottom'?' selected':'')+'>למטה</option>'+
+        '<option value="top"'+(clip.position==='top'?' selected':'')+'>למעלה</option>'+
+        '<option value="center"'+(clip.position==='center'?' selected':'')+'>באמצע</option>'+
+        '</select></div>'+
+        '<div class="field"><label>משך (שניות)</label><input type="number" id="insDuration" min="0.2" step="0.1" value="'+clip.duration.toFixed(1)+'"></div>';
+      $('#insText').addEventListener('input',function(e){clip.text=e.target.value;renderAllTracks();});
+      $('#insPos').addEventListener('change',function(e){clip.position=e.target.value;if(!playing)renderPreviewAt(playhead,false);});
+      $('#insDuration').addEventListener('input',function(e){clip.duration=Math.max(0.2,Number(e.target.value)||0.2);renderAllTracks();});
+    }else if(selection.type==='audio'){
+      var am=audioById(clip.mediaId);
+      inspectorBody.innerHTML=
+        '<div class="field"><label>עוצמת קול: <span id="insVolVal">'+Math.round((clip.volume!=null?clip.volume:1)*100)+'%</span></label>'+
+        '<input type="range" id="insVol" min="0" max="100" value="'+Math.round((clip.volume!=null?clip.volume:1)*100)+'"></div>'+
+        '<div class="field"><label>חיתוך מתוך '+(am?am.duration.toFixed(1):'0')+' שניות</label>'+
+        '<div class="row"><input type="number" id="insTrimIn" min="0" step="0.1" value="'+clip.trimIn.toFixed(1)+'" style="width:80px;">'+
+        '<span>עד</span><input type="number" id="insTrimOut" min="0" step="0.1" value="'+clip.trimOut.toFixed(1)+'" style="width:80px;"></div></div>';
+      $('#insVol').addEventListener('input',function(e){clip.volume=Number(e.target.value)/100;$('#insVolVal').textContent=e.target.value+'%';});
+      $('#insTrimIn').addEventListener('input',function(e){
+        clip.trimIn=clamp(Number(e.target.value)||0,0,clip.trimOut-0.1);
+        clip.duration=clip.trimOut-clip.trimIn;
+        renderAllTracks();
+      });
+      $('#insTrimOut').addEventListener('input',function(e){
+        clip.trimOut=clamp(Number(e.target.value)||0.1,clip.trimIn+0.1,am?am.duration:9999);
+        clip.duration=clip.trimOut-clip.trimIn;
+        renderAllTracks();
+      });
+    }
+  }
+
+  deleteBtn.addEventListener('click',function(){
+    if(!selection)return;
+    var arr=arrOf(selection.type);
+    var idx=arr.findIndex(function(c){return c.id===selection.id;});
+    if(idx>-1)arr.splice(idx,1);
+    clearSelection();
   });
 
-  function clipLen(c){
-    var m=mediaById(c.mediaId);
-    if(!m)return 0;
-    return m.type==='video'?(c.trimOut-c.trimIn):c.duration;
+  splitBtn.addEventListener('click',function(){
+    if(!selection)return;
+    var arr=arrOf(selection.type);
+    var clip=arr.find(function(c){return c.id===selection.id;});
+    if(!clip)return;
+    var t=playhead;
+    if(t<=clip.start+0.05||t>=clip.start+clip.duration-0.05){
+      showToast('הזז את הראש האדום לתוך הקטע כדי לחתוך אותו ✂️');
+      return;
+    }
+    var firstDur=t-clip.start, secondDur=clip.start+clip.duration-t;
+    var newClip=Object.assign({},clip,{id:uid(),start:t,duration:secondDur});
+    if(clip.trimIn!=null){
+      newClip.trimIn=clip.trimIn+firstDur;
+      clip.trimOut=clip.trimIn+firstDur;
+    }
+    clip.duration=firstDur;
+    arr.push(newClip);
+    renderAllTracks();
+  });
+
+  /* ---------- duration & status ---------- */
+  function totalDuration(){
+    var t=0;
+    videoClips.forEach(function(c){t=Math.max(t,c.start+c.duration);});
+    textClips.forEach(function(c){t=Math.max(t,c.start+c.duration);});
+    audioClips.forEach(function(c){t=Math.max(t,c.start+c.duration);});
+    return t;
   }
-  function totalDuration(){return clips.reduce(function(s,c){return s+clipLen(c);},0);}
   function updateStatus(){
     var t=totalDuration();
     statusEl.textContent='אורך כולל: '+t.toFixed(1)+' שניות';
     timeEl.textContent=fmtTime(playhead)+' / '+fmtTime(t);
   }
 
-  var playhead=0, playing=false, activeVideoEl=null, recorder=null, recording=false;
-
-  function clipAt(t){
-    var acc=0;
-    for(var i=0;i<clips.length;i++){
-      var len=clipLen(clips[i]);
-      if(t<acc+len || i===clips.length-1)return {clip:clips[i],localT:t-acc,index:i,start:acc,len:len};
-      acc+=len;
+  /* ---------- playback / preview ---------- */
+  function findActive(arr,t){
+    for(var i=0;i<arr.length;i++){
+      var c=arr[i];
+      if(t>=c.start && t<c.start+c.duration)return c;
     }
     return null;
   }
 
-  function stopAllVideos(){
-    pool.forEach(function(m){if(m.type==='video'){try{m.el.pause();}catch(e){}}});
+  function renderPreviewAt(t,isScrub){
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    var vClip=findActive(videoClips,t);
+    if(vClip){
+      var m=mediaById(vClip.mediaId);
+      if(m){
+        if(m.type==='image'){
+          drawCover(ctx,m.el,0,0,canvas.width,canvas.height);
+        }else{
+          if(isScrub){
+            try{m.el.currentTime=vClip.trimIn+(t-vClip.start);}catch(e){}
+            drawCover(ctx,m.el,0,0,canvas.width,canvas.height);
+          }else{
+            drawCover(ctx,m.el,0,0,canvas.width,canvas.height);
+          }
+        }
+      }
+    }
+    var tClip=findActive(textClips,t);
+    if(tClip)drawCaption(ctx,tClip.text,canvas.width,canvas.height,tClip.position);
   }
 
-  var lastTs=null, currentClipIdx=-1;
+  var playhead=0, playing=false, recorder=null, recording=false, lastTs=null;
+  var activeVideoClipId=null, activeAudioClipId=null;
 
-  function renderAt(hit){
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    if(!hit||!hit.clip)return;
-    var m=mediaById(hit.clip.mediaId);
-    if(!m)return;
-    if(m.type==='image'){
-      drawCover(ctx,m.el,0,0,canvas.width,canvas.height);
-    }else{
-      drawCover(ctx,m.el,0,0,canvas.width,canvas.height);
+  function syncMedia(t){
+    var vClip=findActive(videoClips,t);
+    var vId=vClip?vClip.id:null;
+    if(vId!==activeVideoClipId){
+      if(activeVideoClipId){
+        var oldC=videoClips.find(function(c){return c.id===activeVideoClipId;});
+        var oldM=oldC&&mediaById(oldC.mediaId);
+        if(oldM&&oldM.type==='video')try{oldM.el.pause();}catch(e){}
+      }
+      activeVideoClipId=vId;
+      if(vClip){
+        var m=mediaById(vClip.mediaId);
+        if(m&&m.type==='video'){
+          m.el.currentTime=vClip.trimIn+(t-vClip.start);
+          m.el.play().catch(function(){});
+        }
+      }
     }
-    drawCaption(ctx,hit.clip.caption,canvas.width,canvas.height);
+    var aClip=findActive(audioClips,t);
+    var aId=aClip?aClip.id:null;
+    if(aId!==activeAudioClipId){
+      if(activeAudioClipId){
+        var oldA=audioClips.find(function(c){return c.id===activeAudioClipId;});
+        var oldAm=oldA&&audioById(oldA.mediaId);
+        if(oldAm)try{oldAm.el.pause();}catch(e){}
+      }
+      activeAudioClipId=aId;
+      if(aClip){
+        var am=audioById(aClip.mediaId);
+        if(am){
+          am.el.currentTime=aClip.trimIn+(t-aClip.start);
+          am.el.volume=aClip.volume!=null?aClip.volume:1;
+          am.el.play().catch(function(){});
+        }
+      }
+    }
+  }
+
+  function stopAllMedia(){
+    pool.forEach(function(m){if(m.type==='video')try{m.el.pause();}catch(e){}});
+    audioPool.forEach(function(m){try{m.el.pause();}catch(e){}});
+    activeVideoClipId=null; activeAudioClipId=null;
   }
 
   function loop(ts){
@@ -1166,20 +1489,9 @@ function makeRecorder(canvas,includeAudio){
       finishStep();
       return;
     }
-    var hit=clipAt(playhead);
-    if(hit && hit.index!==currentClipIdx){
-      currentClipIdx=hit.index;
-      stopAllVideos();
-      var m=mediaById(hit.clip.mediaId);
-      if(m && m.type==='video'){
-        m.el.currentTime=hit.clip.trimIn+hit.localT;
-        m.el.play().catch(function(){});
-        activeVideoEl=m.el;
-      }else{
-        activeVideoEl=null;
-      }
-    }
-    renderAt(hit);
+    syncMedia(playhead);
+    renderPreviewAt(playhead,false);
+    updatePlayheadLine();
     timeEl.textContent=fmtTime(playhead)+' / '+fmtTime(total);
     requestAnimationFrame(loop);
   }
@@ -1187,23 +1499,22 @@ function makeRecorder(canvas,includeAudio){
   function finishStep(){
     playing=false;
     playBtn.textContent='▶️';
-    stopAllVideos();
+    stopAllMedia();
     if(recording)finishExport();
   }
-
   function startPlayback(){
-    if(!clips.length)return;
-    playing=true; lastTs=null; currentClipIdx=-1;
+    if(!totalDuration())return;
+    playing=true; lastTs=null; activeVideoClipId=null; activeAudioClipId=null;
     playBtn.textContent='⏸️';
     requestAnimationFrame(loop);
   }
   function stopPlayback(){
     playing=false; playBtn.textContent='▶️';
-    stopAllVideos();
+    stopAllMedia();
   }
   playBtn.addEventListener('click',function(){
     if(playing)stopPlayback();
-    else{playhead=0;startPlayback();}
+    else{if(playhead>=totalDuration())playhead=0;startPlayback();}
   });
 
   function finishExport(){
@@ -1215,20 +1526,24 @@ function makeRecorder(canvas,includeAudio){
   }
 
   $('#tlExportBtn').addEventListener('click',function(){
-    if(!clips.length){showToast('הוסף קודם קטעים לציר הזמן 🙂');return;}
+    if(!totalDuration()){showToast('הוסף קודם קטעים לציר הזמן 🙂');return;}
     if(playing)stopPlayback();
-    var hasVideo=clips.some(function(c){var m=mediaById(c.mediaId);return m&&m.type==='video';});
+    var hasAudio=audioClips.length>0||videoClips.some(function(c){var m=mediaById(c.mediaId);return m&&m.type==='video';});
     playhead=0; recording=true;
     $('#tlExportBtn').disabled=true;
     $('#tlExportBtn').textContent='מקליט…';
     recBadge.classList.add('on');
-    recorder=makeRecorder(canvas,hasVideo);
+    recorder=makeRecorder(canvas,hasAudio);
     recorder.start();
     startPlayback();
   });
 
+  tlScroll.addEventListener('pointerdown',function(e){
+    if(e.target===tlScroll||e.target===tlInner)clearSelection();
+  });
+
   renderPool();
-  renderTimeline();
+  renderAllTracks();
 })();
 
 })();
