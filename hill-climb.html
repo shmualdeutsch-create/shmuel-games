@@ -625,6 +625,20 @@
   };
   Object.values(CARS).forEach(c=>{ c.fuelBurn = (c.fuelBurn || 0.06) * 3; });
 
+  // AI-drawn art for specific vehicles: a body image (no wheels, no driver) plus
+  // one wheel image, rotated live so the art keeps spinning wheels + a moving driver
+  const VEHICLE_ART = {
+    hill_climber: { body: 'assets/vehicles/parts/hill_climber_body.png', wheel: 'assets/vehicles/parts/hill_climber_wheel.png' },
+  };
+  Object.entries(VEHICLE_ART).forEach(([key, srcs])=>{
+    const art = { body: new Image(), wheel: new Image(), ready: false };
+    let loaded = 0;
+    const onLoad = ()=>{ loaded++; if(loaded === 2) art.ready = true; };
+    art.body.onload = onLoad; art.wheel.onload = onLoad;
+    art.body.src = srcs.body; art.wheel.src = srcs.wheel;
+    VEHICLE_ART[key] = art;
+  });
+
   const BANK_KEY = 'hillClimb_bank', OWNED_KEY = 'hillClimb_owned', SELECTED_KEY = 'hillClimb_selectedCar';
   let bankCoins = 0;
   try{ bankCoins = parseInt(localStorage.getItem(BANK_KEY) || '0', 10) || 0; }catch(e){}
@@ -1436,6 +1450,11 @@
 
 // draws one vehicle at the current origin - used by the game and by the shop previews
   function drawVehicleBody(g, v, spin, driverPose){
+    const art = VEHICLE_ART[v.key];
+    if(art && art.ready){
+      drawVehicleBodyFromArt(g, v, spin, driverPose, art);
+      return;
+    }
     // wheels / tracks / skis / hover pads / legs
     const wheelR = v.wheelR;
     const wheelRF = v.wheelRF || wheelR;
@@ -1599,6 +1618,27 @@
       g.arc(v.bumper[1][0]-1, v.bumper[1][1], Math.max(2.2, bh*0.09), 0, Math.PI*2);
       g.fill(); g.stroke();
     }
+  }
+
+  // AI-drawn version of drawVehicleBody: a body image sitting just above the wheel line,
+  // plus the wheel image rotated by `spin` at each wheel spot - so it keeps the same
+  // spinning-wheels + moving-driver feel as the hand-drawn cars
+  function drawVehicleBodyFromArt(g, v, spin, driverPose, art){
+    const wheelR = v.wheelR, hwb = v.halfWB;
+    const wheelSpots = [[-hwb, wheelR], [hwb, wheelR]];
+    for(const [wx, r] of wheelSpots){
+      g.save();
+      g.translate(wx, 0);
+      g.rotate(spin);
+      g.drawImage(art.wheel, -r, -r, r*2, r*2);
+      g.restore();
+    }
+    const targetW = hwb*2 + 24;
+    const scale = targetW / art.body.naturalWidth;
+    const targetH = art.body.naturalHeight * scale;
+    const bottomY = wheelR*0.5;
+    g.drawImage(art.body, -targetW/2, bottomY - targetH, targetW, targetH);
+    drawDriver(g, v.cabin[0]+v.cabin[2]*0.42, v.cabin[1]+v.cabin[3]*0.78, v.cabin[3]*0.62, driverPose);
   }
 
   // lighten (positive percent) or darken (negative) a #rrggbb color
