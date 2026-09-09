@@ -277,7 +277,7 @@
         <button class="btn" id="tlDuplicateBtn" disabled>📋 שכפל</button>
         <button class="btn danger" id="tlDeleteClipBtn" disabled>🗑️ מחק קטע</button>
         <button class="tool-btn toggle-on" id="tlSnapBtn" title="הצמדה לקטעים">🧲</button>
-        <button class="tool-btn" id="tlPenBtn" title="עט עוצמת שמע — צייר עוצמה ישירות על קטע שמע">✏️</button>
+        <button class="tool-btn" id="tlPenBtn" title="עט עוצמת שמע — דלוק: יוצר נקודה חדשה בכל לחיצה. כבוי: גוררים נקודות קיימות">✏️</button>
         <div class="tl-zoom">🔍 <input type="range" id="tlZoom" min="20" max="200" value="70"></div>
       </div>
       <div class="tl-body">
@@ -884,7 +884,12 @@ function dbDelete(key){
     if(rightH)rightH.addEventListener('pointerdown',function(e){begin(e,'right');});
     el.addEventListener('pointerdown',function(e){
       if(e.target===leftH||e.target===rightH)return;
-      if(penMode&&type==='audio'){penPointerDown(e,clip,el);return;}
+      if(type==='audio'){
+        if(penMode){penCreatePoint(e,clip,el);return;}
+        var pos=penPos(e,el,clip);
+        var kIdx=hitTestClipKf(clip,pos);
+        if(kIdx>-1){penDragPoint(e,clip,el,kIdx);return;}
+      }
       begin(e,'move');
     });
     el.addEventListener('pointermove',function(e){
@@ -1110,7 +1115,7 @@ function dbDelete(key){
         '<div class="field"><label>חיתוך מתוך '+(am?am.duration.toFixed(1):'0')+' שניות</label>'+
         '<div class="row"><input type="number" id="insTrimIn" min="0" step="0.1" value="'+clip.trimIn.toFixed(1)+'" style="width:80px;">'+
         '<span>עד</span><input type="number" id="insTrimOut" min="0" step="0.1" value="'+clip.trimOut.toFixed(1)+'" style="width:80px;"></div></div>'+
-        '<div class="mini-note">רואים את גל השמע ישירות על הקטע בציר הזמן. לחץ על ✏️ בסרגל הכלים כדי לצייר עוצמה — חזק/חלש — ישירות על הקו שעל הקטע 🔊</div>';
+        '<div class="mini-note">רואים את גל השמע ישירות על הקטע. עט ✏️ דלוק — כל לחיצה יוצרת נקודת עוצמה חדשה. עט כבוי — גוררים נקודה קיימת כדי לשנות אותה, או גוררים במקום ריק כדי להזיז את כל הקטע 🔊</div>';
       $('#insTrimIn').addEventListener('input',function(e){
         clip.trimIn=clamp(Number(e.target.value)||0,0,clip.trimOut-0.1);
         clip.duration=clip.trimOut-clip.trimIn;
@@ -1169,7 +1174,7 @@ function dbDelete(key){
     penMode=!penMode;
     this.classList.toggle('toggle-on',penMode);
     laneAudio.classList.toggle('pen-mode',penMode);
-    showToast(penMode?'עט עוצמה פעיל — גע בקטע שמע כדי לצייר עוצמה 🖊️':'עט עוצמה כבוי');
+    showToast(penMode?'עט עוצמה פעיל — גע בקטע שמע כדי ליצור נקודה 🖊️':'עט עוצמה כבוי — עכשיו אפשר לגרור נקודות קיימות, או להזיז את הקטע');
   });
 
   function penPos(e,el,clip){
@@ -1186,19 +1191,19 @@ function dbDelete(key){
     }
     return -1;
   }
-  function penPointerDown(e,clip,el){
+  function penCreatePoint(e,clip,el){
+    e.stopPropagation();
+    var pos=penPos(e,el,clip);
+    var t=clamp(pos.t,0,clip.duration), v=clamp(pos.v,0,1);
+    clip.volumeKeyframes.push({t:t,v:v});
+    clip.volumeKeyframes.sort(function(a,b){return a.t-b.t;});
+    refreshClipWaveform(el,clip);
+    scheduleAutosave();
+  }
+  function penDragPoint(e,clip,el,startIdx){
     e.stopPropagation();
     try{el.setPointerCapture(e.pointerId);}catch(err){}
-    var pos=penPos(e,el,clip);
-    var idx=hitTestClipKf(clip,pos);
-    if(idx===-1){
-      var t=clamp(pos.t,0,clip.duration), v=clamp(pos.v,0,1);
-      clip.volumeKeyframes.push({t:t,v:v});
-      clip.volumeKeyframes.sort(function(a,b){return a.t-b.t;});
-      idx=clip.volumeKeyframes.findIndex(function(k){return k.t===t&&k.v===v;});
-    }
-    refreshClipWaveform(el,clip);
-    var draggingIdx=idx;
+    var draggingIdx=startIdx;
     function onMove(ev){
       var p=penPos(ev,el,clip);
       var k=clip.volumeKeyframes[draggingIdx];
@@ -1220,7 +1225,7 @@ function dbDelete(key){
     el.addEventListener('pointercancel',onUp);
   }
   laneAudio.addEventListener('dblclick',function(e){
-    if(!penMode)return;
+    if(penMode)return;
     var clipEl=e.target.closest('.tl-clip');
     if(!clipEl)return;
     var idx=Array.prototype.indexOf.call(laneAudio.children,clipEl);
