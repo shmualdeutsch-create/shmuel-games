@@ -53,6 +53,7 @@
   .brand .logo{font-size:28px;line-height:1;}
   .brand h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em;}
   .brand .sub{font-size:12px;color:var(--text-muted);margin-top:1px;}
+  .project-actions{display:flex;align-items:center;gap:10px;margin-inline-start:auto;}
 
   .quad-grid{
     flex:1;min-height:0;
@@ -233,6 +234,11 @@
         <h1>אולפן הסרטים</h1>
         <div class="sub">עורך טיימליין עם הנפשה ועוצמת שמע — הכל בדפדפן</div>
       </div>
+    </div>
+    <div class="project-actions">
+      <span class="status-text" id="projStatus"></span>
+      <button type="button" class="btn" id="projSaveBtn">💾 שמור פרויקט</button>
+      <button type="button" class="btn danger" id="projNewBtn">🆕 פרויקט חדש</button>
     </div>
   </header>
 
@@ -499,6 +505,47 @@ function clampKeyframesToDuration(clip){
   if(clip.volumeKeyframes)clip.volumeKeyframes.forEach(function(k){k.t=clamp(k.t,0,clip.duration);});
 }
 
+var DB_NAME='movieStudioProject', DB_STORE='project';
+function openProjectDB(){
+  return new Promise(function(resolve,reject){
+    if(!window.indexedDB){reject(new Error('no indexeddb'));return;}
+    var req=indexedDB.open(DB_NAME,1);
+    req.onupgradeneeded=function(){req.result.createObjectStore(DB_STORE);};
+    req.onsuccess=function(){resolve(req.result);};
+    req.onerror=function(){reject(req.error);};
+  });
+}
+function dbPut(key,val){
+  return openProjectDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(DB_STORE,'readwrite');
+      tx.objectStore(DB_STORE).put(val,key);
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error);};
+    });
+  });
+}
+function dbGet(key){
+  return openProjectDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(DB_STORE,'readonly');
+      var req=tx.objectStore(DB_STORE).get(key);
+      req.onsuccess=function(){resolve(req.result);};
+      req.onerror=function(){reject(req.error);};
+    });
+  });
+}
+function dbDelete(key){
+  return openProjectDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(DB_STORE,'readwrite');
+      tx.objectStore(DB_STORE).delete(key);
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error);};
+    });
+  });
+}
+
 (function(){
   var pool=[];
   var audioPool=[];
@@ -550,7 +597,7 @@ function clampKeyframesToDuration(clip){
       var v=document.createElement('video');
       v.src=url; v.muted=false; v.playsInline=true; v.preload='auto';
       v.addEventListener('loadedmetadata',function(){
-        var item={id:uid(),type:'video',name:file.name,url:url,el:v,duration:v.duration||5,thumb:null};
+        var item={id:uid(),type:'video',name:file.name,url:url,el:v,duration:v.duration||5,thumb:null,file:file};
         pool.push(item);
         v.currentTime=Math.min(0.1,v.duration/2);
         v.addEventListener('seeked',function grab(){
@@ -567,7 +614,7 @@ function clampKeyframesToDuration(clip){
       var url2=URL.createObjectURL(file);
       var img=new Image();
       img.onload=function(){
-        pool.push({id:uid(),type:'image',name:file.name,url:url2,el:img,duration:3,thumb:url2});
+        pool.push({id:uid(),type:'image',name:file.name,url:url2,el:img,duration:3,thumb:url2,file:file});
         renderPool();
       };
       img.src=url2;
@@ -577,10 +624,55 @@ function clampKeyframesToDuration(clip){
     var url=URL.createObjectURL(file);
     var a=new Audio(); a.src=url; a.crossOrigin='anonymous';
     a.addEventListener('loadedmetadata',function(){
-      var item={id:uid(),name:file.name,url:url,el:a,duration:a.duration||10};
+      var item={id:uid(),name:file.name,url:url,el:a,duration:a.duration||10,file:file};
       audioPool.push(item);
       routeElement(a);
       renderPool();
+    });
+  }
+
+  function restoreVisualItem(pm){
+    return new Promise(function(resolve){
+      var url=URL.createObjectURL(pm.blob);
+      if(pm.type==='video'){
+        var v=document.createElement('video');
+        v.src=url; v.muted=false; v.playsInline=true; v.preload='auto';
+        v.addEventListener('loadedmetadata',function(){
+          var item={id:pm.id,type:'video',name:pm.name,url:url,el:v,duration:v.duration||pm.duration||5,thumb:null,file:pm.blob};
+          pool.push(item);
+          v.currentTime=Math.min(0.1,v.duration/2);
+          v.addEventListener('seeked',function grab(){
+            var tmp=document.createElement('canvas'); tmp.width=120;tmp.height=68;
+            tmp.getContext('2d').drawImage(v,0,0,120,68);
+            item.thumb=tmp.toDataURL('image/png');
+            v.removeEventListener('seeked',grab);
+            resolve();
+          });
+          routeElement(v);
+        });
+        v.addEventListener('error',function(){resolve();});
+      }else{
+        var img=new Image();
+        img.onload=function(){
+          pool.push({id:pm.id,type:'image',name:pm.name,url:url,el:img,duration:pm.duration||3,thumb:url,file:pm.blob});
+          resolve();
+        };
+        img.onerror=function(){resolve();};
+        img.src=url;
+      }
+    });
+  }
+  function restoreAudioItem(pam){
+    return new Promise(function(resolve){
+      var url=URL.createObjectURL(pam.blob);
+      var a=new Audio(); a.src=url; a.crossOrigin='anonymous';
+      a.addEventListener('loadedmetadata',function(){
+        var item={id:pam.id,name:pam.name,url:url,el:a,duration:a.duration||pam.duration||10,file:pam.blob};
+        audioPool.push(item);
+        routeElement(a);
+        resolve();
+      });
+      a.addEventListener('error',function(){resolve();});
     });
   }
 
@@ -642,6 +734,7 @@ function clampKeyframesToDuration(clip){
       el.querySelector('.acts button').addEventListener('click',function(){addClipToAudioTrack(am,null);});
       poolEl.appendChild(el);
     });
+    scheduleAutosave();
   }
 
   laneVideo.addEventListener('dragover',function(e){e.preventDefault();});
@@ -818,7 +911,8 @@ function clampKeyframesToDuration(clip){
       var wasMode=mode, wasMoved=moved;
       mode=null;
       if(wasMode&&!wasMoved){
-        selectClip(type,clip.id);
+        if(selection&&selection.type===type&&selection.id===clip.id)clearSelection();
+        else selectClip(type,clip.id);
       }else if(wasMode){
         renderAllTracks();
         if(selection&&selection.type===type&&selection.id===clip.id)renderInspector();
@@ -847,6 +941,7 @@ function clampKeyframesToDuration(clip){
     updatePlayheadLine();
     updateStatus();
     if(!playing)renderPreviewAt(playhead,false);
+    scheduleAutosave();
   }
 
   function selectClip(type,id){
@@ -907,6 +1002,7 @@ function clampKeyframesToDuration(clip){
       renderInspector();
       if(!playing)renderPreviewAt(playhead,false);
       showToast('נקודה נקבעה 📍');
+      scheduleAutosave();
     });
     $all('.kf-item').forEach(function(row){
       row.addEventListener('click',function(e){
@@ -929,6 +1025,7 @@ function clampKeyframesToDuration(clip){
           clip.transform.keyframes.splice(i,1);
           renderInspector();
           if(!playing)renderPreviewAt(playhead,false);
+          scheduleAutosave();
         }
       });
     });
@@ -1120,14 +1217,17 @@ function clampKeyframesToDuration(clip){
     drawVolCanvas();
   });
   ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
-    volCanvas.addEventListener(ev,function(){draggingKf=null;});
+    volCanvas.addEventListener(ev,function(){
+      if(draggingKf!=null)scheduleAutosave();
+      draggingKf=null;
+    });
   });
   volCanvas.addEventListener('dblclick',function(e){
     var clip=selection&&selection.type==='audio'?clipOf('audio',selection.id):null;
     if(!clip||clip.volumeKeyframes.length<=2)return;
     var pos=volPos(e);
     var idx=hitTestKf(clip,pos);
-    if(idx>-1){clip.volumeKeyframes.splice(idx,1);drawVolCanvas();}
+    if(idx>-1){clip.volumeKeyframes.splice(idx,1);drawVolCanvas();scheduleAutosave();}
   });
 
   deleteBtn.addEventListener('click',function(){
@@ -1373,9 +1473,80 @@ function clampKeyframesToDuration(clip){
     }
   });
 
+  var projStatus=$('#projStatus');
+  var autosaveTimer=null;
+  var initialLoadDone=false;
+  function buildProjectSnapshot(){
+    return {
+      version:1,
+      savedAt:Date.now(),
+      pool:pool.map(function(m){return {id:m.id,type:m.type,name:m.name,duration:m.duration,blob:m.file};}),
+      audioPool:audioPool.map(function(am){return {id:am.id,name:am.name,duration:am.duration,blob:am.file};}),
+      videoClips:JSON.parse(JSON.stringify(videoClips)),
+      textClips:JSON.parse(JSON.stringify(textClips)),
+      audioClips:JSON.parse(JSON.stringify(audioClips))
+    };
+  }
+  function saveProjectNow(){
+    return dbPut('current',buildProjectSnapshot()).then(function(){
+      if(projStatus)projStatus.textContent='נשמר ✓ '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    });
+  }
+  function scheduleAutosave(){
+    if(!initialLoadDone)return;
+    clearTimeout(autosaveTimer);
+    if(projStatus)projStatus.textContent='שומר…';
+    autosaveTimer=setTimeout(function(){saveProjectNow().catch(function(){});},900);
+  }
+
+  function restoreProject(proj){
+    var jobs=[];
+    (proj.pool||[]).forEach(function(pm){if(pm.blob)jobs.push(restoreVisualItem(pm));});
+    (proj.audioPool||[]).forEach(function(pam){if(pam.blob)jobs.push(restoreAudioItem(pam));});
+    return Promise.all(jobs).then(function(){
+      videoClips=proj.videoClips||[];
+      textClips=proj.textClips||[];
+      audioClips=proj.audioClips||[];
+      renderPool();
+      renderAllTracks();
+      renderInspector();
+      showToast('הפרויקט שלך נטען אוטומטית 💾');
+    });
+  }
+
+  $('#projSaveBtn').addEventListener('click',function(){
+    saveProjectNow().then(function(){
+      showToast('הפרויקט נשמר במחשב שלך 💾');
+    }).catch(function(){
+      showToast('לא הצלחתי לשמור את הפרויקט 😕');
+    });
+  });
+  $('#projNewBtn').addEventListener('click',function(){
+    if(!confirm('להתחיל פרויקט חדש? זה ימחק את כל התמונות, הסרטונים, הכיתובים והמוזיקה שהוספת עכשיו.'))return;
+    if(playing)stopPlayback();
+    pool.forEach(function(m){try{URL.revokeObjectURL(m.url);}catch(e){}});
+    audioPool.forEach(function(am){try{URL.revokeObjectURL(am.url);}catch(e){}});
+    pool.length=0; audioPool.length=0;
+    videoClips.length=0; textClips.length=0; audioClips.length=0;
+    playhead=0;
+    clearSelection();
+    renderPool();
+    renderAllTracks();
+    dbDelete('current').catch(function(){});
+    if(projStatus)projStatus.textContent='';
+    showToast('פרויקט חדש נפתח 🆕');
+  });
+
   renderPool();
   renderAllTracks();
   renderInspector();
+  dbGet('current').then(function(proj){
+    if(!proj)return;
+    var hasContent=(proj.pool&&proj.pool.length)||(proj.audioPool&&proj.audioPool.length)||(proj.videoClips&&proj.videoClips.length)||(proj.textClips&&proj.textClips.length)||(proj.audioClips&&proj.audioClips.length);
+    if(hasContent)return restoreProject(proj);
+  }).catch(function(){}).then(function(){
+    initialLoadDone=true;
+  });
 })();
 
 })();
