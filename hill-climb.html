@@ -625,19 +625,69 @@
   };
   Object.values(CARS).forEach(c=>{ c.fuelBurn = (c.fuelBurn || 0.06) * 3; });
 
-  // AI-drawn art for specific vehicles: a body image (no wheels, no driver) plus
-  // one wheel image, rotated live so the art keeps spinning wheels + a moving driver
+  // AI-drawn art: each listed vehicle gets a body image (no wheels, no driver) plus
+  // a shared wheel image for its wheel style, rotated live so the art keeps spinning
+  // wheels + a moving driver just like the hand-drawn cars. Vehicles with special
+  // ground contact (tracks/skis/hover pads/legs) keep the hand-drawn look, since a
+  // still photo can't animate those the same way.
+  const PARTS_DIR = 'assets/vehicles/parts/';
+  const WHEEL_IMG = {};
+  const WHEEL_SRC = { car: 'hill_climber_wheel.png', big: 'wheel_big.png', moto: 'wheel_moto.png' };
+  Object.entries(WHEEL_SRC).forEach(([k, file])=>{ const im = new Image(); im.src = PARTS_DIR + file; WHEEL_IMG[k] = im; });
+
   const VEHICLE_ART = {
-    hill_climber: { body: 'assets/vehicles/parts/hill_climber_body.png', wheel: 'assets/vehicles/parts/hill_climber_wheel.png' },
+    hill_climber: { wheel: 'car' },
+    used_car: { wheel: 'car' },
+    family_car: { wheel: 'car' },
+    hippie_van: { wheel: 'car' },
+    race_car: { wheel: 'car' },
+    police_car: { wheel: 'car' },
+    ambulance: { wheel: 'car' },
+    electric_car: { wheel: 'car' },
+    super_hill_climber: { wheel: 'car' },
+    rally_car: { wheel: 'car' },
+    car_car: { wheel: 'car' },
+    lowrider: { wheel: 'car' },
+    kiddie_express: { wheel: 'car', wheelCount: 3 },
+    hot_rod: { wheel: 'car' },
+    the_rocket: { wheel: 'car' },
+    fast_car: { wheel: 'car' },
+    luxury_car: { wheel: 'car' },
+    golf_cart: { wheel: 'car' },
+    tourist_bus: { wheel: 'car' },
+    quad_bike: { wheel: 'car' },
+    pickup_truck: { wheel: 'car' },
+    school_bus: { wheel: 'car', wheelCount: 3 },
+    moonlander: { wheel: 'car' },
+    monster_truck: { wheel: 'big' },
+    tractor: { wheel: 'big' },
+    onewheeler: { wheel: 'big', wheelCount: 1 },
+    trophy_truck: { wheel: 'big' },
+    finger_screw: { wheel: 'big' },
+    super_diesel_4x4: { wheel: 'big' },
+    dragster: { wheel: 'big' },
+    fire_truck: { wheel: 'big' },
+    dune_buggy: { wheel: 'big' },
+    truck: { wheel: 'big' },
+    big_finger: { wheel: 'big' },
+    mutant: { wheel: 'big' },
+    jeep_safari: { wheel: 'big' },
+    garbage_truck: { wheel: 'big' },
+    cement_mixer: { wheel: 'big' },
+    motocross_bike: { wheel: 'moto' },
+    chopper: { wheel: 'moto' },
+    minibike: { wheel: 'moto' },
+    fast_bike: { wheel: 'moto' },
   };
-  Object.entries(VEHICLE_ART).forEach(([key, srcs])=>{
-    const art = { body: new Image(), wheel: new Image(), ready: false };
-    let loaded = 0;
-    const onLoad = ()=>{ loaded++; if(loaded === 2) art.ready = true; };
-    art.body.onload = onLoad; art.wheel.onload = onLoad;
-    art.body.src = srcs.body; art.wheel.src = srcs.wheel;
-    VEHICLE_ART[key] = art;
+  Object.entries(VEHICLE_ART).forEach(([key, cfg])=>{
+    cfg.bodyImg = new Image();
+    cfg.bodyImg.src = PARTS_DIR + key + '_body.png';
+    cfg.wheelImg = WHEEL_IMG[cfg.wheel];
   });
+  function artReady(art){
+    return art && art.bodyImg.complete && art.bodyImg.naturalWidth > 0 &&
+      art.wheelImg && art.wheelImg.complete && art.wheelImg.naturalWidth > 0;
+  }
 
   const BANK_KEY = 'hillClimb_bank', OWNED_KEY = 'hillClimb_owned', SELECTED_KEY = 'hillClimb_selectedCar';
   let bankCoins = 0;
@@ -1203,6 +1253,10 @@
       const angErr = normAngle(desiredAngle - car.angle);
       car.angularVel += angErr*K_ANG*stab - car.angularVel*DAMP_ANG*stab;
 
+      // suspension squash: how hard the springs are compressed (>0) or stretched (<0) right now,
+      // so the body can visibly squish on landings and over bumps like a real off-road jeep
+      car.susp = -posErr;
+
       if(fuel > 0){
         if(gas) car.vx += vehicle.accel;
         if(brake) car.vx -= BRAKE_ACCEL;
@@ -1214,6 +1268,7 @@
       car.vy += GRAVITY;
       car.angularVel *= 0.997;
       car.vx *= 0.999;
+      car.susp = (car.susp || 0) * 0.85;
       if(fuel > 0){
         if(gas) car.angularVel -= AIR_TORQUE;
         if(brake) car.angularVel += AIR_TORQUE;
@@ -1442,17 +1497,17 @@
       air: car.grounded ? 0 : clamp(Math.abs(car.vy)/6, 0, 1),
       bounce: car.grounded ? Math.sin(wheelSpin*2)*0.15 : 0,
     };
-    drawVehicleBody(ctx, vehicle, wheelSpin, driverPose);
+    drawVehicleBody(ctx, vehicle, wheelSpin, driverPose, car.susp);
     ctx.restore();
 
     ctx.restore();
   }
 
 // draws one vehicle at the current origin - used by the game and by the shop previews
-  function drawVehicleBody(g, v, spin, driverPose){
+  function drawVehicleBody(g, v, spin, driverPose, susp){
     const art = VEHICLE_ART[v.key];
-    if(art && art.ready){
-      drawVehicleBodyFromArt(g, v, spin, driverPose, art);
+    if(artReady(art)){
+      drawVehicleBodyFromArt(g, v, spin, driverPose, art, susp);
       return;
     }
     // wheels / tracks / skis / hover pads / legs
@@ -1478,6 +1533,12 @@
         g.restore();
       }
     }
+
+    // suspension squash: the chassis visibly compresses on hard landings and stretches
+    // in the air, like real springs - wheels stay round so contact with the ground still reads
+    const sq = clamp((susp||0)/24, -0.18, 0.18);
+    g.save();
+    g.scale(1, 1-sq);
 
     if(v.shape === 'moto'){
       const hw = v.halfWB;
@@ -1618,27 +1679,34 @@
       g.arc(v.bumper[1][0]-1, v.bumper[1][1], Math.max(2.2, bh*0.09), 0, Math.PI*2);
       g.fill(); g.stroke();
     }
+    g.restore();
   }
 
   // AI-drawn version of drawVehicleBody: a body image sitting just above the wheel line,
   // plus the wheel image rotated by `spin` at each wheel spot - so it keeps the same
   // spinning-wheels + moving-driver feel as the hand-drawn cars
-  function drawVehicleBodyFromArt(g, v, spin, driverPose, art){
-    const wheelR = v.wheelR, hwb = v.halfWB;
-    const wheelSpots = [[-hwb, wheelR], [hwb, wheelR]];
+  function drawVehicleBodyFromArt(g, v, spin, driverPose, art, susp){
+    const wheelR = v.wheelR, wheelRF = v.wheelRF || wheelR, hwb = v.halfWB;
+    const wheelSpots = art.wheelCount === 1 ? [[0, wheelR]]
+      : art.wheelCount === 3 ? [[-hwb, wheelR], [0, wheelR], [hwb, wheelRF]]
+      : [[-hwb, wheelR], [hwb, wheelRF]];
     for(const [wx, r] of wheelSpots){
       g.save();
       g.translate(wx, 0);
       g.rotate(spin);
-      g.drawImage(art.wheel, -r, -r, r*2, r*2);
+      g.drawImage(art.wheelImg, -r, -r, r*2, r*2);
       g.restore();
     }
+    const sq = clamp((susp||0)/24, -0.18, 0.18);
+    g.save();
+    g.scale(1, 1-sq);
     const targetW = hwb*2 + 24;
-    const scale = targetW / art.body.naturalWidth;
-    const targetH = art.body.naturalHeight * scale;
+    const scale = targetW / art.bodyImg.naturalWidth;
+    const targetH = art.bodyImg.naturalHeight * scale;
     const bottomY = wheelR*0.5;
-    g.drawImage(art.body, -targetW/2, bottomY - targetH, targetW, targetH);
+    g.drawImage(art.bodyImg, -targetW/2, bottomY - targetH, targetW, targetH);
     drawDriver(g, v.cabin[0]+v.cabin[2]*0.42, v.cabin[1]+v.cabin[3]*0.78, v.cabin[3]*0.62, driverPose);
+    g.restore();
   }
 
   // lighten (positive percent) or darken (negative) a #rrggbb color
