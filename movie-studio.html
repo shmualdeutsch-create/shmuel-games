@@ -1576,12 +1576,16 @@ function dbGetAll(){
     renderHomeList();
   }
 
+  var openingProjectId=null;
   function openProjectRecord(proj){
+    if(openingProjectId===proj.id)return;
+    openingProjectId=proj.id;
     activeProjectId=null;
     resetEditorState();
     activeProjectId=proj.id;
     activeProjectName=proj.name||'פרויקט ללא שם';
     if(projStatus)projStatus.textContent='';
+    showEditor();
     var jobs=[];
     (proj.pool||[]).forEach(function(pm){if(pm.blob)jobs.push(restoreVisualItem(pm));});
     (proj.audioPool||[]).forEach(function(pam){if(pam.blob)jobs.push(restoreAudioItem(pam));});
@@ -1592,7 +1596,7 @@ function dbGetAll(){
       renderPool();
       renderAllTracks();
       renderInspector();
-      showEditor();
+      openingProjectId=null;
     });
   }
 
