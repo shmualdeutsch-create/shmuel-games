@@ -727,7 +727,7 @@ function dbGetAll(){
   }
 
   function addClipToVideoTrack(m,desiredStart){
-    var duration=m.type==='image'?3:Math.min(5,m.duration);
+    var duration=m.type==='image'?3:m.duration;
     var end=videoClips.reduce(function(s,c){return Math.max(s,c.start+c.duration);},0);
     var start=desiredStart==null?end:desiredStart;
     var overlaps=videoClips.some(function(c){return start<c.start+c.duration && start+duration>c.start;});
@@ -740,7 +740,7 @@ function dbGetAll(){
     renderAllTracks();
   }
   function addClipToAudioTrack(am,desiredStart){
-    var duration=Math.min(10,am.duration);
+    var duration=am.duration;
     var end=audioClips.reduce(function(s,c){return Math.max(s,c.start+c.duration);},0);
     var start=desiredStart==null?end:desiredStart;
     var overlaps=audioClips.some(function(c){return start<c.start+c.duration && start+duration>c.start;});
