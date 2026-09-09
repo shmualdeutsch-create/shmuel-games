@@ -1541,10 +1541,15 @@ function dbDelete(key){
   renderAllTracks();
   renderInspector();
   dbGet('current').then(function(proj){
+    console.log('DEBUG dbGet result',proj);
     if(!proj)return;
     var hasContent=(proj.pool&&proj.pool.length)||(proj.audioPool&&proj.audioPool.length)||(proj.videoClips&&proj.videoClips.length)||(proj.textClips&&proj.textClips.length)||(proj.audioClips&&proj.audioClips.length);
+    console.log('DEBUG hasContent',hasContent);
     if(hasContent)return restoreProject(proj);
-  }).catch(function(){}).then(function(){
+  }).catch(function(err){
+    console.error('DEBUG restore error',err);
+  }).then(function(){
+    console.log('DEBUG initialLoadDone set');
     initialLoadDone=true;
   });
 })();
