@@ -637,44 +637,44 @@
 
   const VEHICLE_ART = {
     hill_climber: { wheel: 'car' },
-    used_car: { wheel: 'car' },
-    family_car: { wheel: 'car' },
-    hippie_van: { wheel: 'car' },
+    used_car: { wheel: 'car', flip: true },
+    family_car: { wheel: 'car', flip: true },
+    hippie_van: { wheel: 'car', flip: true },
     race_car: { wheel: 'car' },
     police_car: { wheel: 'car' },
-    ambulance: { wheel: 'car' },
+    ambulance: { wheel: 'car', flip: true },
     electric_car: { wheel: 'car' },
-    super_hill_climber: { wheel: 'car' },
-    rally_car: { wheel: 'car' },
-    car_car: { wheel: 'car' },
-    lowrider: { wheel: 'car' },
+    super_hill_climber: { wheel: 'car', flip: true },
+    rally_car: { wheel: 'car', flip: true },
+    car_car: { wheel: 'car', flip: true },
+    lowrider: { wheel: 'car', flip: true },
     kiddie_express: { wheel: 'car', wheelCount: 3 },
-    hot_rod: { wheel: 'car' },
-    the_rocket: { wheel: 'car' },
-    fast_car: { wheel: 'car' },
-    luxury_car: { wheel: 'car' },
-    golf_cart: { wheel: 'car' },
+    hot_rod: { wheel: 'car', flip: true },
+    the_rocket: { wheel: 'car', flip: true },
+    fast_car: { wheel: 'car', flip: true },
+    luxury_car: { wheel: 'car', flip: true },
+    golf_cart: { wheel: 'car', flip: true },
     tourist_bus: { wheel: 'car' },
-    quad_bike: { wheel: 'car' },
-    pickup_truck: { wheel: 'car' },
-    school_bus: { wheel: 'car', wheelCount: 3 },
+    quad_bike: { wheel: 'car', flip: true },
+    pickup_truck: { wheel: 'car', flip: true },
+    school_bus: { wheel: 'car', wheelCount: 3, flip: true },
     moonlander: { wheel: 'car' },
-    monster_truck: { wheel: 'big' },
+    monster_truck: { wheel: 'big', flip: true },
     tractor: { wheel: 'big' },
     onewheeler: { wheel: 'big', wheelCount: 1 },
     trophy_truck: { wheel: 'big' },
-    finger_screw: { wheel: 'big' },
-    super_diesel_4x4: { wheel: 'big' },
+    finger_screw: { wheel: 'big', flip: true },
+    super_diesel_4x4: { wheel: 'big', flip: true },
     dragster: { wheel: 'big' },
     fire_truck: { wheel: 'big' },
     dune_buggy: { wheel: 'big' },
-    truck: { wheel: 'big' },
-    big_finger: { wheel: 'big' },
+    truck: { wheel: 'big', flip: true },
+    big_finger: { wheel: 'big', flip: true },
     mutant: { wheel: 'big' },
-    jeep_safari: { wheel: 'big' },
+    jeep_safari: { wheel: 'big', flip: true },
     garbage_truck: { wheel: 'big' },
     cement_mixer: { wheel: 'big' },
-    motocross_bike: { wheel: 'moto' },
+    motocross_bike: { wheel: 'moto', flip: true },
     chopper: { wheel: 'moto' },
     minibike: { wheel: 'moto' },
     fast_bike: { wheel: 'moto' },
@@ -1699,12 +1699,15 @@
     }
     const sq = clamp((susp||0)/24, -0.18, 0.18);
     g.save();
-    g.scale(1, 1-sq);
+    g.scale(art.flip ? -1 : 1, 1-sq);
     const targetW = hwb*2 + 24;
     const scale = targetW / art.bodyImg.naturalWidth;
     const targetH = art.bodyImg.naturalHeight * scale;
     const bottomY = wheelR*0.5;
     g.drawImage(art.bodyImg, -targetW/2, bottomY - targetH, targetW, targetH);
+    g.restore();
+    g.save();
+    g.scale(1, 1-sq);
     drawDriver(g, v.cabin[0]+v.cabin[2]*0.42, v.cabin[1]+v.cabin[3]*0.78, v.cabin[3]*0.62, driverPose);
     g.restore();
   }
