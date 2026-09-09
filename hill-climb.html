@@ -171,6 +171,7 @@
   }
   .menu-btn:active{ transform: translateY(2px); }
   #fsBtn{ left:auto; right:12px; }
+  #muteBtn{ left:auto; right:54px; }
 
   .game-wrap{ display:flex; flex-direction:column; align-items:center; width:100%; max-width:900px; }
   .game-wrap:fullscreen, .game-wrap:-webkit-full-screen{
@@ -197,6 +198,7 @@
       <span class="pill">💰 <span id="moneyEl">0</span></span>
     </div>
     <button class="menu-btn" id="menuBtn" title="תפריט ראשי">🏠</button>
+    <button class="menu-btn" id="muteBtn" title="השתקת קול">🔇</button>
     <button class="menu-btn" id="fsBtn" title="מסך מלא">⛶</button>
 
     <div class="overlay" id="startScreen">
@@ -291,13 +293,37 @@
 
   // ---- sound (WebAudio beeps, no assets) ----
   let actx = null;
+  // muted by default until the player turns sound on - remembered per browser
+  const MUTE_KEY = 'hillClimb_muted';
+  let muted = true;
+  try{ const stored = localStorage.getItem(MUTE_KEY); muted = stored === null ? true : stored === '1'; }catch(e){}
+  let masterGain = null;
+  function getMasterGain(){
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(!masterGain){
+      masterGain = actx.createGain();
+      masterGain.gain.value = muted ? 0 : 1;
+      masterGain.connect(actx.destination);
+    }
+    return masterGain;
+  }
+  const muteBtn = document.getElementById('muteBtn');
+  function updateMuteBtn(){ if(muteBtn) muteBtn.textContent = muted ? '🔇' : '🔊'; }
+  function setMuted(v){
+    muted = v;
+    try{ localStorage.setItem(MUTE_KEY, v ? '1' : '0'); }catch(e){}
+    if(masterGain) masterGain.gain.value = v ? 0 : 1;
+    updateMuteBtn();
+  }
+  updateMuteBtn();
+  if(muteBtn) muteBtn.addEventListener('click', ()=> setMuted(!muted));
   function beep(freq, dur, type, gainVal){
     try{
-      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      const dest = getMasterGain();
       const o = actx.createOscillator(); const g = actx.createGain();
       o.type = type||'square'; o.frequency.value = freq;
       g.gain.value = gainVal||0.06;
-      o.connect(g); g.connect(actx.destination);
+      o.connect(g); g.connect(dest);
       o.start();
       g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + (dur||0.12));
       o.stop(actx.currentTime + (dur||0.12));
@@ -315,7 +341,7 @@
   let engineOsc = null, engineGain = null, engineFilter = null;
   function startEngine(){
     try{
-      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      const dest = getMasterGain();
       if(engineOsc) return;
       engineOsc = actx.createOscillator();
       engineFilter = actx.createBiquadFilter();
@@ -327,7 +353,7 @@
       engineGain.gain.value = 0.0001;
       engineOsc.connect(engineFilter);
       engineFilter.connect(engineGain);
-      engineGain.connect(actx.destination);
+      engineGain.connect(dest);
       engineOsc.start();
     }catch(e){}
   }
