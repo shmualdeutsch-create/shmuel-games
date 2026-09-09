@@ -46,6 +46,25 @@
 
   .backlink{position:fixed;top:14px;right:14px;z-index:100;background:var(--surface-2);color:var(--text);text-decoration:none;font-weight:700;font-size:13px;padding:8px 14px;border-radius:99px;box-shadow:var(--shadow);border:1.5px solid var(--border);font-family:-apple-system,'Segoe UI',system-ui,sans-serif;}
 
+  .home-screen{height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .home-card{
+    width:100%;max-width:520px;max-height:calc(100vh - 48px);display:flex;flex-direction:column;
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:28px 26px;box-shadow:var(--shadow);
+  }
+  .home-brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-shrink:0;}
+  .home-brand .logo{font-size:30px;line-height:1;}
+  .home-brand h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em;}
+  .home-card .hint{margin:0 0 16px;flex-shrink:0;}
+  .home-list-scroll{flex:1;min-height:0;}
+  .home-item{display:flex;gap:10px;align-items:center;background:var(--surface-2);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .15s;}
+  .home-item:hover{border-color:var(--accent);}
+  .home-item .home-item-icon{font-size:20px;flex-shrink:0;}
+  .home-item .meta{flex:1;min-width:0;}
+  .home-item .meta .name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .home-item .meta .cap{font-size:11.5px;color:var(--text-muted);}
+  .home-item .home-item-del{flex-shrink:0;}
+
   .app{height:100vh;display:flex;flex-direction:column;padding:48px 12px 10px;gap:8px;}
 
   .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;flex-shrink:0;}
@@ -226,7 +245,20 @@
 <body>
 <a class="backlink" href="index.html">⟵ למשחקים של שמואל</a>
 
-<div class="app" dir="rtl" lang="he">
+<div class="home-screen" id="homeScreen" dir="rtl" lang="he">
+  <div class="home-card">
+    <div class="home-brand"><span class="logo">🎬</span><h1>אולפן הסרטים</h1></div>
+    <p class="hint">פתח פרויקט קיים, או התחל פרויקט חדש</p>
+    <button type="button" class="btn primary lg block" id="homeNewBtn">➕ פרויקט חדש</button>
+    <div class="divider"></div>
+    <div class="quad-scroll home-list-scroll">
+      <div class="list" id="homeProjectList"></div>
+      <div class="empty-state" id="homeEmpty">אין עדיין פרויקטים שמורים. לחץ "פרויקט חדש" כדי להתחיל 🙂</div>
+    </div>
+  </div>
+</div>
+
+<div class="app hidden" id="editorScreen" dir="rtl" lang="he">
   <header class="topbar">
     <div class="brand">
       <div class="logo">🎬</div>
@@ -237,7 +269,7 @@
       <span class="status-text" id="tlStatus">אורך כולל: 0 שניות</span>
       <button type="button" class="btn" id="projSaveBtn">💾 שמור פרויקט</button>
       <button type="button" class="btn primary" id="tlExportBtn">⬇️ ייצא סרטון</button>
-      <button type="button" class="btn danger" id="projNewBtn">🆕 פרויקט חדש</button>
+      <button type="button" class="btn danger" id="goHomeBtn">🏠 חזרה לדף הבית</button>
     </div>
   </header>
 
@@ -549,6 +581,16 @@ function dbDelete(key){
       tx.objectStore(DB_STORE).delete(key);
       tx.oncomplete=function(){resolve();};
       tx.onerror=function(){reject(tx.error);};
+    });
+  });
+}
+function dbGetAll(){
+  return openProjectDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(DB_STORE,'readonly');
+      var req=tx.objectStore(DB_STORE).getAll();
+      req.onsuccess=function(){resolve(req.result||[]);};
+      req.onerror=function(){reject(req.error);};
     });
   });
 }
@@ -1481,9 +1523,15 @@ function dbDelete(key){
 
   var projStatus=$('#projStatus');
   var autosaveTimer=null;
-  var initialLoadDone=false;
+  var activeProjectId=null;
+  var activeProjectName='';
+  var homeScreen=$('#homeScreen'), editorScreen=$('#editorScreen');
+  var homeListEl=$('#homeProjectList'), homeEmptyEl=$('#homeEmpty');
+
   function buildProjectSnapshot(){
     return {
+      id:activeProjectId,
+      name:activeProjectName,
       version:1,
       savedAt:Date.now(),
       pool:pool.map(function(m){return {id:m.id,type:m.type,name:m.name,duration:m.duration,blob:m.file};}),
@@ -1494,41 +1542,19 @@ function dbDelete(key){
     };
   }
   function saveProjectNow(){
-    return dbPut('current',buildProjectSnapshot()).then(function(){
+    if(!activeProjectId)return Promise.resolve();
+    return dbPut(activeProjectId,buildProjectSnapshot()).then(function(){
       if(projStatus)projStatus.textContent='נשמר ✓ '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
     });
   }
   function scheduleAutosave(){
-    if(!initialLoadDone)return;
+    if(!activeProjectId)return;
     clearTimeout(autosaveTimer);
     if(projStatus)projStatus.textContent='שומר…';
     autosaveTimer=setTimeout(function(){saveProjectNow().catch(function(){});},900);
   }
 
-  function restoreProject(proj){
-    var jobs=[];
-    (proj.pool||[]).forEach(function(pm){if(pm.blob)jobs.push(restoreVisualItem(pm));});
-    (proj.audioPool||[]).forEach(function(pam){if(pam.blob)jobs.push(restoreAudioItem(pam));});
-    return Promise.all(jobs).then(function(){
-      videoClips=proj.videoClips||[];
-      textClips=proj.textClips||[];
-      audioClips=proj.audioClips||[];
-      renderPool();
-      renderAllTracks();
-      renderInspector();
-      showToast('הפרויקט שלך נטען אוטומטית 💾');
-    });
-  }
-
-  $('#projSaveBtn').addEventListener('click',function(){
-    saveProjectNow().then(function(){
-      showToast('הפרויקט נשמר במחשב שלך 💾');
-    }).catch(function(){
-      showToast('לא הצלחתי לשמור את הפרויקט 😕');
-    });
-  });
-  $('#projNewBtn').addEventListener('click',function(){
-    if(!confirm('להתחיל פרויקט חדש? זה ימחק את כל התמונות, הסרטונים, הכיתובים והמוזיקה שהוספת עכשיו.'))return;
+  function resetEditorState(){
     if(playing)stopPlayback();
     pool.forEach(function(m){try{URL.revokeObjectURL(m.url);}catch(e){}});
     audioPool.forEach(function(am){try{URL.revokeObjectURL(am.url);}catch(e){}});
@@ -1538,20 +1564,118 @@ function dbDelete(key){
     clearSelection();
     renderPool();
     renderAllTracks();
-    dbDelete('current').catch(function(){});
+  }
+
+  function showEditor(){
+    homeScreen.classList.add('hidden');
+    editorScreen.classList.remove('hidden');
+  }
+  function showHome(){
+    editorScreen.classList.add('hidden');
+    homeScreen.classList.remove('hidden');
+    renderHomeList();
+  }
+
+  function openProjectRecord(proj){
+    activeProjectId=null;
+    resetEditorState();
+    activeProjectId=proj.id;
+    activeProjectName=proj.name||'פרויקט ללא שם';
     if(projStatus)projStatus.textContent='';
-    showToast('פרויקט חדש נפתח 🆕');
+    var jobs=[];
+    (proj.pool||[]).forEach(function(pm){if(pm.blob)jobs.push(restoreVisualItem(pm));});
+    (proj.audioPool||[]).forEach(function(pam){if(pam.blob)jobs.push(restoreAudioItem(pam));});
+    Promise.all(jobs).then(function(){
+      videoClips=proj.videoClips||[];
+      textClips=proj.textClips||[];
+      audioClips=proj.audioClips||[];
+      renderPool();
+      renderAllTracks();
+      renderInspector();
+      showEditor();
+    });
+  }
+
+  function createNewProject(name){
+    activeProjectId=null;
+    resetEditorState();
+    activeProjectId=uid();
+    activeProjectName=name;
+    if(projStatus)projStatus.textContent='';
+    renderInspector();
+    showEditor();
+    saveProjectNow().catch(function(){});
+  }
+
+  function fmtSavedAt(ts){
+    if(!ts)return '';
+    var d=new Date(ts);
+    return d.toLocaleDateString('he-IL')+' '+d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function renderHomeList(){
+    dbGetAll().then(function(list){
+      list=list.filter(function(p){return p&&p.id;});
+      list.sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);});
+      homeEmptyEl.style.display=list.length?'none':'block';
+      homeListEl.innerHTML='';
+      list.forEach(function(proj){
+        var el=document.createElement('div');
+        el.className='home-item';
+        el.innerHTML=
+          '<span class="home-item-icon">🎬</span>'+
+          '<div class="meta"><div class="name"></div><div class="cap">'+fmtSavedAt(proj.savedAt)+'</div></div>'+
+          '<button type="button" class="btn icon danger home-item-del" title="מחק פרויקט">🗑️</button>';
+        el.querySelector('.name').textContent=proj.name||'פרויקט ללא שם';
+        el.addEventListener('click',function(e){
+          if(e.target.closest('.home-item-del'))return;
+          openProjectRecord(proj);
+        });
+        el.querySelector('.home-item-del').addEventListener('click',function(e){
+          e.stopPropagation();
+          if(!confirm('למחוק את הפרויקט "'+(proj.name||'פרויקט ללא שם')+'"? אי אפשר לבטל את זה.'))return;
+          dbDelete(proj.id).then(renderHomeList).catch(function(){});
+        });
+        homeListEl.appendChild(el);
+      });
+    }).catch(function(){});
+  }
+
+  $('#homeNewBtn').addEventListener('click',function(){
+    var name=prompt('איך לקרוא לפרויקט החדש?','הסרט שלי');
+    if(name==null)return;
+    name=name.trim();
+    if(!name)name='הסרט שלי';
+    createNewProject(name);
+  });
+
+  $('#goHomeBtn').addEventListener('click',function(){
+    saveProjectNow().catch(function(){}).then(function(){showHome();});
+  });
+
+  $('#projSaveBtn').addEventListener('click',function(){
+    saveProjectNow().then(function(){
+      showToast('הפרויקט נשמר במחשב שלך 💾');
+    }).catch(function(){
+      showToast('לא הצלחתי לשמור את הפרויקט 😕');
+    });
   });
 
   renderPool();
   renderAllTracks();
   renderInspector();
-  dbGet('current').then(function(proj){
-    if(!proj)return;
-    var hasContent=(proj.pool&&proj.pool.length)||(proj.audioPool&&proj.audioPool.length)||(proj.videoClips&&proj.videoClips.length)||(proj.textClips&&proj.textClips.length)||(proj.audioClips&&proj.audioClips.length);
-    if(hasContent)return restoreProject(proj);
+
+  dbGet('current').then(function(oldProj){
+    if(!oldProj)return;
+    var hasContent=(oldProj.pool&&oldProj.pool.length)||(oldProj.audioPool&&oldProj.audioPool.length)||(oldProj.videoClips&&oldProj.videoClips.length)||(oldProj.textClips&&oldProj.textClips.length)||(oldProj.audioClips&&oldProj.audioClips.length);
+    if(!hasContent)return dbDelete('current');
+    var migratedId=uid();
+    oldProj.id=migratedId;
+    oldProj.name='הפרויקט שלי';
+    oldProj.savedAt=oldProj.savedAt||Date.now();
+    return dbPut(migratedId,oldProj).then(function(){return dbDelete('current');});
   }).catch(function(){}).then(function(){
-    initialLoadDone=true;
+    renderHomeList();
   });
 })();
 
