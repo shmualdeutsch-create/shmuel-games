@@ -336,7 +336,7 @@
     <section class="quad quad-inspector">
       <h2>⚙️ מאפייני הקטע הנבחר</h2>
       <div class="quad-scroll" id="tlInspectorBody">
-        <div class="empty-state">בחר קטע בציר הזמן כדי לערוך אותו</div>
+        <div class="empty-state">לא זמין כרגע, בקרוב אני אטפל בזה 🙂</div>
       </div>
     </section>
   </main>
@@ -1093,6 +1093,8 @@ function dbGetAll(){
   }
 
   function renderInspector(){
+    inspectorBody.innerHTML='<div class="empty-state">לא זמין כרגע, בקרוב אני אטפל בזה 🙂</div>';
+    return;
     if(!selection){
       inspectorBody.innerHTML='<div class="empty-state">בחר קטע בציר הזמן כדי לערוך אותו</div>';
       return;
