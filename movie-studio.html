@@ -162,12 +162,15 @@
   .preview-full{position:relative;width:100%;height:100%;background:#000;}
   .preview-full canvas{width:100%;height:100%;display:block;object-fit:contain;background:#000;touch-action:none;}
   .preview-interact{position:absolute;inset:0;pointer-events:none;touch-action:none;}
-  .preview-interact.active{pointer-events:auto;cursor:move;}
-  .preview-interact.active::after{content:"גוררים כדי להזיז";position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;color:#f0ede6;background:rgba(0,0,0,.5);padding:3px 9px;border-radius:999px;pointer-events:none;}
-  .pi-handle{position:absolute;pointer-events:auto;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#1b1108;display:none;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.45);touch-action:none;}
-  .preview-interact.active .pi-handle{display:flex;}
-  .pi-rotate{top:10px;right:10px;cursor:grab;}
-  .pi-scale{top:10px;left:10px;cursor:nwse-resize;}
+  .pi-frame{position:absolute;display:none;box-sizing:border-box;border:1.5px dashed var(--accent);pointer-events:auto;cursor:move;touch-action:none;transform-origin:center center;}
+  .preview-interact.active .pi-frame{display:block;}
+  .pi-corner{position:absolute;width:14px;height:14px;background:var(--accent);border:2px solid #1b1108;border-radius:3px;pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+  .pi-corner.pi-nw{top:0;left:0;transform:translate(-50%,-50%) scale(var(--cs,1));cursor:nwse-resize;}
+  .pi-corner.pi-ne{top:0;right:0;transform:translate(50%,-50%) scale(var(--cs,1));cursor:nesw-resize;}
+  .pi-corner.pi-sw{bottom:0;left:0;transform:translate(-50%,50%) scale(var(--cs,1));cursor:nesw-resize;}
+  .pi-corner.pi-se{bottom:0;right:0;transform:translate(50%,50%) scale(var(--cs,1));cursor:nwse-resize;}
+  .pi-rotate-stick{position:absolute;top:6px;left:50%;width:2px;height:16px;background:var(--accent);transform:translateX(-50%) scale(var(--cs,1));transform-origin:top center;pointer-events:none;}
+  .pi-rotate{position:absolute;top:24px;left:50%;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#1b1108;display:flex;align-items:center;justify-content:center;font-size:13px;transform:translate(-50%,0) scale(var(--cs,1));transform-origin:top center;pointer-events:auto;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.4);}
   .badge-rec{
     position:absolute;top:12px;inset-inline-start:12px;background:var(--danger);color:#1b1108;
     font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;display:none;align-items:center;gap:6px;
@@ -310,8 +313,14 @@
       <div class="preview-full">
         <canvas id="tlCanvas" width="960" height="540"></canvas>
         <div class="preview-interact" id="previewInteract">
-          <div class="pi-handle pi-rotate" id="piRotate" title="גרור כדי לסובב">↻</div>
-          <div class="pi-handle pi-scale" id="piScale" title="גרור כדי להגדיל/להקטין">⤡</div>
+          <div class="pi-frame" id="piFrame">
+            <div class="pi-corner pi-nw" data-corner="nw"></div>
+            <div class="pi-corner pi-ne" data-corner="ne"></div>
+            <div class="pi-corner pi-sw" data-corner="sw"></div>
+            <div class="pi-corner pi-se" data-corner="se"></div>
+            <div class="pi-rotate-stick"></div>
+            <div class="pi-rotate" id="piRotate" title="גרור כדי לסובב">↻</div>
+          </div>
         </div>
         <div class="badge-rec" id="tlRecBadge"><span class="dot"></span> מקליט</div>
         <div class="preview-controls">
@@ -643,11 +652,30 @@ function dbGetAll(){
   var laneVideo=$('#tlLaneVideo'), laneText=$('#tlLaneText'), laneAudio=$('#tlLaneAudio');
   var tlScroll=$('#tlScroll'), tlInner=$('#tlInner'), tlRuler=$('#tlRuler'), tlPlayheadLine=$('#tlPlayheadLine');
   var splitBtn=$('#tlSplitBtn'), deleteBtn=$('#tlDeleteClipBtn'), duplicateBtn=$('#tlDuplicateBtn'), snapBtn=$('#tlSnapBtn');
-  var previewInteract=$('#previewInteract'), piRotate=$('#piRotate'), piScale=$('#piScale');
+  var previewInteract=$('#previewInteract'), piFrame=$('#piFrame'), piRotate=$('#piRotate');
 
   function updatePreviewInteract(){
     var show=selection&&(selection.type==='video'||selection.type==='text');
     previewInteract.classList.toggle('active',!!show);
+    updatePreviewFrame();
+  }
+  function updatePreviewFrame(){
+    var clip=currentTransformClip();
+    if(!clip)return;
+    var rect=canvas.getBoundingClientRect();
+    var boxW=rect.width, boxH=rect.height;
+    if(!boxW||!boxH)return;
+    var s=Math.min(boxW/canvas.width,boxH/canvas.height)||1;
+    var contentW=canvas.width*s, contentH=canvas.height*s;
+    var offX=(boxW-contentW)/2, offY=(boxH-contentH)/2;
+    var localT=clamp(playhead-clip.start,0,clip.duration);
+    var tr=interpAt(clip.transform.keyframes,localT,['x','y','rotation','scale'])||{x:0,y:0,rotation:0,scale:1};
+    piFrame.style.left=offX+'px';
+    piFrame.style.top=offY+'px';
+    piFrame.style.width=contentW+'px';
+    piFrame.style.height=contentH+'px';
+    piFrame.style.transform='translate('+(tr.x*s).toFixed(2)+'px,'+(tr.y*s).toFixed(2)+'px) rotate('+tr.rotation+'deg) scale('+tr.scale+')';
+    piFrame.style.setProperty('--cs',(1/Math.max(0.05,tr.scale)).toFixed(4));
   }
   function canvasPointFromEvent(e){
     var rect=canvas.getBoundingClientRect();
@@ -671,12 +699,12 @@ function dbGetAll(){
     if(!selection||(selection.type!=='video'&&selection.type!=='text'))return null;
     return clipOf(selection.type,selection.id);
   }
-  previewInteract.addEventListener('pointerdown',function(e){
-    if(e.target.closest('.pi-handle'))return;
+  piFrame.addEventListener('pointerdown',function(e){
+    if(e.target!==piFrame)return;
     var clip=currentTransformClip();
     if(!clip)return;
     e.preventDefault();
-    try{previewInteract.setPointerCapture(e.pointerId);}catch(err){}
+    try{piFrame.setPointerCapture(e.pointerId);}catch(err){}
     var localT=clamp(playhead-clip.start,0,clip.duration);
     var kf=ensureKeyframeAt(clip,localT);
     var start=canvasPointFromEvent(e);
@@ -685,27 +713,28 @@ function dbGetAll(){
       var p=canvasPointFromEvent(ev);
       kf.x=origX+(p.x-start.x);
       kf.y=origY+(p.y-start.y);
-      if(!playing)renderPreviewAt(playhead,false);
+      if(!playing)renderPreviewAt(playhead,false); else updatePreviewFrame();
       var xI=document.getElementById('insX'), yI=document.getElementById('insY');
       if(xI)xI.value=Math.round(kf.x);
       if(yI)yI.value=Math.round(kf.y);
     }
     function onUp(){
-      previewInteract.removeEventListener('pointermove',onMove);
-      previewInteract.removeEventListener('pointerup',onUp);
-      previewInteract.removeEventListener('pointercancel',onUp);
+      piFrame.removeEventListener('pointermove',onMove);
+      piFrame.removeEventListener('pointerup',onUp);
+      piFrame.removeEventListener('pointercancel',onUp);
       renderInspector();
       scheduleAutosave();
     }
-    previewInteract.addEventListener('pointermove',onMove);
-    previewInteract.addEventListener('pointerup',onUp);
-    previewInteract.addEventListener('pointercancel',onUp);
+    piFrame.addEventListener('pointermove',onMove);
+    piFrame.addEventListener('pointerup',onUp);
+    piFrame.addEventListener('pointercancel',onUp);
   });
-  piScale.addEventListener('pointerdown',function(e){
+  function startCornerScaleDrag(e){
     var clip=currentTransformClip();
     if(!clip)return;
     e.preventDefault(); e.stopPropagation();
-    try{piScale.setPointerCapture(e.pointerId);}catch(err){}
+    var handle=e.currentTarget;
+    try{handle.setPointerCapture(e.pointerId);}catch(err){}
     var localT=clamp(playhead-clip.start,0,clip.duration);
     var kf=ensureKeyframeAt(clip,localT);
     var cx=canvas.width/2+kf.x, cy=canvas.height/2+kf.y;
@@ -716,21 +745,22 @@ function dbGetAll(){
       var p=canvasPointFromEvent(ev);
       var dist=Math.hypot(p.x-cx,p.y-cy);
       kf.scale=clamp(origScale*(dist/startDist),0.1,4);
-      if(!playing)renderPreviewAt(playhead,false);
+      if(!playing)renderPreviewAt(playhead,false); else updatePreviewFrame();
       var sI=document.getElementById('insScale');
       if(sI)sI.value=Math.round(kf.scale*100);
     }
     function onUp(){
-      piScale.removeEventListener('pointermove',onMove);
-      piScale.removeEventListener('pointerup',onUp);
-      piScale.removeEventListener('pointercancel',onUp);
+      handle.removeEventListener('pointermove',onMove);
+      handle.removeEventListener('pointerup',onUp);
+      handle.removeEventListener('pointercancel',onUp);
       renderInspector();
       scheduleAutosave();
     }
-    piScale.addEventListener('pointermove',onMove);
-    piScale.addEventListener('pointerup',onUp);
-    piScale.addEventListener('pointercancel',onUp);
-  });
+    handle.addEventListener('pointermove',onMove);
+    handle.addEventListener('pointerup',onUp);
+    handle.addEventListener('pointercancel',onUp);
+  }
+  $all('.pi-corner').forEach(function(c){c.addEventListener('pointerdown',startCornerScaleDrag);});
   piRotate.addEventListener('pointerdown',function(e){
     var clip=currentTransformClip();
     if(!clip)return;
@@ -746,7 +776,7 @@ function dbGetAll(){
       var p=canvasPointFromEvent(ev);
       var angle=Math.atan2(p.y-cy,p.x-cx)*180/Math.PI;
       kf.rotation=Math.round(origRot+(angle-startAngle));
-      if(!playing)renderPreviewAt(playhead,false);
+      if(!playing)renderPreviewAt(playhead,false); else updatePreviewFrame();
       var rI=document.getElementById('insRot');
       if(rI)rI.value=Math.round(kf.rotation);
     }
@@ -1213,7 +1243,7 @@ function dbGetAll(){
     var localT=clamp(playhead-clip.start,0,clip.duration);
     var cur=interpAt(clip.transform.keyframes,localT,['x','y','rotation','scale'])||{x:0,y:0,rotation:0,scale:1};
     return '<div class="divider"></div>'+
-      '<div class="mini-note">מיקום, סיבוב וגודל על המסך. גם ישירות על המסך למעלה: גוררים כדי להזיז, וגוררים את ⤡ / ↻ בפינות כדי להגדיל ולסובב — וגם עם המספרים כאן למטה. כל שינוי נקבע בזמן שראש הנגן נמצא בו. גרור את היהלום 🔶 על הפס כדי לשנות מתי הוא קורה, לחץ עליו כדי לקפוץ אליו, או דאבל-קליק כדי למחוק אותו.</div>'+
+      '<div class="mini-note">מיקום, סיבוב וגודל על המסך — בדיוק כמו בפרימייר. למעלה על המסך יש מסגרת מקווקוות: גוררים אותה כדי להזיז, גוררים ריבוע בפינה כדי להגדיל/להקטין, וגוררים את ↻ למעלה כדי לסובב. אפשר גם עם המספרים כאן למטה. כל שינוי נקבע בזמן שראש הנגן נמצא בו. גרור את היהלום 🔶 על הפס כדי לשנות מתי הוא קורה, לחץ עליו כדי לקפוץ אליו, או דאבל-קליק כדי למחוק אותו.</div>'+
       '<div class="transform-grid">'+
       '<div class="field"><label>ימין-שמאל (X)</label><input type="number" id="insX" step="5" value="'+Math.round(cur.x)+'"></div>'+
       '<div class="field"><label>למעלה-למטה (Y)</label><input type="number" id="insY" step="5" value="'+Math.round(cur.y)+'"></div>'+
@@ -1309,6 +1339,7 @@ function dbGetAll(){
   }
 
   function renderInspector(){
+    updatePreviewInteract();
     if(!selection){
       inspectorBody.innerHTML='<div class="empty-state">בחר קטע בציר הזמן כדי לערוך אותו</div>';
       return;
@@ -1649,6 +1680,7 @@ function dbGetAll(){
         ctx.fillRect(0,0,canvas.width,canvas.height);
       }
     }
+    updatePreviewFrame();
   }
 
   var playhead=0, playing=false, recorder=null, recording=false, lastTs=null;
