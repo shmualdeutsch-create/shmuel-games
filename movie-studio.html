@@ -186,12 +186,13 @@
   .mini-note{font-size:11.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:10px;}
 
   .transform-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .kf-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
-  .kf-item{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:7px 10px;font-size:11.5px;cursor:pointer;}
-  .kf-item:hover{border-color:var(--accent);}
-  .kf-item .kf-time{font-weight:700;color:var(--accent);flex-shrink:0;font-variant-numeric:tabular-nums;}
-  .kf-item .kf-vals{flex:1;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .kf-item .kf-del{flex-shrink:0;background:none;border:none;color:var(--danger);font-size:15px;cursor:pointer;padding:2px 4px;}
+  .kf-track-wrap{margin-top:10px;}
+  .kf-track{position:relative;height:36px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;margin-top:6px;cursor:pointer;}
+  .kf-track-line{position:absolute;top:50%;left:10px;right:10px;height:2px;background:var(--border);transform:translateY(-50%);pointer-events:none;}
+  .kf-track-playhead{position:absolute;top:3px;bottom:3px;width:2px;background:var(--accent);pointer-events:none;}
+  .kf-diamond{position:absolute;top:50%;width:13px;height:13px;background:var(--accent);border:2px solid var(--surface-2);border-radius:3px;transform:translate(-50%,-50%) rotate(45deg);cursor:grab;touch-action:none;}
+  .kf-diamond:hover{background:var(--accent-strong);}
+  .kf-track-times{display:flex;justify-content:space-between;direction:ltr;font-size:10px;color:var(--text-muted);margin-top:4px;font-variant-numeric:tabular-nums;}
 
   .tl-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;flex-shrink:0;}
   .tl-zoom{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-inline-start:auto;}
@@ -1022,16 +1023,17 @@ function dbGetAll(){
     renderInspector();
   }
 
-  function renderKfList(clip){
+  function kfTrackHtml(clip,localT){
     var kfs=clip.transform.keyframes;
-    var html='<div class="kf-list">';
+    var dur=clip.duration>0?clip.duration:0.01;
+    var html='<div class="kf-track-wrap"><div class="kf-track" id="kfTrack">'+
+      '<div class="kf-track-line"></div>'+
+      '<div class="kf-track-playhead" style="left:'+(clamp(localT/dur,0,1)*100).toFixed(2)+'%"></div>';
     kfs.forEach(function(k,i){
-      html+='<div class="kf-item" data-i="'+i+'"><span class="kf-time">⏱ '+k.t.toFixed(1)+'ש</span>'+
-        '<span class="kf-vals">X:'+Math.round(k.x)+' Y:'+Math.round(k.y)+' סיבוב:'+Math.round(k.rotation)+'° גודל:'+Math.round(k.scale*100)+'%</span>'+
-        (kfs.length>1?'<button class="kf-del" data-i="'+i+'" title="מחק נקודה">✕</button>':'')+
-        '</div>';
+      var xr=clamp(k.t/dur,0,1);
+      html+='<div class="kf-diamond" data-i="'+i+'" style="left:'+(xr*100).toFixed(2)+'%" title="⏱ '+k.t.toFixed(1)+'ש — X:'+Math.round(k.x)+' Y:'+Math.round(k.y)+' סיבוב:'+Math.round(k.rotation)+'° גודל:'+Math.round(k.scale*100)+'%"></div>';
     });
-    html+='</div>';
+    html+='</div><div class="kf-track-times"><span>0.0ש</span><span>'+clip.duration.toFixed(1)+'ש</span></div></div>';
     return html;
   }
 
@@ -1039,7 +1041,7 @@ function dbGetAll(){
     var localT=clamp(playhead-clip.start,0,clip.duration);
     var cur=interpAt(clip.transform.keyframes,localT,['x','y','rotation','scale'])||{x:0,y:0,rotation:0,scale:1};
     return '<div class="divider"></div>'+
-      '<div class="mini-note">מיקום, סיבוב וגודל על המסך. הזז את ראש הנגן ➡️ קבע מספרים ➡️ "קבע נקודה". תוכל להוסיף כמה נקודות שתרצה, והסרטון יעבור חלק ביניהן.</div>'+
+      '<div class="mini-note">מיקום, סיבוב וגודל על המסך. גרור את היהלום 🔶 על הפס כדי לשנות מתי הוא קורה, לחץ עליו כדי לקפוץ אליו, או דאבל-קליק כדי למחוק אותו. הזז את ראש הנגן, קבע מספרים ולחץ "קבע נקודה" כדי להוסיף עוד אחד — הסרטון יעבור חלק בין הנקודות.</div>'+
       '<div class="transform-grid">'+
       '<div class="field"><label>ימין-שמאל (X)</label><input type="number" id="insX" step="5" value="'+Math.round(cur.x)+'"></div>'+
       '<div class="field"><label>למעלה-למטה (Y)</label><input type="number" id="insY" step="5" value="'+Math.round(cur.y)+'"></div>'+
@@ -1047,7 +1049,7 @@ function dbGetAll(){
       '<div class="field"><label>גודל (%)</label><input type="number" id="insScale" step="5" min="10" max="400" value="'+Math.round(cur.scale*100)+'"></div>'+
       '</div>'+
       '<button class="btn primary block" id="insSetKfBtn">📍 קבע נקודה בזמן '+localT.toFixed(1)+' שניות</button>'+
-      renderKfList(clip);
+      kfTrackHtml(clip,localT);
   }
 
   function bindTransformSection(clip){
@@ -1065,31 +1067,73 @@ function dbGetAll(){
       showToast('נקודה נקבעה 📍');
       scheduleAutosave();
     });
-    $all('.kf-item').forEach(function(row){
-      row.addEventListener('click',function(e){
-        if(e.target.classList.contains('kf-del'))return;
-        var i=Number(row.dataset.i);
-        var k=clip.transform.keyframes[i];
-        if(!k)return;
-        playhead=clip.start+k.t;
+    var kfTrackEl=$('#kfTrack');
+    if(kfTrackEl){
+      kfTrackEl.addEventListener('click',function(e){
+        if(e.target.classList.contains('kf-diamond'))return;
+        var rect=kfTrackEl.getBoundingClientRect();
+        var xr=rect.width>0?clamp((e.clientX-rect.left)/rect.width,0,1):0;
+        playhead=clip.start+xr*clip.duration;
         updatePlayheadLine();
         renderPreviewAt(playhead,false);
         updateStatus();
         renderInspector();
       });
-    });
-    $all('.kf-del').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var i=Number(btn.dataset.i);
-        if(clip.transform.keyframes.length>1){
-          clip.transform.keyframes.splice(i,1);
+      $all('.kf-diamond').forEach(function(dia){
+        dia.addEventListener('click',function(e){
+          e.stopPropagation();
+          var i=Number(dia.dataset.i);
+          var k=clip.transform.keyframes[i];
+          if(!k)return;
+          playhead=clip.start+k.t;
+          updatePlayheadLine();
+          renderPreviewAt(playhead,false);
+          updateStatus();
           renderInspector();
-          if(!playing)renderPreviewAt(playhead,false);
-          scheduleAutosave();
-        }
+        });
+        dia.addEventListener('dblclick',function(e){
+          e.stopPropagation();
+          var i=Number(dia.dataset.i);
+          if(clip.transform.keyframes.length>1){
+            clip.transform.keyframes.splice(i,1);
+            renderInspector();
+            if(!playing)renderPreviewAt(playhead,false);
+            scheduleAutosave();
+          }
+        });
+        dia.addEventListener('pointerdown',function(e){
+          e.stopPropagation();
+          e.preventDefault();
+          try{dia.setPointerCapture(e.pointerId);}catch(err){}
+          var idx=Number(dia.dataset.i);
+          var moved=false;
+          function onMove(ev){
+            moved=true;
+            var rect=kfTrackEl.getBoundingClientRect();
+            var xr=rect.width>0?clamp((ev.clientX-rect.left)/rect.width,0,1):0;
+            var k=clip.transform.keyframes[idx];
+            if(!k)return;
+            k.t=xr*clip.duration;
+            dia.style.left=(xr*100).toFixed(2)+'%';
+            dia.title='⏱ '+k.t.toFixed(1)+'ש — X:'+Math.round(k.x)+' Y:'+Math.round(k.y)+' סיבוב:'+Math.round(k.rotation)+'° גודל:'+Math.round(k.scale*100)+'%';
+          }
+          function onUp(){
+            dia.removeEventListener('pointermove',onMove);
+            dia.removeEventListener('pointerup',onUp);
+            dia.removeEventListener('pointercancel',onUp);
+            if(moved){
+              clip.transform.keyframes.sort(function(a,b){return a.t-b.t;});
+              renderInspector();
+              if(!playing)renderPreviewAt(playhead,false);
+              scheduleAutosave();
+            }
+          }
+          dia.addEventListener('pointermove',onMove);
+          dia.addEventListener('pointerup',onUp);
+          dia.addEventListener('pointercancel',onUp);
+        });
       });
-    });
+    }
   }
 
   function renderInspector(){
