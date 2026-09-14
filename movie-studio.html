@@ -161,6 +161,13 @@
 
   .preview-full{position:relative;width:100%;height:100%;background:#000;}
   .preview-full canvas{width:100%;height:100%;display:block;object-fit:contain;background:#000;touch-action:none;}
+  .preview-interact{position:absolute;inset:0;pointer-events:none;touch-action:none;}
+  .preview-interact.active{pointer-events:auto;cursor:move;}
+  .preview-interact.active::after{content:"גוררים כדי להזיז";position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;color:#f0ede6;background:rgba(0,0,0,.5);padding:3px 9px;border-radius:999px;pointer-events:none;}
+  .pi-handle{position:absolute;pointer-events:auto;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#1b1108;display:none;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.45);touch-action:none;}
+  .preview-interact.active .pi-handle{display:flex;}
+  .pi-rotate{top:10px;right:10px;cursor:grab;}
+  .pi-scale{top:10px;left:10px;cursor:nwse-resize;}
   .badge-rec{
     position:absolute;top:12px;inset-inline-start:12px;background:var(--danger);color:#1b1108;
     font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;display:none;align-items:center;gap:6px;
@@ -243,6 +250,11 @@
   @media (prefers-reduced-motion:reduce){
     .badge-rec .dot{animation:none;}
   }
+
+  #promptDialog{display:flex!important;}
+  #promptDialog.hidden{display:none!important;}
+  #promptDialog input{background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:14px;}
+  #promptDialog input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -297,6 +309,10 @@
     <section class="quad quad-preview">
       <div class="preview-full">
         <canvas id="tlCanvas" width="960" height="540"></canvas>
+        <div class="preview-interact" id="previewInteract">
+          <div class="pi-handle pi-rotate" id="piRotate" title="גרור כדי לסובב">↻</div>
+          <div class="pi-handle pi-scale" id="piScale" title="גרור כדי להגדיל/להקטין">⤡</div>
+        </div>
         <div class="badge-rec" id="tlRecBadge"><span class="dot"></span> מקליט</div>
         <div class="preview-controls">
           <button class="btn icon" id="tlPlayBtn" title="נגן">▶️</button>
@@ -344,6 +360,17 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div id="promptDialog" class="hidden" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:400px;width:90%;">
+    <p id="promptText" style="margin:0 0 16px;"></p>
+    <input type="text" id="promptInput" style="width:100%;margin-bottom:16px;">
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" id="promptCancel">ביטול</button>
+      <button class="btn primary" id="promptOk">אוקיי</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -545,6 +572,7 @@ function makeRecorder(canvas,includeAudio){
 
 function defaultTransform(){return {keyframes:[{t:0,x:0,y:0,rotation:0,scale:1}]};}
 function defaultVolumeKeyframes(duration){return [{t:0,v:1},{t:duration,v:1}];}
+function defaultTransition(){return {type:'cut',duration:0.3};}
 function clampKeyframesToDuration(clip){
   if(clip.transform)clip.transform.keyframes.forEach(function(k){k.t=clamp(k.t,0,clip.duration);});
   if(clip.volumeKeyframes)clip.volumeKeyframes.forEach(function(k){k.t=clamp(k.t,0,clip.duration);});
@@ -615,6 +643,124 @@ function dbGetAll(){
   var laneVideo=$('#tlLaneVideo'), laneText=$('#tlLaneText'), laneAudio=$('#tlLaneAudio');
   var tlScroll=$('#tlScroll'), tlInner=$('#tlInner'), tlRuler=$('#tlRuler'), tlPlayheadLine=$('#tlPlayheadLine');
   var splitBtn=$('#tlSplitBtn'), deleteBtn=$('#tlDeleteClipBtn'), duplicateBtn=$('#tlDuplicateBtn'), snapBtn=$('#tlSnapBtn');
+  var previewInteract=$('#previewInteract'), piRotate=$('#piRotate'), piScale=$('#piScale');
+
+  function updatePreviewInteract(){
+    var show=selection&&(selection.type==='video'||selection.type==='text');
+    previewInteract.classList.toggle('active',!!show);
+  }
+  function canvasPointFromEvent(e){
+    var rect=canvas.getBoundingClientRect();
+    var boxW=rect.width, boxH=rect.height;
+    var scale=Math.min(boxW/canvas.width,boxH/canvas.height)||1;
+    var contentW=canvas.width*scale, contentH=canvas.height*scale;
+    var offX=(boxW-contentW)/2, offY=(boxH-contentH)/2;
+    return {x:(e.clientX-rect.left-offX)/scale,y:(e.clientY-rect.top-offY)/scale};
+  }
+  function ensureKeyframeAt(clip,localT){
+    var kfs=clip.transform.keyframes;
+    var existing=kfs.find(function(k){return Math.abs(k.t-localT)<0.05;});
+    if(existing)return existing;
+    var cur=interpAt(kfs,localT,['x','y','rotation','scale'])||{x:0,y:0,rotation:0,scale:1};
+    var kf={t:localT,x:cur.x,y:cur.y,rotation:cur.rotation,scale:cur.scale};
+    kfs.push(kf);
+    kfs.sort(function(a,b){return a.t-b.t;});
+    return kf;
+  }
+  function currentTransformClip(){
+    if(!selection||(selection.type!=='video'&&selection.type!=='text'))return null;
+    return clipOf(selection.type,selection.id);
+  }
+  previewInteract.addEventListener('pointerdown',function(e){
+    if(e.target.closest('.pi-handle'))return;
+    var clip=currentTransformClip();
+    if(!clip)return;
+    e.preventDefault();
+    try{previewInteract.setPointerCapture(e.pointerId);}catch(err){}
+    var localT=clamp(playhead-clip.start,0,clip.duration);
+    var kf=ensureKeyframeAt(clip,localT);
+    var start=canvasPointFromEvent(e);
+    var origX=kf.x, origY=kf.y;
+    function onMove(ev){
+      var p=canvasPointFromEvent(ev);
+      kf.x=origX+(p.x-start.x);
+      kf.y=origY+(p.y-start.y);
+      if(!playing)renderPreviewAt(playhead,false);
+      var xI=document.getElementById('insX'), yI=document.getElementById('insY');
+      if(xI)xI.value=Math.round(kf.x);
+      if(yI)yI.value=Math.round(kf.y);
+    }
+    function onUp(){
+      previewInteract.removeEventListener('pointermove',onMove);
+      previewInteract.removeEventListener('pointerup',onUp);
+      previewInteract.removeEventListener('pointercancel',onUp);
+      renderInspector();
+      scheduleAutosave();
+    }
+    previewInteract.addEventListener('pointermove',onMove);
+    previewInteract.addEventListener('pointerup',onUp);
+    previewInteract.addEventListener('pointercancel',onUp);
+  });
+  piScale.addEventListener('pointerdown',function(e){
+    var clip=currentTransformClip();
+    if(!clip)return;
+    e.preventDefault(); e.stopPropagation();
+    try{piScale.setPointerCapture(e.pointerId);}catch(err){}
+    var localT=clamp(playhead-clip.start,0,clip.duration);
+    var kf=ensureKeyframeAt(clip,localT);
+    var cx=canvas.width/2+kf.x, cy=canvas.height/2+kf.y;
+    var start=canvasPointFromEvent(e);
+    var startDist=Math.hypot(start.x-cx,start.y-cy)||1;
+    var origScale=kf.scale;
+    function onMove(ev){
+      var p=canvasPointFromEvent(ev);
+      var dist=Math.hypot(p.x-cx,p.y-cy);
+      kf.scale=clamp(origScale*(dist/startDist),0.1,4);
+      if(!playing)renderPreviewAt(playhead,false);
+      var sI=document.getElementById('insScale');
+      if(sI)sI.value=Math.round(kf.scale*100);
+    }
+    function onUp(){
+      piScale.removeEventListener('pointermove',onMove);
+      piScale.removeEventListener('pointerup',onUp);
+      piScale.removeEventListener('pointercancel',onUp);
+      renderInspector();
+      scheduleAutosave();
+    }
+    piScale.addEventListener('pointermove',onMove);
+    piScale.addEventListener('pointerup',onUp);
+    piScale.addEventListener('pointercancel',onUp);
+  });
+  piRotate.addEventListener('pointerdown',function(e){
+    var clip=currentTransformClip();
+    if(!clip)return;
+    e.preventDefault(); e.stopPropagation();
+    try{piRotate.setPointerCapture(e.pointerId);}catch(err){}
+    var localT=clamp(playhead-clip.start,0,clip.duration);
+    var kf=ensureKeyframeAt(clip,localT);
+    var cx=canvas.width/2+kf.x, cy=canvas.height/2+kf.y;
+    var start=canvasPointFromEvent(e);
+    var startAngle=Math.atan2(start.y-cy,start.x-cx)*180/Math.PI;
+    var origRot=kf.rotation;
+    function onMove(ev){
+      var p=canvasPointFromEvent(ev);
+      var angle=Math.atan2(p.y-cy,p.x-cx)*180/Math.PI;
+      kf.rotation=Math.round(origRot+(angle-startAngle));
+      if(!playing)renderPreviewAt(playhead,false);
+      var rI=document.getElementById('insRot');
+      if(rI)rI.value=Math.round(kf.rotation);
+    }
+    function onUp(){
+      piRotate.removeEventListener('pointermove',onMove);
+      piRotate.removeEventListener('pointerup',onUp);
+      piRotate.removeEventListener('pointercancel',onUp);
+      renderInspector();
+      scheduleAutosave();
+    }
+    piRotate.addEventListener('pointermove',onMove);
+    piRotate.addEventListener('pointerup',onUp);
+    piRotate.addEventListener('pointercancel',onUp);
+  });
 
   var pxPerSec=70;
   var snapEnabled=true;
@@ -741,7 +887,7 @@ function dbGetAll(){
     videoClips.push({
       id:uid(), mediaId:m.id, start:start, duration:duration,
       trimIn:0, trimOut:m.type==='video'?duration:undefined,
-      transform:defaultTransform()
+      transform:defaultTransform(), transition:defaultTransition()
     });
     renderAllTracks();
   }
@@ -753,7 +899,7 @@ function dbGetAll(){
     if(overlaps)start=end;
     audioClips.push({
       id:uid(), mediaId:am.id, start:start, duration:duration,
-      trimIn:0, trimOut:duration, volumeKeyframes:defaultVolumeKeyframes(duration)
+      trimIn:0, trimOut:duration, volumeKeyframes:defaultVolumeKeyframes(duration), transition:defaultTransition()
     });
     renderAllTracks();
   }
@@ -820,7 +966,7 @@ function dbGetAll(){
     var start=Math.min(playhead,Math.max(0,totalDuration()));
     var overlaps=textClips.some(function(c){return start<c.start+c.duration && start+3>c.start;});
     if(overlaps)start=textClips.reduce(function(s,c){return Math.max(s,c.start+c.duration);},0);
-    var clip={id:uid(),start:start,duration:3,text:'כתוב כאן משהו',position:'bottom',transform:defaultTransform()};
+    var clip={id:uid(),start:start,duration:3,text:'כתוב כאן משהו',position:'bottom',transform:defaultTransform(),transition:defaultTransition()};
     textClips.push(clip);
     renderAllTracks();
     selectClip('text',clip.id);
@@ -1037,11 +1183,37 @@ function dbGetAll(){
     return html;
   }
 
+  function transitionSectionHtml(clip){
+    var tr=clip.transition||defaultTransition();
+    return '<div class="divider"></div>'+
+      '<div class="mini-note">מעבר (Transition) בין קליפים כשעוברים מ"זה" ל"הבא" בציר הזמן</div>'+
+      '<div class="field"><label>סוג מעבר</label>'+
+      '<select class="tl-select" id="insTransType">'+
+      '<option value="cut"'+(tr.type==='cut'?' selected':'')+'>חתוך (Cut) - מיידי</option>'+
+      '<option value="dissolve"'+(tr.type==='dissolve'?' selected':'')+'>התאפלות (Dissolve) - צבע שחור</option>'+
+      '<option value="fade"'+(tr.type==='fade'?' selected':'')+'>בהיר (Fade) - צבע לבן</option>'+
+      '</select></div>'+
+      '<div class="field"><label>משך המעבר (שניות)</label>'+
+      '<input type="number" id="insTransDur" min="0.1" step="0.1" max="2" value="'+(tr.duration||0.3).toFixed(1)+'"></div>';
+  }
+  function bindTransitionSection(clip){
+    $('#insTransType').addEventListener('change',function(e){
+      if(!clip.transition)clip.transition=defaultTransition();
+      clip.transition.type=e.target.value;
+      scheduleAutosave();
+    });
+    $('#insTransDur').addEventListener('input',function(e){
+      if(!clip.transition)clip.transition=defaultTransition();
+      clip.transition.duration=Math.max(0.1,Number(e.target.value)||0.3);
+      scheduleAutosave();
+    });
+  }
+
   function transformSectionHtml(clip){
     var localT=clamp(playhead-clip.start,0,clip.duration);
     var cur=interpAt(clip.transform.keyframes,localT,['x','y','rotation','scale'])||{x:0,y:0,rotation:0,scale:1};
     return '<div class="divider"></div>'+
-      '<div class="mini-note">מיקום, סיבוב וגודל על המסך. גרור את היהלום 🔶 על הפס כדי לשנות מתי הוא קורה, לחץ עליו כדי לקפוץ אליו, או דאבל-קליק כדי למחוק אותו. הזז את ראש הנגן, קבע מספרים ולחץ "קבע נקודה" כדי להוסיף עוד אחד — הסרטון יעבור חלק בין הנקודות.</div>'+
+      '<div class="mini-note">מיקום, סיבוב וגודל על המסך. גם ישירות על המסך למעלה: גוררים כדי להזיז, וגוררים את ⤡ / ↻ בפינות כדי להגדיל ולסובב — וגם עם המספרים כאן למטה. כל שינוי נקבע בזמן שראש הנגן נמצא בו. גרור את היהלום 🔶 על הפס כדי לשנות מתי הוא קורה, לחץ עליו כדי לקפוץ אליו, או דאבל-קליק כדי למחוק אותו.</div>'+
       '<div class="transform-grid">'+
       '<div class="field"><label>ימין-שמאל (X)</label><input type="number" id="insX" step="5" value="'+Math.round(cur.x)+'"></div>'+
       '<div class="field"><label>למעלה-למטה (Y)</label><input type="number" id="insY" step="5" value="'+Math.round(cur.y)+'"></div>'+
@@ -1155,6 +1327,7 @@ function dbGetAll(){
           '<div class="row"><input type="number" id="insTrimIn" min="0" step="0.1" value="'+clip.trimIn.toFixed(1)+'" style="width:80px;">'+
           '<span>עד</span><input type="number" id="insTrimOut" min="0" step="0.1" value="'+clip.trimOut.toFixed(1)+'" style="width:80px;"></div></div>'
         ):'')+
+        transitionSectionHtml(clip)+
         transformSectionHtml(clip);
       $('#insDuration').addEventListener('input',function(e){
         clip.duration=Math.max(0.2,Number(e.target.value)||0.2);
@@ -1179,6 +1352,7 @@ function dbGetAll(){
           renderInspector();
         });
       }
+      bindTransitionSection(clip);
       bindTransformSection(clip);
     }else if(selection.type==='text'){
       inspectorBody.innerHTML=
@@ -1190,6 +1364,7 @@ function dbGetAll(){
         '<option value="center"'+(clip.position==='center'?' selected':'')+'>באמצע</option>'+
         '</select></div>'+
         '<div class="field"><label>משך (שניות)</label><input type="number" id="insDuration" min="0.2" step="0.1" value="'+clip.duration.toFixed(1)+'"></div>'+
+        transitionSectionHtml(clip)+
         transformSectionHtml(clip);
       $('#insText').addEventListener('input',function(e){clip.text=e.target.value;renderAllTracks();});
       $('#insPos').addEventListener('change',function(e){clip.position=e.target.value;if(!playing)renderPreviewAt(playhead,false);});
@@ -1199,6 +1374,7 @@ function dbGetAll(){
         renderAllTracks();
         renderInspector();
       });
+      bindTransitionSection(clip);
       bindTransformSection(clip);
     }else if(selection.type==='audio'){
       var am=audioById(clip.mediaId);
@@ -1392,8 +1568,8 @@ function dbGetAll(){
 
   function totalDuration(){
     var t=0;
-    videoClips.forEach(function(c){t=Math.max(t,c.start+c.duration);});
-    textClips.forEach(function(c){t=Math.max(t,c.start+c.duration);});
+    videoClips.forEach(function(c){var end=c.start+c.duration;if(c.transition)end+=c.transition.duration;t=Math.max(t,end);});
+    textClips.forEach(function(c){var end=c.start+c.duration;if(c.transition)end+=c.transition.duration;t=Math.max(t,end);});
     audioClips.forEach(function(c){t=Math.max(t,c.start+c.duration);});
     return t;
   }
@@ -1407,6 +1583,18 @@ function dbGetAll(){
     for(var i=0;i<arr.length;i++){
       var c=arr[i];
       if(t>=c.start && t<c.start+c.duration)return c;
+    }
+    return null;
+  }
+  function findClipTransitionAt(arr,t){
+    for(var i=0;i<arr.length;i++){
+      var c=arr[i];
+      if(!c.transition||c.transition.type==='cut')continue;
+      var clipEnd=c.start+c.duration;
+      var tr=c.transition;
+      if(t>=clipEnd && t<clipEnd+tr.duration){
+        return {clip:c,nextClip:i+1<arr.length?arr[i+1]:null,progress:(t-clipEnd)/tr.duration,transition:tr};
+      }
     }
     return null;
   }
@@ -1427,6 +1615,17 @@ function dbGetAll(){
         }
       }
     }
+    var vTrans=findClipTransitionAt(videoClips,t);
+    if(vTrans){
+      var prog=vTrans.progress;
+      if(vTrans.transition.type==='dissolve'){
+        ctx.fillStyle='rgba(0,0,0,'+prog.toFixed(2)+')';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }else if(vTrans.transition.type==='fade'){
+        ctx.fillStyle='rgba(255,255,255,'+prog.toFixed(2)+')';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
+    }
     var tClip=findActive(textClips,t);
     if(tClip){
       var localT2=t-tClip.start;
@@ -1438,6 +1637,17 @@ function dbGetAll(){
       ctx.translate(-canvas.width/2,-canvas.height/2);
       drawCaption(ctx,tClip.text,canvas.width,canvas.height,tClip.position);
       ctx.restore();
+    }
+    var tTrans=findClipTransitionAt(textClips,t);
+    if(tTrans){
+      var prog2=tTrans.progress;
+      if(tTrans.transition.type==='dissolve'){
+        ctx.fillStyle='rgba(0,0,0,'+prog2.toFixed(2)+')';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }else if(tTrans.transition.type==='fade'){
+        ctx.fillStyle='rgba(255,255,255,'+prog2.toFixed(2)+')';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
     }
   }
 
@@ -1694,12 +1904,34 @@ function dbGetAll(){
     }).catch(function(){});
   }
 
+  function showPromptDialog(text,defaultVal){
+    return new Promise(function(resolve){
+      $('#promptText').textContent=text;
+      $('#promptInput').value=defaultVal||'';
+      $('#promptDialog').classList.remove('hidden');
+      $('#promptInput').focus();
+      function onOk(){cleanup();resolve($('#promptInput').value);}
+      function onCancel(){cleanup();resolve(null);}
+      function cleanup(){
+        $('#promptOk').removeEventListener('click',onOk);
+        $('#promptCancel').removeEventListener('click',onCancel);
+        $('#promptInput').removeEventListener('keypress',onEnter);
+        $('#promptDialog').classList.add('hidden');
+      }
+      function onEnter(e){if(e.key==='Enter')onOk();}
+      $('#promptOk').addEventListener('click',onOk);
+      $('#promptCancel').addEventListener('click',onCancel);
+      $('#promptInput').addEventListener('keypress',onEnter);
+    });
+  }
+
   $('#homeNewBtn').addEventListener('click',function(){
-    var name=prompt('איך לקרוא לפרויקט החדש?','הסרט שלי');
-    if(name==null)return;
-    name=name.trim();
-    if(!name)name='הסרט שלי';
-    createNewProject(name);
+    showPromptDialog('איך לקרוא לפרויקט החדש?','הסרט שלי').then(function(name){
+      if(name==null)return;
+      name=name.trim();
+      if(!name)name='הסרט שלי';
+      createNewProject(name);
+    });
   });
 
   $('#goHomeBtn').addEventListener('click',function(){
