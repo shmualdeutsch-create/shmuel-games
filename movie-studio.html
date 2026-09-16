@@ -1791,7 +1791,14 @@ function dbGetAll(){
     recBadge.classList.remove('on');
     $('#tlExportBtn').disabled=false;
     $('#tlExportBtn').textContent='⬇️ ייצא סרטון';
-    recorder.stop().then(function(blob){saveBlob('הסרט-שלי.webm',blob);});
+    recorder.stop().then(function(blob){
+      showPromptDialog('איך לקרוא לסרטון?','הסרט-שלי').then(function(name){
+        if(name==null)return;
+        name=name.trim();
+        if(!name)name='הסרט-שלי';
+        saveBlob(name+'.webm',blob);
+      });
+    });
   }
 
   $('#tlExportBtn').addEventListener('click',function(){
