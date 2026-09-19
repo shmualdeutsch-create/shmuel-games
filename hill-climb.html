@@ -663,7 +663,7 @@
 
   const VEHICLE_ART = {
     hill_climber: { wheel: 'car' },
-    used_car: { wheel: 'car', flip: true },
+    used_car: { wheel: 'car', wheelSrc: 'used_car_wheel.png', flip: true },
     family_car: { wheel: 'car', flip: true },
     hippie_van: { wheel: 'car', flip: true },
     race_car: { wheel: 'car' },
@@ -708,7 +708,14 @@
   Object.entries(VEHICLE_ART).forEach(([key, cfg])=>{
     cfg.bodyImg = new Image();
     cfg.bodyImg.src = PARTS_DIR + key + '_body.png';
-    cfg.wheelImg = WHEEL_IMG[cfg.wheel];
+    if(cfg.wheelSrc){
+      // this vehicle brings its own wheel image instead of the shared one
+      const im = new Image();
+      im.src = PARTS_DIR + cfg.wheelSrc;
+      cfg.wheelImg = im;
+    } else {
+      cfg.wheelImg = WHEEL_IMG[cfg.wheel];
+    }
   });
   function artReady(art){
     return art && art.bodyImg.complete && art.bodyImg.naturalWidth > 0 &&
