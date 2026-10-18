@@ -191,6 +191,14 @@
   #dHorn{ right:18px; bottom:206px; width:54px; height:54px; font-size:22px; }
   #dExit{ left:18px; bottom:206px; width:54px; height:54px; font-size:22px;
     background:linear-gradient(135deg,rgba(255,120,120,.38),rgba(220,60,60,.28)); }
+  #dAct{ left:88px; bottom:206px; width:54px; height:54px; font-size:22px; display:none;
+    background:linear-gradient(135deg,rgba(255,214,90,.42),rgba(255,160,40,.3)); border-color:rgba(255,224,140,.65);
+    animation:pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 5px 16px rgba(0,0,0,.45), 0 0 0 0 rgba(255,214,90,.5); }
+                    50%{ box-shadow:0 5px 16px rgba(0,0,0,.45), 0 0 0 11px rgba(255,214,90,0); } }
+  #promptPill{ background:linear-gradient(135deg,rgba(255,214,90,.32),rgba(255,150,50,.22));
+    border-color:rgba(255,224,140,.65); display:none; }
+  body.inside #speedo{ display:none; }
   #loading{ position:fixed; inset:0; z-index:60; display:grid; place-items:center; background:#0E1430; }
   #loading div{ text-align:center; font-weight:800; font-size:18px; color:#B9AEE6; }
   #loading .spin{ font-size:52px; animation:sp 1.4s linear infinite; display:inline-block; }
@@ -219,6 +227,7 @@
 <div id="side">
   <a class="rbtn" href="index.html" title="חזרה למשחקים של שמואל">⬅️</a>
   <div class="rbtn" id="bDrive" title="כניסה למכונית">🚗</div>
+  <div class="rbtn" id="bWalk" title="ללכת ברגל בעיר">🚶</div>
   <div class="rbtn" id="bManage" title="לוח ניהול העיר">📊</div>
   <div class="rbtn" id="bHelp" title="הוראות">❓</div>
   <div class="rbtn" id="bZoomIn" title="התקרב">➕</div>
@@ -233,6 +242,7 @@
 <div id="info"><span id="infoX">✖</span><h4 id="infoTitle"></h4><div id="infoBody"></div></div>
 
 <div id="driveHud">
+  <div class="dpill" id="promptPill"><span id="promptTxt"></span></div>
   <div class="dpill" id="speedo">🚗 <b id="speedTxt">0</b> קמ"ש</div>
 </div>
 <div id="driveCtl">
@@ -241,7 +251,8 @@
   <div class="dbtn" id="dGas">⬆️</div>
   <div class="dbtn" id="dBrake">⬇️</div>
   <div class="dbtn" id="dHorn">📣</div>
-  <div class="dbtn" id="dExit">🚪</div>
+  <div class="dbtn" id="dAct">🚪</div>
+  <div class="dbtn" id="dExit">🏙️</div>
 </div>
 
 <div id="dock">
@@ -348,14 +359,30 @@
         <li>במחשב אפשר גם בחיצים או W A S D, ורווח לצופר.</li>
         <li>על <b>כביש</b> נוסעים מהר, על הדשא לאט, ובבניינים מתנגשים 💥</li>
       </ul>
-      <h3>9. 🚓 גנבים ומשטרה</h3>
+      <h3>9. 🚶 לצאת מהמכונית ולהיכנס לבניינים!</h3>
+      <ul>
+        <li>כשאתה בתוך המכונית, לוחצים <b>🚪</b> — ואתה <b>יוצא ועומד ליד האוטו</b>.</li>
+        <li>אפשר גם ללחוץ <b>🚶</b> בצד כדי ללכת ברגל בלי מכונית בכלל.</li>
+        <li>הולכים עם אותם כפתורים: ⬆️ קדימה · ⬅️➡️ פנייה. <b>👋</b> לשלום.</li>
+        <li>כשמתקרבים לבניין — מופיע למטה <b>🚪 להיכנס ל...</b>, לוחצים על הכפתור הצהוב <b>🚪</b> (או Enter במחשב) <b>ואתה בפנים!</b></li>
+        <li>אפשר להיכנס ל-<b>19 בניינים</b>: בתים, חנויות, בית ספר, בית כנסת, מפעל, העירייה ועוד.</li>
+        <li>בתוך הבניין מסתובבים חופשי. ליד הדלת לוחצים <b>🚪</b> כדי לצאת.</li>
+      </ul>
+      <h3>10. 🏛️ המשרד שלך בעירייה</h3>
+      <ul>
+        <li>תיכנס לעירייה — יש לך שם <b>משרד אמיתי</b>: שולחן, מחשב, כיסא מנהלים, דגלים, ספרייה, כספת ומפת העיר.</li>
+        <li><b>השולחן 📊</b> — לנהל את כל העיר מהמשרד (מיסים, שכר, פרסום).</li>
+        <li><b>המפה על הקיר 🗺️</b> — לחזור לתצוגת העיר מלמעלה.</li>
+        <li><b>הכספת 💰</b> — לספור כמה כסף יש לעיר.</li>
+      </ul>
+      <h3>11. 🚓 גנבים ומשטרה</h3>
       <ul>
         <li>כשהעיר גדלה מתחיל <b>פשע</b>. אם הוא גבוה — מופיע <b>🦹 גנב</b>.</li>
         <li><b>🚓 תחנת משטרה</b> שולחת ניידת שרודפת אחריו ותופסת אותו.</li>
         <li>אם אין משטרה — הגנב בורח עם <b>90 💰</b> שלך!</li>
         <li><b>אתה יכול לתפוס אותו בעצמך</b> — פשוט סע עליו עם המכונית! +150 💰</li>
       </ul>
-      <h3>10. 📊 לוח הניהול</h3>
+      <h3>12. 📊 לוח הניהול</h3>
       <ul>
         <li>כפתור <b>📊</b> פותח את לוח הניהול של ראש העיר.</li>
         <li><b>💸 מיסים</b> — יותר מיסים = יותר כסף, אבל אנשים כועסים ובורחים.</li>
@@ -384,34 +411,34 @@ var TICK_MS = 1600;
 
 var TYPES = {
   road:       { name:"כביש",        e:"🛣️", cost:12,  up:0.1, cat:"infra" },
-  house:      { name:"בית",         e:"🏠", cost:110, up:0.8, pw:2, wt:2, cap:4,  res:true, cat:"homes" },
-  apartment:  { name:"בניין דירות", e:"🏢", cost:330, up:2.2, pw:6, wt:6, cap:16, res:true, cat:"homes" },
-  villa:      { name:"וילה",        e:"🏡", cost:260, up:1.6, pw:4, wt:4, cap:6,  res:true, lux:true, cat:"homes" },
-  shop:       { name:"חנות",        e:"🏪", cost:150, up:1.5, pw:3, wt:1, jobs:6,  inc:6,  joy:10, joyR:4, trash:2, cat:"biz" },
-  factory:    { name:"מפעל",        e:"🏭", cost:320, up:3,  pw:8, wt:3, jobs:22, inc:18, pol:20, polR:3, trash:5, cat:"biz" },
-  supermarket:{ name:"סופרמרקט",    e:"🛒", cost:290, up:3, pw:5, wt:2, jobs:14, inc:12, joy:12, joyR:5, trash:4, cat:"biz" },
-  restaurant: { name:"מסעדה",       e:"🍕", cost:200, up:2.5, pw:4, wt:3, jobs:8, inc:9, joy:11, joyR:4, trash:4, cat:"biz" },
-  bank:       { name:"בנק",         e:"🏦", cost:420, up:4, pw:4, wt:2, jobs:10, inc:24, cat:"biz" },
-  gas:        { name:"תחנת דלק",    e:"⛽", cost:210, up:2, pw:3, jobs:5, inc:10, pol:5, polR:2, cat:"biz" },
+  house:      { name:"בית",         e:"🏠", cost:110, up:0.8, pw:2, wt:2, cap:4,  res:true, inside:"home", cat:"homes" },
+  apartment:  { name:"בניין דירות", e:"🏢", cost:330, up:2.2, pw:6, wt:6, cap:16, res:true, inside:"home", cat:"homes" },
+  villa:      { name:"וילה",        e:"🏡", cost:260, up:1.6, pw:4, wt:4, cap:6,  res:true, lux:true, inside:"home", cat:"homes" },
+  shop:       { name:"חנות",        e:"🏪", cost:150, up:1.5, pw:3, wt:1, jobs:6,  inc:6,  joy:10, joyR:4, trash:2, inside:"shop", cat:"biz" },
+  factory:    { name:"מפעל",        e:"🏭", cost:320, up:3,  pw:8, wt:3, jobs:22, inc:18, pol:20, polR:3, trash:5, inside:"industrial", cat:"biz" },
+  supermarket:{ name:"סופרמרקט",    e:"🛒", cost:290, up:3, pw:5, wt:2, jobs:14, inc:12, joy:12, joyR:5, trash:4, inside:"shop", cat:"biz" },
+  restaurant: { name:"מסעדה",       e:"🍕", cost:200, up:2.5, pw:4, wt:3, jobs:8, inc:9, joy:11, joyR:4, trash:4, inside:"shop", cat:"biz" },
+  bank:       { name:"בנק",         e:"🏦", cost:420, up:4, pw:4, wt:2, jobs:10, inc:24, inside:"shop", cat:"biz" },
+  gas:        { name:"תחנת דלק",    e:"⛽", cost:210, up:2, pw:3, jobs:5, inc:10, pol:5, polR:2, inside:"shop", cat:"biz" },
   trashbin:   { name:"פח אשפה",     e:"🗑️", cost:35, up:0.3, trashCap:9, cat:"infra" },
-  recycling:  { name:"מרכז מיחזור", e:"♻️", cost:340, up:3, pw:5, wt:2, jobs:12, trashCap:70, pol:6, polR:2, truck:true, cat:"infra" },
-  powerplant: { name:"תחנת כוח",    e:"⚡", cost:280, up:4,  pwGen:48, jobs:6, pol:14, polR:3, cat:"infra" },
+  recycling:  { name:"מרכז מיחזור", e:"♻️", cost:340, up:3, pw:5, wt:2, jobs:12, trashCap:70, pol:6, polR:2, truck:true, inside:"industrial", cat:"infra" },
+  powerplant: { name:"תחנת כוח",    e:"⚡", cost:280, up:4,  pwGen:48, jobs:6, pol:14, polR:3, inside:"industrial", cat:"infra" },
   windmill:   { name:"טורבינת רוח", e:"🌬️", cost:200, up:0.8, pwGen:15, jobs:1, cat:"infra" },
-  watertower: { name:"מגדל מים",    e:"🚰", cost:170, up:1.5, pw:2, wtGen:48, jobs:2, cat:"infra" },
+  watertower: { name:"מגדל מים",    e:"🚰", cost:170, up:1.5, pw:2, wtGen:48, jobs:2, inside:"industrial", cat:"infra" },
   park:       { name:"פארק",        e:"🌳", cost:75,  up:0.6, wt:1, joy:13, joyR:3, cat:"fun" },
   tree:       { name:"עץ",          e:"🌲", cost:15,  up:0,  joy:4, joyR:2, cat:"fun" },
   fountain:   { name:"מזרקה",       e:"⛲", cost:95,  up:0.7, wt:2, joy:9, joyR:3, cat:"fun" },
   billboard:  { name:"לוח מודעות",  e:"📢", cost:130, up:1, pw:1, jobs:1, joy:9, joyR:5, ad:true, cat:"fun" },
   stadium:    { name:"אצטדיון",     e:"🏟️", cost:650, up:5, pw:10, wt:5, jobs:16, inc:10, joy:18, joyR:8, cat:"fun" },
-  cityhall:   { name:"עירייה",      e:"🏛️", cost:850, up:6, pw:6, wt:4, jobs:14, joy:16, joyR:9, hall:true, one:true, cat:"serv" },
-  synagogue:  { name:"בית כנסת",    e:"🕍", cost:320, up:2, pw:3, wt:2, jobs:3, joy:17, joyR:6, cat:"serv" },
-  library:    { name:"ספרייה",      e:"📚", cost:250, up:2, pw:3, wt:2, jobs:6, joy:12, joyR:5, cat:"serv" },
+  cityhall:   { name:"עירייה",      e:"🏛️", cost:850, up:6, pw:6, wt:4, jobs:14, joy:16, joyR:9, hall:true, one:true, inside:"office", cat:"serv" },
+  synagogue:  { name:"בית כנסת",    e:"🕍", cost:320, up:2, pw:3, wt:2, jobs:3, joy:17, joyR:6, inside:"service", cat:"serv" },
+  library:    { name:"ספרייה",      e:"📚", cost:250, up:2, pw:3, wt:2, jobs:6, joy:12, joyR:5, inside:"service", cat:"serv" },
   busstop:    { name:"תחנת אוטובוס", e:"🚌", cost:120, up:1, pw:1, jobs:2, joy:8, joyR:4, bus:true, cat:"serv" },
   pool:       { name:"בריכה",       e:"🏊", cost:260, up:3, pw:4, wt:9, jobs:5, joy:14, joyR:5, cat:"fun" },
-  school:     { name:"בית ספר",     e:"🏫", cost:230, up:2,  pw:4, wt:3, jobs:9,  joy:11, joyR:5, cat:"serv" },
-  hospital:   { name:"בית חולים",   e:"🏥", cost:300, up:2.5, pw:5, wt:4, jobs:13, joy:11, joyR:6, cat:"serv" },
-  police:     { name:"משטרה",       e:"🚓", cost:240, up:2,  pw:3, wt:2, jobs:9,  joy:9,  joyR:6, cat:"serv" },
-  fire:       { name:"מכבי אש",     e:"🚒", cost:240, up:2,  pw:3, wt:3, jobs:9,  joy:8,  joyR:6, cat:"serv" }
+  school:     { name:"בית ספר",     e:"🏫", cost:230, up:2,  pw:4, wt:3, jobs:9,  joy:11, joyR:5, inside:"service", cat:"serv" },
+  hospital:   { name:"בית חולים",   e:"🏥", cost:300, up:2.5, pw:5, wt:4, jobs:13, joy:11, joyR:6, inside:"service", cat:"serv" },
+  police:     { name:"משטרה",       e:"🚓", cost:240, up:2,  pw:3, wt:2, jobs:9,  joy:9,  joyR:6, inside:"service", cat:"serv" },
+  fire:       { name:"מכבי אש",     e:"🚒", cost:240, up:2,  pw:3, wt:3, jobs:9,  joy:8,  joyR:6, inside:"service", cat:"serv" }
 };
 
 var CATS = [
@@ -2331,7 +2358,7 @@ function doClick(cx, cy){
 
 var pointers = {}, dragging = false, startX = 0, startY = 0, pinchDist = 0, nPointers = 0;
 canvas.addEventListener("pointerdown", function(ev){
-  if (DRV.on) return;
+  if (DRV.on || WALK.on) return;
   canvas.setPointerCapture && canvas.setPointerCapture(ev.pointerId);
   pointers[ev.pointerId] = { x:ev.clientX, y:ev.clientY };
   nPointers++;
@@ -2344,7 +2371,7 @@ canvas.addEventListener("pointerdown", function(ev){
   }
 });
 canvas.addEventListener("pointermove", function(ev){
-  if (DRV.on) return;
+  if (DRV.on || WALK.on) return;
   if (!pointers[ev.pointerId]){
     if (ev.pointerType === "mouse"){
       var t = pickTile(ev.clientX, ev.clientY);
@@ -2373,7 +2400,7 @@ canvas.addEventListener("pointermove", function(ev){
   }
 });
 function endPointer(ev){
-  if (DRV.on) return;
+  if (DRV.on || WALK.on) return;
   if (pointers[ev.pointerId]){ delete pointers[ev.pointerId]; nPointers = Math.max(0, nPointers-1); }
   if (nPointers === 0){
     if (!dragging) doClick(ev.clientX, ev.clientY);
@@ -2386,7 +2413,7 @@ canvas.addEventListener("pointerleave", function(ev){
   if (ev.pointerType === "mouse" && nPointers === 0) moveCursor(-1,-1);
 });
 canvas.addEventListener("wheel", function(ev){
-  if (DRV.on) return;
+  if (DRV.on || WALK.on) return;
   ev.preventDefault();
   camDist *= (1 + (ev.deltaY > 0 ? 0.11 : -0.11));
   updateCam();
@@ -2394,7 +2421,7 @@ canvas.addEventListener("wheel", function(ev){
 canvas.addEventListener("contextmenu", function(ev){ ev.preventDefault(); });
 
 window.addEventListener("keydown", function(ev){
-  if (DRV.on) return;
+  if (DRV.on || WALK.on) return;
   var k = ev.key;
   var step = 4;
   if (k === "ArrowLeft")  { camTarget.x -= step*Math.cos(camYaw); camTarget.z += step*Math.sin(camYaw); }
@@ -2547,6 +2574,8 @@ function clearCity(){
   while (trucks.length) killAgent(trucks, 0);
   while (buses.length) killAgent(buses, 0);
   clearCrime(); clearGarbage();
+  if (INS.on) exitInterior();
+  if (WALK.on) exitWalk();
   refreshRoadList();
   S.money = START_MONEY; S.day = 1; S.pop = 0; S.happy = 60;
   S.pwCap = S.pwUse = S.wtCap = S.wtUse = S.jobs = 0;
@@ -2554,6 +2583,540 @@ function clearCity(){
   var st = document.getElementById("sTax"), ss = document.getElementById("sSal");
   if (st) st.value = 100; if (ss) ss.value = 100;
   S.everHadPop = false; warnCool = {};
+}
+
+/* ============================================================
+   16. הליכה ברגל 🚶 וכניסה לבניינים 🚪
+   ============================================================ */
+var WALK = { on:false, g:null, x:0, z:0, ang:0, spd:0, legs:null, arms:null };
+var INS  = { on:false, type:null, tx:0, tz:0, inters:[], near:null };
+var ROOM_X = 5000;
+var WALK_SPD = 5.4, WALK_TURN = 2.9;
+
+var interiorGroup = new THREE.Group();
+interiorGroup.position.x = ROOM_X;
+scene.add(interiorGroup);
+var roomLight = new THREE.PointLight(0xFFEAC4, 1.15, 30);
+roomLight.position.set(ROOM_X, 3.0, 0);
+roomLight.visible = false;
+scene.add(roomLight);
+var roomLight2 = new THREE.HemisphereLight(0xFFF2DC, 0x6A5A48, 0);
+scene.add(roomLight2);
+
+function buildPerson(){
+  var g = new THREE.Group();
+  var shirt = M(0x4E86C8, 0.8), pants = M(0x3A4258, 0.85), skin = M(0xF0C8A0, 0.8);
+  g.add(box(0.5, 0.62, 0.3, shirt, 0, 0.92, 0));
+  var head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 12, 10), skin);
+  head.position.y = 1.4; head.castShadow = true; g.add(head);
+  /* שיער וכיפה */
+  var hair = new THREE.Mesh(new THREE.SphereGeometry(0.215, 12, 10, 0, Math.PI*2, 0, Math.PI/2.1), M(0x4A3524, 0.9));
+  hair.position.y = 1.41; g.add(hair);
+  var kip = new THREE.Mesh(new THREE.SphereGeometry(0.115, 10, 8, 0, Math.PI*2, 0, Math.PI/2), M(0x2E3A6A, 0.85));
+  kip.position.set(0, 1.55, -0.05); g.add(kip);
+  /* עיניים */
+  var eyeM = M(0x2A2A32, 0.4);
+  var e1 = new THREE.Mesh(new THREE.SphereGeometry(0.035, 7, 6), eyeM); e1.position.set(-0.08, 1.42, 0.2);
+  var e2 = new THREE.Mesh(new THREE.SphereGeometry(0.035, 7, 6), eyeM); e2.position.set( 0.08, 1.42, 0.2);
+  g.add(e1); g.add(e2);
+  /* ידיים ורגליים */
+  var a1 = cyl(0.075, 0.075, 0.5, 7, shirt, -0.32, 0.95, 0);
+  var a2 = cyl(0.075, 0.075, 0.5, 7, shirt,  0.32, 0.95, 0);
+  var l1 = cyl(0.09, 0.09, 0.62, 7, pants, -0.13, 0.31, 0);
+  var l2 = cyl(0.09, 0.09, 0.62, 7, pants,  0.13, 0.31, 0);
+  g.add(a1); g.add(a2); g.add(l1); g.add(l2);
+  g.userData.legs = [l1, l2];
+  g.userData.arms = [a1, a2];
+  return g;
+}
+
+/* ---------- בניית חדר פנימי ---------- */
+var RW = 6.5, RD = 4.8, RH = 3.4;   /* חצי רוחב, חצי עומק, גובה */
+function clearInterior(){
+  while (interiorGroup.children.length){
+    var c = interiorGroup.children[0];
+    interiorGroup.remove(c); disposeGroup(c);
+  }
+  INS.inters = [];
+}
+function addInteract(x, z, r, label, icon, fn){
+  INS.inters.push({ x:x, z:z, r:r, label:label, icon:icon, fn:fn });
+}
+function roomShell(floorCol, wallCol){
+  var g = new THREE.Group();
+  g.add(box(RW*2, 0.2, RD*2, M(floorCol, 0.9), 0, -0.1, 0));
+  var wm = M(wallCol, 0.95);
+  g.add(box(RW*2, RH, 0.3, wm, 0, RH/2, -RD));
+  g.add(box(0.3, RH, RD*2, wm, -RW, RH/2, 0));
+  g.add(box(0.3, RH, RD*2, wm,  RW, RH/2, 0));
+  /* קיר קדמי עם פתח דלת */
+  g.add(box(RW-0.8, RH, 0.3, wm, -(RW+0.8)/2 - 0.1, RH/2, RD));
+  g.add(box(RW-0.8, RH, 0.3, wm,  (RW+0.8)/2 + 0.1, RH/2, RD));
+  g.add(box(1.8, RH-2.3, 0.3, wm, 0, RH-0.55, RD));
+  /* תקרה */
+  g.add(box(RW*2, 0.2, RD*2, M(0xF4F0E6, 0.95), 0, RH, 0));
+  /* פנל תאורה */
+  var lampM = new THREE.MeshStandardMaterial({ color:0xFFFFFF, emissive:new THREE.Color(0xFFF0C8), emissiveIntensity:1.5, roughness:0.4 });
+  g.add(box(2.4, 0.1, 0.9, lampM, 0, RH-0.14, -1));
+  g.add(box(2.4, 0.1, 0.9, lampM, 0, RH-0.14, 2));
+  /* שטיח */
+  g.add(box(RW*1.1, 0.03, RD*1.0, M(0xB8654E, 0.95), 0, 0.02, -0.4));
+  /* מפתן הדלת */
+  g.add(box(1.8, 0.06, 0.5, M(0x8A6B4A, 0.9), 0, 0.03, RD-0.15));
+  return g;
+}
+function roomWindow(g, x, z, rotY){
+  var frame = box(1.7, 1.3, 0.12, M(0xE8E2D2, 0.8), x, 1.75, z);
+  frame.rotation.y = rotY || 0;
+  g.add(frame);
+  var glassM = new THREE.MeshStandardMaterial({ color:0x9FD8FF, emissive:new THREE.Color(0xBFE8FF), emissiveIntensity:0.55, roughness:0.1 });
+  var glass = box(1.5, 1.1, 0.08, glassM, x, 1.75, z + (rotY ? 0 : -0.04));
+  glass.rotation.y = rotY || 0;
+  g.add(glass);
+  var bar = box(0.07, 1.1, 0.1, M(0xE8E2D2, 0.8), x, 1.75, z);
+  bar.rotation.y = rotY || 0; g.add(bar);
+}
+function plantPot(g, x, z){
+  g.add(cyl(0.25, 0.3, 0.42, 10, M(0xC2703C, 0.9), x, 0.21, z));
+  for (var i=0;i<4;i++){
+    var leaf = cone(0.26, 0.9, 6, M(0x3FA85C, 0.9), x, 0.85 + i*0.14, z);
+    leaf.rotation.z = (i-1.5)*0.3; leaf.rotation.x = Math.sin(i)*0.25;
+    g.add(leaf);
+  }
+}
+
+/* --- משרד ראש העיר --- */
+function interiorOffice(){
+  var g = roomShell(0x8A6A4A, 0xE8DFC8);
+  roomWindow(g, -3.4, -RD+0.1);
+  roomWindow(g,  3.4, -RD+0.1);
+  /* שולחן ראש העיר */
+  var deskM = M(0x6B4226, 0.75);
+  g.add(box(3.0, 0.16, 1.4, deskM, 0, 0.88, -2.2));
+  g.add(box(0.3, 0.88, 1.2, deskM, -1.3, 0.44, -2.2));
+  g.add(box(0.3, 0.88, 1.2, deskM,  1.3, 0.44, -2.2));
+  g.add(box(2.6, 0.5, 0.1, deskM, 0, 0.62, -1.56));
+  /* מחשב */
+  g.add(box(0.9, 0.08, 0.3, M(0x3A3A46, 0.6), -0.4, 1.0, -2.3));
+  var scr = new THREE.MeshStandardMaterial({ color:0x2A4A7A, emissive:new THREE.Color(0x4E9FE8), emissiveIntensity:1.1, roughness:0.2 });
+  g.add(box(0.9, 0.6, 0.06, scr, -0.4, 1.34, -2.42));
+  g.add(box(0.55, 0.03, 0.22, M(0x2A2A34, 0.5), -0.4, 0.98, -1.95));
+  /* ניירות וספל */
+  g.add(box(0.34, 0.03, 0.26, M(0xFFFFFF, 0.8), 0.7, 0.98, -2.1));
+  g.add(cyl(0.1, 0.09, 0.16, 10, M(0xE8534F, 0.6), 1.15, 1.04, -2.3));
+  /* כיסא מנהלים */
+  var chair = new THREE.Group(); chair.position.set(0, 0, -3.2); g.add(chair);
+  chair.add(box(0.74, 0.14, 0.7, M(0x2E3444, 0.8), 0, 0.5, 0));
+  chair.add(box(0.74, 0.95, 0.14, M(0x2E3444, 0.8), 0, 1.0, -0.33));
+  chair.add(cyl(0.08, 0.08, 0.42, 8, M(0x55555F, 0.5, 0.4), 0, 0.26, 0));
+  chair.add(cyl(0.34, 0.34, 0.07, 10, M(0x55555F, 0.5, 0.4), 0, 0.05, 0));
+  /* מפת העיר על הקיר */
+  g.add(box(2.6, 1.7, 0.1, M(0x2E3A4E, 0.7), -RW+0.22, 1.9, -0.5).rotateY(Math.PI/2));
+  var mapM = new THREE.MeshStandardMaterial({ color:0x6FC97A, emissive:new THREE.Color(0x3FA85C), emissiveIntensity:0.25, roughness:0.8 });
+  var map = box(2.3, 1.45, 0.06, mapM, -RW+0.3, 1.9, -0.5); map.rotation.y = Math.PI/2; g.add(map);
+  for (var i=0;i<5;i++){
+    var pin = box(0.07, 0.07, 0.12, M([0xE8534F,0xFFD24E,0x4EA8DE,0xFF6FA0,0xFFFFFF][i], 0.5),
+                  -RW+0.38, 1.4 + (i%3)*0.5, -1.3 + i*0.45);
+    pin.rotation.y = Math.PI/2; g.add(pin);
+  }
+  /* ספרייה */
+  var shelfM = M(0x7A5236, 0.8);
+  g.add(box(0.14, 2.3, 2.6, shelfM, RW-0.22, 1.15, -1.2));          /* גב הארון */
+  g.add(box(0.5, 0.1, 2.6, shelfM, RW-0.45, 2.3, -1.2));            /* גג */
+  g.add(box(0.5, 2.3, 0.1, shelfM, RW-0.45, 1.15, -2.45));
+  g.add(box(0.5, 2.3, 0.1, shelfM, RW-0.45, 1.15, 0.05));
+  for (var sh=0; sh<4; sh++){
+    g.add(box(0.5, 0.07, 2.5, shelfM, RW-0.45, 0.42 + sh*0.55, -1.2));
+    for (var bk=0; bk<7; bk++){
+      var bc = [0xE8534F, 0x4EA8DE, 0xFFD24E, 0x3FBF7F, 0x9B5DE5][(sh+bk)%5];
+      g.add(box(0.3, 0.42, 0.11, M(bc, 0.8), RW-0.45, 0.67 + sh*0.55, -2.3 + bk*0.33));
+    }
+  }
+  /* דגלים משני צדי השולחן */
+  for (var f=0; f<2; f++){
+    var fx = f ? 2.3 : -2.3;
+    g.add(cyl(0.05,0.05,2.3, 6, M(0xC8A84E, 0.4, 0.6), fx, 1.15, -3.6));
+    var flag = box(0.1, 0.8, 0.62, M(f ? 0x4EA8DE : 0xFFFFFF, 0.8), fx, 1.9, -3.28);
+    g.add(flag);
+  }
+  /* כספת */
+  g.add(box(0.9, 1.0, 0.7, M(0x4A5260, 0.5, 0.4), RW-0.6, 0.5, 2.6));
+  var dial = cyl(0.17, 0.17, 0.07, 14, M(0xC8C8D4, 0.3, 0.7), RW-0.6, 0.62, 2.98);
+  dial.rotation.x = Math.PI/2; g.add(dial);
+  g.add(box(0.5, 0.1, 0.05, M(0xFFD24E, 0.4, 0.6), RW-0.6, 1.1, 2.62));
+  /* שלט על הקיר */
+  g.add(box(2.0, 0.42, 0.08, M(0xFFD24E, 0.5), 0, 2.75, -RD+0.2));
+  plantPot(g, -RW+0.8, 2.6);
+  plantPot(g, -RW+0.8, -3.4);
+  addInteract(0, -1.4, 1.5, "לנהל את העיר", "📊", function(){
+    updateManage(); document.getElementById("manageScreen").className = "overlay"; beep(680,0.06);
+  });
+  addInteract(-RW+0.9, -0.5, 1.5, "לחזור לתצוגת העיר מלמעלה", "🗺️", function(){
+    exitInterior(); exitWalk(); beep(600,0.08);
+  });
+  addInteract(RW-0.9, 2.6, 1.4, "לספור את הקופה", "💰", function(){
+    toast("💰 בקופת העיר יש " + S.money + " שקלים. רווח " + ((S.income||0)-(S.pay||0)) + " ליום", "good");
+    beep(840,0.07); setTimeout(function(){ beep(1040,0.1); }, 80);
+  });
+  return g;
+}
+
+/* --- בית --- */
+function interiorHome(){
+  var g = roomShell(0xC9A376, 0xF4E8D4);
+  roomWindow(g, -3.2, -RD+0.1);
+  roomWindow(g,  3.2, -RD+0.1);
+  /* ספה */
+  var sofaM = M(0x4E86C8, 0.9);
+  g.add(box(2.6, 0.5, 0.95, sofaM, -2.0, 0.3, -1.4));
+  g.add(box(2.6, 0.7, 0.26, sofaM, -2.0, 0.72, -1.82));
+  g.add(box(0.28, 0.62, 0.95, sofaM, -3.3, 0.5, -1.4));
+  g.add(box(0.28, 0.62, 0.95, sofaM, -0.7, 0.5, -1.4));
+  g.add(box(0.5, 0.16, 0.5, M(0xFFD24E, 0.9), -2.4, 0.62, -1.4));
+  /* שולחן סלון */
+  g.add(box(1.2, 0.1, 0.7, M(0x8A5A32, 0.7), -2.0, 0.42, -0.1));
+  g.add(box(0.1, 0.42, 0.1, M(0x8A5A32, 0.7), -2.5, 0.21, -0.1));
+  g.add(box(0.1, 0.42, 0.1, M(0x8A5A32, 0.7), -1.5, 0.21, -0.1));
+  /* טלוויזיה */
+  g.add(box(0.3, 0.9, 1.4, M(0x3A3A46, 0.6), -RW+0.35, 1.3, -1.4));
+  var tv = new THREE.MeshStandardMaterial({ color:0x2A3A5A, emissive:new THREE.Color(0x5E9FD8), emissiveIntensity:0.9, roughness:0.2 });
+  var tvScr = box(0.08, 0.75, 1.25, tv, -RW+0.5, 1.3, -1.4); g.add(tvScr);
+  /* מטבחון */
+  var counter = M(0xE8E2D2, 0.8);
+  g.add(box(2.8, 0.9, 0.7, counter, 2.6, 0.45, -RD+0.5));
+  g.add(box(2.9, 0.1, 0.78, M(0x6B6B76, 0.5), 2.6, 0.92, -RD+0.5));
+  g.add(box(0.6, 0.06, 0.45, M(0xBFBFC8, 0.3, 0.6), 1.8, 0.97, -RD+0.5));
+  g.add(cyl(0.05,0.05,0.4, 6, M(0xBFBFC8, 0.3, 0.6), 1.8, 1.15, -RD+0.3));
+  g.add(box(0.75, 1.75, 0.7, M(0xF4F4F8, 0.5), 4.4, 0.88, -RD+0.5));
+  g.add(box(0.05, 0.3, 0.06, M(0xBFBFC8, 0.4, 0.5), 4.05, 1.3, -RD+0.5));
+  /* שולחן אוכל */
+  g.add(box(1.6, 0.1, 1.0, M(0x9A6B3C, 0.8), 2.6, 0.78, 1.6));
+  for (var l=0;l<4;l++) g.add(box(0.1, 0.78, 0.1, M(0x9A6B3C, 0.8), 2.6 + (l<2?-0.65:0.65), 0.39, 1.6 + (l%2?-0.38:0.38)));
+  for (var c=0;c<2;c++){
+    g.add(box(0.42, 0.07, 0.42, M(0xC2703C, 0.8), 2.6 + (c?1.2:-1.2), 0.46, 1.6));
+    g.add(box(0.42, 0.55, 0.08, M(0xC2703C, 0.8), 2.6 + (c?1.42:-1.42), 0.72, 1.6));
+  }
+  /* מנורה ותמונות */
+  g.add(cyl(0.06,0.06,1.5, 6, M(0x8A8A96, 0.5), -3.6, 0.75, 0.9));
+  var lamp = cone(0.34, 0.4, 10, new THREE.MeshStandardMaterial({ color:0xFFE8B0, emissive:new THREE.Color(0xFFD88A), emissiveIntensity:1.0 }), -3.6, 1.65, 0.9);
+  lamp.rotation.x = Math.PI; g.add(lamp);
+  g.add(box(0.9, 0.7, 0.06, M(0x9A6B3C, 0.8), 0, 2.1, -RD+0.2));
+  g.add(box(0.75, 0.55, 0.03, M(0x7FC2E8, 0.7), 0, 2.1, -RD+0.26));
+  plantPot(g, RW-0.8, 2.8);
+  addInteract(-2.0, -1.0, 1.4, "לשבת ולראות טלוויזיה", "📺", function(){
+    toast("📺 נחמד בבית! התושבים אוהבים את העיר שלך", "good"); beep(620,0.08);
+  });
+  return g;
+}
+
+/* --- חנות / עסק --- */
+function interiorShop(){
+  var g = roomShell(0xDCD6C6, 0xF2EFE6);
+  roomWindow(g, 0, -RD+0.1);
+  /* דלפק */
+  var cm = M(0xC9A376, 0.8);
+  g.add(box(3.4, 1.0, 0.8, cm, -2.0, 0.5, 1.4));
+  g.add(box(3.5, 0.1, 0.9, M(0x6B6B76, 0.5), -2.0, 1.03, 1.4));
+  /* קופה רושמת */
+  g.add(box(0.55, 0.32, 0.45, M(0x3A3A46, 0.6), -3.0, 1.22, 1.4));
+  var reg = new THREE.MeshStandardMaterial({ color:0x2A4A3A, emissive:new THREE.Color(0x5EE89A), emissiveIntensity:0.9 });
+  g.add(box(0.4, 0.22, 0.05, reg, -3.0, 1.34, 1.16));
+  /* מדפים עם מוצרים */
+  var shelfM = M(0xBFBFC8, 0.6, 0.2);
+  for (var r=0; r<3; r++){
+    var sz = -3.0 + r*2.1;
+    g.add(box(4.6, 0.12, 0.7, shelfM, 1.6, 0.5, sz));
+    g.add(box(4.6, 0.12, 0.7, shelfM, 1.6, 1.15, sz));
+    g.add(box(4.6, 0.12, 0.7, shelfM, 1.6, 1.8, sz));
+    g.add(box(0.12, 2.0, 0.7, shelfM, -0.7, 1.0, sz));
+    g.add(box(0.12, 2.0, 0.7, shelfM, 3.9, 1.0, sz));
+    for (var p=0; p<16; p++){
+      var pc = [0xE8534F, 0xFFD24E, 0x4EA8DE, 0x3FBF7F, 0xFF6FA0, 0x9B5DE5][p%6];
+      g.add(box(0.26, 0.34, 0.26, M(pc, 0.7), -0.3 + (p%8)*0.56, 0.73 + Math.floor(p/8)*0.65, sz));
+    }
+  }
+  /* עגלה */
+  g.add(box(0.5, 0.4, 0.44, M(0xB8B8C4, 0.4, 0.5), -3.6, 0.35, -1.2));
+  /* שלט */
+  g.add(box(2.4, 0.5, 0.08, M(0xFFD24E, 0.5), -2.0, 2.4, -RD+0.2));
+  addInteract(-2.0, 0.6, 1.4, "לבדוק את הקופה", "🧾", function(){
+    toast("🧾 ההכנסה של העיר היום: " + (S.income||0) + " 💰", "good"); beep(700,0.07);
+  });
+  return g;
+}
+
+/* --- מוסד ציבורי --- */
+function interiorService(){
+  var g = roomShell(0xC2C8D2, 0xF0F2F6);
+  roomWindow(g, -3.2, -RD+0.1);
+  roomWindow(g,  3.2, -RD+0.1);
+  /* לוח */
+  g.add(box(3.4, 1.6, 0.1, M(0x2E4A38, 0.85), 0, 1.9, -RD+0.22));
+  g.add(box(3.6, 1.8, 0.06, M(0x9A6B3C, 0.8), 0, 1.9, -RD+0.16));
+  for (var s=0;s<3;s++) g.add(box(1.4, 0.06, 0.03, M(0xFFFFFF, 0.6), -0.6 + s*0.3, 2.2 - s*0.35, -RD+0.28));
+  /* שולחנות */
+  for (var i=0;i<6;i++){
+    var dx = -2.4 + (i%3)*2.4, dz = -0.6 + Math.floor(i/3)*1.9;
+    g.add(box(1.5, 0.1, 0.8, M(0xD8B98A, 0.8), dx, 0.72, dz));
+    g.add(box(0.1, 0.72, 0.1, M(0x8A8A96, 0.5), dx-0.6, 0.36, dz));
+    g.add(box(0.1, 0.72, 0.1, M(0x8A8A96, 0.5), dx+0.6, 0.36, dz));
+    g.add(box(0.5, 0.07, 0.44, M(0x4E86C8, 0.8), dx, 0.42, dz+0.65));
+    g.add(box(0.5, 0.5, 0.07, M(0x4E86C8, 0.8), dx, 0.66, dz+0.86));
+  }
+  /* ארון תיקים */
+  g.add(box(0.5, 2.0, 1.6, M(0x9AA4B4, 0.6, 0.2), RW-0.35, 1.0, 2.6));
+  for (var d=0; d<4; d++) g.add(box(0.06, 0.4, 1.4, M(0x7A8494, 0.5, 0.3), RW-0.62, 0.42 + d*0.48, 2.6));
+  plantPot(g, -RW+0.8, 2.8);
+  addInteract(0, -1.6, 1.6, "לקרוא את הלוח", "📋", function(){
+    toast("📋 בעיר יש " + S.pop + " תושבים, " + S.jobs + " משרות ו-" + S.happy + "% שמחה", "good");
+    beep(660,0.07);
+  });
+  return g;
+}
+
+/* --- מפעל / תשתית --- */
+function interiorIndustrial(){
+  var g = roomShell(0x6E7078, 0xA8ACB4);
+  roomWindow(g, 0, -RD+0.1);
+  /* מכונות */
+  var mach = M(0x8A8E98, 0.6, 0.3);
+  g.add(box(2.4, 2.0, 1.4, mach, -3.2, 1.0, -2.6));
+  g.add(cyl(0.5, 0.5, 2.2, 12, mach, -1.2, 1.1, -3.0));
+  g.add(cyl(0.6, 0.6, 1.2, 12, M(0xC2703C, 0.7), 1.0, 0.6, -3.2));
+  /* צינורות */
+  var pipe = cyl(0.18, 0.18, 6.0, 8, M(0x9AA4B4, 0.5, 0.4), 0, 2.8, -RD+0.6);
+  pipe.rotation.z = Math.PI/2; g.add(pipe);
+  var pipe2 = cyl(0.14, 0.14, 3.0, 8, M(0xC2703C, 0.6, 0.3), -RW+0.6, 1.8, 0);
+  pipe2.rotation.x = Math.PI/2; g.add(pipe2);
+  /* לוח בקרה עם נורות */
+  g.add(box(2.6, 1.3, 0.4, M(0x3A4048, 0.7), 2.6, 1.1, -RD+0.4));
+  var lampsM = [];
+  for (var i=0;i<6;i++){
+    var lm = new THREE.MeshStandardMaterial({
+      color:[0xFF5555,0x5EE89A,0xFFD24E][i%3],
+      emissive:new THREE.Color([0xFF0000,0x00FF66,0xFFC400][i%3]), emissiveIntensity:1 });
+    g.add(cyl(0.1,0.1,0.07, 10, lm, 1.7 + (i%3)*0.9, 1.5 - Math.floor(i/3)*0.45, -RD+0.6).rotateX(Math.PI/2));
+    lampsM.push(lm);
+  }
+  g.add(box(2.2, 0.4, 0.06, new THREE.MeshStandardMaterial({ color:0x2A3A2A, emissive:new THREE.Color(0x4EE88A), emissiveIntensity:0.8 }), 2.6, 0.75, -RD+0.63));
+  /* חביות */
+  for (var b=0;b<4;b++)
+    g.add(cyl(0.34, 0.34, 0.85, 12, M([0xE8534F,0x3FA85C,0xFFD24E,0x4EA8DE][b], 0.75), -4.4 + b*0.8, 0.43, 2.8));
+  /* מסוע */
+  g.add(box(5.0, 0.16, 0.9, M(0x4A4A56, 0.7), 0.5, 0.75, 1.4));
+  g.add(box(0.14, 0.75, 0.9, M(0x8A8E98, 0.6), -1.9, 0.38, 1.4));
+  g.add(box(0.14, 0.75, 0.9, M(0x8A8E98, 0.6), 2.9, 0.38, 1.4));
+  g.userData.anim = function(t){
+    for (var i=0;i<lampsM.length;i++)
+      lampsM[i].emissiveIntensity = 0.5 + Math.abs(Math.sin(t*2 + i*0.8))*1.6;
+  };
+  addInteract(2.6, -RD+1.4, 1.5, "לבדוק את לוח הבקרה", "🎛️", function(){
+    toast("🎛️ חשמל " + S.pwUse + "/" + S.pwCap + " · מים " + S.wtUse + "/" + S.wtCap + " · אשפה " + S.traUse + "/" + S.traCap, "good");
+    beep(560,0.07);
+  });
+  return g;
+}
+
+var INTERIORS = { office:interiorOffice, home:interiorHome, shop:interiorShop,
+                  service:interiorService, industrial:interiorIndustrial };
+
+/* ---------- כניסה ויציאה ---------- */
+function enterInterior(tx, tz){
+  var c = cell(tx, tz);
+  if (!c.t) return;
+  var T = TYPES[c.t];
+  if (!T.inside) { toast("לא נכנסים ל" + T.name + " 🙂"); return; }
+  clearInterior();
+  var room = INTERIORS[T.inside]();
+  interiorGroup.add(room);
+  addInteract(0, RD-0.4, 1.5, "לצאת החוצה", "🚪", function(){ exitInterior(); });
+  INS.on = true; INS.type = c.t; INS.tx = tx; INS.tz = tz; INS.near = null;
+  document.body.className = "driving inside";
+  interiorGroup.visible = true;
+  roomLight.visible = true; roomLight2.intensity = 0.45;
+  scene.background = new THREE.Color(0x14100C);
+  scene.fog.near = 40; scene.fog.far = 90;
+  WALK.x = ROOM_X; WALK.z = RD - 1.2; WALK.ang = Math.PI; WALK.spd = 0;
+  WALK.g.position.set(WALK.x, 0, WALK.z);
+  camera.position.set(ROOM_X, 3.0, RD + 2.5);
+  toast("🚪 נכנסת ל" + T.name + "!", "good");
+  beep(520,0.08); setTimeout(function(){ beep(700,0.1); }, 80);
+}
+function exitInterior(){
+  if (!INS.on) return;
+  INS.on = false;
+  clearInterior();
+  interiorGroup.visible = false;
+  roomLight.visible = false; roomLight2.intensity = 0;
+  scene.background = new THREE.Color(0x8FD3FF);
+  scene.fog.near = 150; scene.fog.far = 330;
+  document.body.className = "driving";
+  var w = tileToWorld(INS.tx, INS.tz);
+  WALK.x = w.x; WALK.z = w.z + TILE*0.8; WALK.ang = 0; WALK.spd = 0;
+  if (blockedAt(WALK.x, WALK.z)){ WALK.z = w.z - TILE*0.8; WALK.ang = Math.PI; }
+  WALK.g.position.set(WALK.x, 0, WALK.z);
+  camera.position.set(WALK.x, 3.2, WALK.z - 6);
+  beep(420,0.1);
+}
+
+/* ---------- מצב הליכה ---------- */
+function enterWalk(fromCar){
+  if (WALK.on) return;
+  if (!WALK.g) WALK.g = buildPerson();
+  if (!fromCar || !DRV.save) DRV.save = { yaw:camYaw, pitch:camPitch, dist:camDist, tx:camTarget.x, tz:camTarget.z };
+  var sx, sz, sa;
+  if (fromCar){
+    sa = DRV.ang;
+    sx = DRV.x - Math.cos(DRV.ang)*2.2;
+    sz = DRV.z + Math.sin(DRV.ang)*2.2;
+    if (blockedAt(sx, sz)){ sx = DRV.x + Math.cos(DRV.ang)*2.2; sz = DRV.z - Math.sin(DRV.ang)*2.2; }
+    if (blockedAt(sx, sz)){ sx = DRV.x; sz = DRV.z; }
+  } else {
+    var r = nearestRoadTile(camTarget.x, camTarget.z);
+    if (!r){ toast("קודם תבנה כביש 🛣️", "bad"); return; }
+    var w = tileToWorld(r.x, r.z);
+    sx = w.x; sz = w.z; sa = 0;
+  }
+  WALK.on = true; WALK.x = sx; WALK.z = sz; WALK.ang = sa; WALK.spd = 0;
+  WALK.g.position.set(sx, 0, sz);
+  scene.add(WALK.g);
+  document.body.className = "driving";
+  cursor.visible = false;
+  infoEl.style.display = "none";
+  camera.position.set(sx - Math.sin(sa)*6, 3.2, sz - Math.cos(sa)*6);
+  document.getElementById("bDrive").textContent = "🏙️";
+  document.getElementById("dHorn").textContent = "👋";
+  document.getElementById("dExit").textContent = "🏙️";
+  if (!fromCar) toast("🚶 אתה הולך ברגל! תתקרב לבניין כדי להיכנס", "good");
+}
+function exitWalk(){
+  if (!WALK.on) return;
+  if (INS.on) exitInterior();
+  WALK.on = false;
+  scene.remove(WALK.g);
+  if (DRV.g){ scene.remove(DRV.g); disposeGroup(DRV.g); DRV.g = null; }
+  document.body.className = "";
+  hidePrompt();
+  if (DRV.save){
+    camYaw = DRV.save.yaw; camPitch = DRV.save.pitch; camDist = DRV.save.dist;
+    camTarget.set(DRV.save.tx, 0, DRV.save.tz);
+  }
+  updateCam();
+  document.getElementById("bDrive").textContent = "🚗";
+  document.getElementById("dHorn").textContent = "📣";
+  document.getElementById("dExit").textContent = "🚪";
+  beep(380,0.1);
+}
+function showPrompt(txt, icon){
+  var p = document.getElementById("promptPill");
+  document.getElementById("promptTxt").textContent = icon + " " + txt;
+  p.style.display = "flex";
+  var a = document.getElementById("dAct");
+  a.textContent = icon; a.style.display = "grid";
+}
+function hidePrompt(){
+  document.getElementById("promptPill").style.display = "none";
+  document.getElementById("dAct").style.display = "none";
+}
+var walkAction = null;
+function updateWalk(dt, t){
+  var k = DRV.keys;
+  var target = (k.up ? 1 : 0) - (k.down ? 0.55 : 0);
+  WALK.spd += (target*WALK_SPD - WALK.spd) * Math.min(1, dt*9);
+  if (Math.abs(WALK.spd) < 0.02) WALK.spd = 0;
+  if (k.left)  WALK.ang += WALK_TURN*dt;
+  if (k.right) WALK.ang -= WALK_TURN*dt;
+
+  var mx = Math.sin(WALK.ang)*WALK.spd*dt, mz = Math.cos(WALK.ang)*WALK.spd*dt;
+  if (INS.on){
+    var nx = WALK.x + mx, nz = WALK.z + mz;
+    var lx = nx - ROOM_X;
+    if (Math.abs(lx) < RW-0.6) WALK.x = nx;
+    if (nz > -(RD-0.6) && nz < RD-0.6) WALK.z = nz;
+  } else {
+    if (!blockedAt(WALK.x + mx, WALK.z)) WALK.x += mx;
+    if (!blockedAt(WALK.x, WALK.z + mz)) WALK.z += mz;
+  }
+  WALK.g.position.set(WALK.x, 0, WALK.z);
+  WALK.g.rotation.y = WALK.ang;
+  var sw = Math.sin(t*7.5) * Math.min(1, Math.abs(WALK.spd)/3) * 0.5;
+  if (WALK.g.userData.legs){
+    WALK.g.userData.legs[0].rotation.x = sw;
+    WALK.g.userData.legs[1].rotation.x = -sw;
+    WALK.g.userData.arms[0].rotation.x = -sw*0.8;
+    WALK.g.userData.arms[1].rotation.x = sw*0.8;
+    WALK.g.position.y = Math.abs(Math.sin(t*15)) * Math.min(1, Math.abs(WALK.spd)/3) * 0.05;
+  }
+
+  /* מצלמה */
+  var back = 6, camY = 3.2;
+  if (!INS.on){
+    for (var s = 1.6; s <= back; s += 0.6){
+      var px = WALK.x - Math.sin(WALK.ang)*s, pz = WALK.z - Math.cos(WALK.ang)*s;
+      var ptx = Math.floor((px + HALF)/TILE), ptz = Math.floor((pz + HALF)/TILE);
+      var pt = inGrid(ptx,ptz) ? cell(ptx,ptz).t : null;
+      if (!inGrid(ptx,ptz) || (pt && pt !== "road" && pt !== "tree")){ back = Math.max(2.4, s - 0.9); break; }
+    }
+    camY = 3.2 + (6 - back)*0.35;
+  } else {
+    back = 4.0; camY = 2.7;
+  }
+  var bx2 = WALK.x - Math.sin(WALK.ang)*back, bz2 = WALK.z - Math.cos(WALK.ang)*back;
+  if (INS.on){
+    /* המצלמה חייבת להישאר בתוך החדר, אחרת רואים רק קיר */
+    var lx2 = bx2 - ROOM_X;
+    bx2 = ROOM_X + Math.max(-(RW-0.5), Math.min(RW-0.5, lx2));
+    bz2 = Math.max(-(RD-0.5), Math.min(RD-0.5, bz2));
+  }
+  var lerp = 1 - Math.pow(0.002, dt);
+  camera.position.x += (bx2 - camera.position.x) * lerp;
+  camera.position.z += (bz2 - camera.position.z) * lerp;
+  camera.position.y += (camY - camera.position.y) * lerp;
+  camera.lookAt(WALK.x + Math.sin(WALK.ang)*2.5, 1.3, WALK.z + Math.cos(WALK.ang)*2.5);
+
+  /* מה אפשר לעשות כאן? */
+  var act = null;
+  if (INS.on){
+    var bestD = 1e9;
+    for (var i=0;i<INS.inters.length;i++){
+      var it = INS.inters[i];
+      var d = Math.hypot(WALK.x - (ROOM_X + it.x), WALK.z - it.z);
+      if (d < it.r && d < bestD){ bestD = d; act = { label:it.label, icon:it.icon, fn:it.fn }; }
+    }
+  } else {
+    /* חזרה למכונית */
+    if (DRV.g && Math.hypot(WALK.x - DRV.x, WALK.z - DRV.z) < 2.6){
+      act = { label:"לחזור למכונית", icon:"🚗", fn:function(){ backToCar(); } };
+    } else {
+      var tx = Math.floor((WALK.x + HALF)/TILE), tz = Math.floor((WALK.z + HALF)/TILE);
+      var best = null, bd = 1e9;
+      for (var dx=-1; dx<=1; dx++) for (var dz=-1; dz<=1; dz++){
+        var nx2 = tx+dx, nz2 = tz+dz;
+        if (!inGrid(nx2,nz2)) continue;
+        var cc = cell(nx2,nz2);
+        if (!cc.t || !TYPES[cc.t].inside) continue;
+        var w2 = tileToWorld(nx2, nz2);
+        var dd = Math.hypot(WALK.x - w2.x, WALK.z - w2.z);
+        if (dd < 3.6 && dd < bd){ bd = dd; best = { x:nx2, z:nz2, t:cc.t }; }
+      }
+      if (best) act = { label:"להיכנס ל" + TYPES[best.t].name, icon:"🚪",
+                        fn:(function(b){ return function(){ enterInterior(b.x, b.z); }; })(best) };
+    }
+  }
+  if (act){ walkAction = act.fn; showPrompt(act.label, act.icon); }
+  else { walkAction = null; hidePrompt(); }
+}
+function backToCar(){
+  if (!DRV.g) return;
+  WALK.on = false;
+  scene.remove(WALK.g);
+  hidePrompt();
+  DRV.on = true;
+  document.body.className = "driving";
+  document.getElementById("dHorn").textContent = "📣";
+  document.getElementById("dExit").textContent = "🚪";
+  toast("🚗 חזרת למכונית", "good");
+  beep(560,0.08);
 }
 
 /* ============================================================
@@ -2765,7 +3328,7 @@ function nearestRoadTile(wx, wz){
   return best;
 }
 function enterDrive(){
-  if (DRV.on) return;
+  if (DRV.on || WALK.on) return;
   var r = nearestRoadTile(camTarget.x, camTarget.z);
   if (!r){ toast("קודם תבנה כביש כדי שיהיה איפה לנסוע! 🛣️", "bad"); beep(170,0.12); return; }
   DRV.save = { yaw:camYaw, pitch:camPitch, dist:camDist, tx:camTarget.x, tz:camTarget.z };
@@ -2805,7 +3368,24 @@ function exitDrive(){
   document.getElementById("bDrive").title = "כניסה למכונית";
   beep(380,0.1);
 }
-document.getElementById("bDrive").onclick = function(){ DRV.on ? exitDrive() : enterDrive(); };
+/* יציאה מהמכונית אל הליכה ברגל */
+function getOutOfCar(){
+  if (!DRV.on) return;
+  DRV.on = false;
+  DRV.keys.up = DRV.keys.down = DRV.keys.left = DRV.keys.right = false;
+  enterWalk(true);
+  beep(480,0.09);
+}
+document.getElementById("bDrive").onclick = function(){
+  if (INS.on){ exitInterior(); exitWalk(); return; }
+  if (WALK.on){ exitWalk(); return; }
+  if (DRV.on){ exitDrive(); return; }
+  enterDrive();
+};
+document.getElementById("bWalk").onclick = function(){
+  if (WALK.on || DRV.on || INS.on) return;
+  enterWalk(false);
+};
 
 /* --- פיזיקה של הנהיגה --- */
 function blockedAt(wx, wz){
@@ -2881,11 +3461,15 @@ function updateDrive(dt, t){
 var KEYMAP = { ArrowUp:"up", ArrowDown:"down", ArrowLeft:"left", ArrowRight:"right",
                w:"up", s:"down", a:"left", d:"right", W:"up", S:"down", A:"left", D:"right" };
 window.addEventListener("keydown", function(ev){
-  if (!DRV.on) return;
+  if (!DRV.on && !WALK.on) return;
   var m = KEYMAP[ev.key];
   if (m){ DRV.keys[m] = true; ev.preventDefault(); }
-  if (ev.key === "Escape") exitDrive();
-  if (ev.key === " ") honk();
+  if (ev.key === "Escape"){ if (INS.on) exitInterior(); else if (WALK.on) exitWalk(); else exitDrive(); }
+  if (ev.key === " "){ ev.preventDefault(); if (DRV.on) honk(); }
+  if (ev.key === "Enter" || ev.key === "e" || ev.key === "E"){
+    if (WALK.on && walkAction) walkAction();
+    else if (DRV.on) getOutOfCar();
+  }
 }, { passive:false });
 window.addEventListener("keyup", function(ev){
   var m = KEYMAP[ev.key];
@@ -2908,8 +3492,16 @@ function holdBtn(id, key){
 }
 holdBtn("dLeft","left"); holdBtn("dRight","right");
 holdBtn("dGas","up");   holdBtn("dBrake","down");
-document.getElementById("dHorn").onclick = honk;
-document.getElementById("dExit").onclick = exitDrive;
+document.getElementById("dHorn").onclick = function(){
+  if (WALK.on){ beep(700,0.07); setTimeout(function(){ beep(900,0.09); }, 80); toast("👋 שלום!"); }
+  else honk();
+};
+document.getElementById("dAct").onclick = function(){ if (walkAction) walkAction(); };
+document.getElementById("dExit").onclick = function(){
+  if (INS.on){ exitInterior(); return; }
+  if (WALK.on){ exitWalk(); return; }
+  if (DRV.on){ getOutOfCar(); return; }
+};
 
 /* ============================================================
    12. לופ האנימציה
@@ -2930,11 +3522,17 @@ function animate(){
   var sy = Math.sin(ang);
   sun.position.set(Math.cos(ang)*110, Math.max(-20, sy*110), 45);
   nightFactor = Math.max(0, Math.min(1, (0.12 - sy) / 0.42));
-  sun.intensity = 1.15 * (1 - nightFactor*0.88);
-  hemi.intensity = 0.95 - nightFactor*0.58;
-  scene.fog.color.copy(dayColor).lerp(nightColor, nightFactor);
-  skyMat.color.copy(skyDay).lerp(skyNight, nightFactor);
-  seaMat.color.copy(seaDay).lerp(seaNight, nightFactor);
+  if (INS.on){
+    /* בתוך בניין: רק תאורת החדר, אחרת הכול מסנוור */
+    sun.intensity = 0.12;
+    hemi.intensity = 0.2;
+  } else {
+    sun.intensity = 1.15 * (1 - nightFactor*0.88);
+    hemi.intensity = 0.95 - nightFactor*0.58;
+    scene.fog.color.copy(dayColor).lerp(nightColor, nightFactor);
+    skyMat.color.copy(skyDay).lerp(skyNight, nightFactor);
+    seaMat.color.copy(seaDay).lerp(seaNight, nightFactor);
+  }
 
   /* חלונות נדלקים + אנימציות בניינים */
   var kids = cityGroup.children;
@@ -2963,6 +3561,11 @@ function animate(){
   cursorPad.material.opacity = 0.28 + Math.abs(Math.sin(t*3))*0.22;
 
   if (DRV.on && DRV.g) updateDrive(dt, t);
+  if (WALK.on && WALK.g) updateWalk(dt, t);
+  if (INS.on){
+    var ik = interiorGroup.children;
+    for (var ii=0; ii<ik.length; ii++) if (ik[ii].userData.anim) ik[ii].userData.anim(t, dt);
+  }
   if (thieves.length || copCars.length) updateCrime(dt, t);
 
   /* פעימת הסימולציה */
@@ -3019,6 +3622,9 @@ window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:c
                   enterDrive:enterDrive, exitDrive:exitDrive, updateDrive:updateDrive,
                   spawnThief:spawnThief, updateCrime:updateCrime, thieves:thieves, copCars:copCars,
                   garbage:garbage, trucks:trucks, buses:buses,
+                  WALK:WALK, INS:INS, enterWalk:enterWalk, exitWalk:exitWalk, updateWalk:updateWalk,
+                  enterInterior:enterInterior, exitInterior:exitInterior, getOutOfCar:getOutOfCar,
+                  getAction:function(){ return walkAction; },
                   draw:function(){ if(!DRV.on) updateCam(); renderer.render(scene, camera); } };
 
 })();
