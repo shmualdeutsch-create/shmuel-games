@@ -42,6 +42,7 @@
   .bar i{ display:block; height:100%; width:0%; border-radius:99px; transition:width .35s ease; }
   #pwrFill{ background:linear-gradient(90deg,#FFD84E,#FF9E2C); }
   #watFill{ background:linear-gradient(90deg,#5ED0FF,#2A8CFF); }
+  #traFill{ background:linear-gradient(90deg,#9FE07A,#4FA85C); }
   .bar.over i{ background:linear-gradient(90deg,#FF6B6B,#E53935) !important; }
 
   /* ===== side buttons ===== */
@@ -174,7 +175,6 @@
     padding:7px 15px; font-weight:800; font-size:15px; display:flex; align-items:center; gap:9px;
     box-shadow:0 6px 18px rgba(0,0,0,.45); white-space:nowrap; }
   #speedo b{ color:#7CFFB2; font-size:20px; }
-  #missionPill{ background:linear-gradient(135deg,rgba(255,190,60,.3),rgba(255,120,60,.22)); border-color:rgba(255,214,120,.6); }
   #driveCtl{ position:fixed; inset:0; z-index:23; display:none; pointer-events:none; }
   body.driving #driveCtl{ display:block; }
   .dbtn{ position:fixed; width:70px; height:70px; border-radius:50%; pointer-events:auto;
@@ -211,6 +211,7 @@
   <div class="bars">
     <div class="bar-row"><span>⚡</span><span class="bar" id="pwrBar"><i id="pwrFill"></i></span><span id="sPwr">0/0</span></div>
     <div class="bar-row"><span>💧</span><span class="bar" id="watBar"><i id="watFill"></i></span><span id="sWat">0/0</span></div>
+    <div class="bar-row"><span>🗑️</span><span class="bar" id="traBar"><i id="traFill"></i></span><span id="sTra">0/0</span></div>
   </div>
   <div class="stat"><span class="ico">📅</span><span id="sDay">1</span></div>
 </div>
@@ -232,7 +233,6 @@
 <div id="info"><span id="infoX">✖</span><h4 id="infoTitle"></h4><div id="infoBody"></div></div>
 
 <div id="driveHud">
-  <div class="dpill" id="missionPill">📦 <span id="missionTxt">אין משימה</span></div>
   <div class="dpill" id="speedo">🚗 <b id="speedTxt">0</b> קמ"ש</div>
 </div>
 <div id="driveCtl">
@@ -270,6 +270,8 @@
       <div class="mrow"><span class="lbl">💼 משרות</span><b id="mJobs">0</b></div>
       <div class="mrow"><span class="lbl">🙋 מחפשים עבודה</span><b id="mUnemp">0</b></div>
       <div class="mrow"><span class="lbl">🚓 פשע</span><span class="mbar"><i id="mCrimeBar"></i></span><b id="mCrime">0%</b></div>
+      <div class="mrow"><span class="lbl">🗑️ אשפה</span><b id="mTrash">0/0</b></div>
+      <div class="mrow"><span class="lbl">🏛️ עירייה</span><b id="mHall">אין</b></div>
       <div class="mrow"><span class="lbl">💰 רווח ליום</span><b id="mProfit">0</b></div>
 
       <h3>💸 מיסים</h3>
@@ -312,13 +314,26 @@
         <li><b>🏠 בית</b> = עד 4 אנשים. <b>🏢 בניין דירות</b> = עד 16 אנשים.</li>
         <li>אנשים באים לאט לאט. 😊 = באים, 😞 = בורחים.</li>
       </ul>
-      <h3>4. שמחה</h3>
+      <h3>4. 🗑️ אשפה — חדש!</h3>
       <ul>
-        <li>🌳 פארק, ⛲ מזרקה, 🏟️ אצטדיון, 🏫 בית ספר, 🏥 חולים, 🚓 משטרה — מעלים שמחה.</li>
+        <li>כל תושב מייצר <b>זבל</b> כל יום. יש פס 🗑️ למעלה שמראה כמה זבל יש.</li>
+        <li>בונים <b>🗑️ פח אשפה</b> (זול, רק 35 💰) או <b>♻️ מרכז מיחזור</b> (מפנה הרבה).</li>
+        <li>אם הפס נהיה אדום — <b>ערימות זבל מופיעות בעיר עם זבובים</b> 🪰 והאנשים בורחים!</li>
+        <li>למרכז מיחזור יוצאת <b>משאית זבל</b> שנוסעת בעיר.</li>
+      </ul>
+      <h3>5. 🏛️ העירייה — משרד ראש העיר</h3>
+      <ul>
+        <li>אפשר לבנות <b>רק עירייה אחת</b> בעיר (850 💰).</li>
+        <li>היא נותנת: <b>+15% מיסים</b>, <b>פחות פשע</b>, <b>פרסום זול ב-30%</b> והרבה שמחה.</li>
+      </ul>
+      <h3>6. שמחה</h3>
+      <ul>
+        <li>🌳 פארק · ⛲ מזרקה · 🏊 בריכה · 🏟️ אצטדיון · 🕍 בית כנסת · 📚 ספרייה · 🏫 בית ספר · 🏥 חולים · 🚓 משטרה · 🚌 תחנת אוטובוס — כולם מעלים שמחה.</li>
+        <li>🛒 סופרמרקט · 🍕 מסעדה · 🏦 בנק · ⛽ תחנת דלק — נותנים עבודה והכנסה.</li>
         <li>🏭 מפעל נותן הרבה כסף ועבודה — אבל מלכלך! בונים אותו <b>רחוק</b> מהבתים.</li>
         <li>צריך <b>עבודה</b> לכולם: 🏪 חנויות ו-🏭 מפעלים נותנים עבודה.</li>
       </ul>
-      <h3>5. איך מזיזים את המצלמה</h3>
+      <h3>7. איך מזיזים את המצלמה</h3>
       <ul>
         <li><b>לחיצה</b> על הקרקע = בונה.</li>
         <li><b>גרירה</b> (אצבע או עכבר) = מסתובבים מסביב לעיר.</li>
@@ -326,26 +341,21 @@
         <li>💥 <b>דחפור</b> = מוחק בניין (מקבלים חצי כסף בחזרה).</li>
         <li>👆 <b>מידע</b> = לוחצים על בניין ורואים מה קורה לו.</li>
       </ul>
-      <h3>6. 🚗 להיכנס למכונית ולנסוע!</h3>
+      <h3>8. 🚗 להיכנס למכונית ולנסוע!</h3>
       <ul>
         <li>לוחצים על כפתור <b>🚗</b> בצד — ואתה בתוך מכונית בעיר שבנית.</li>
         <li><b>גז</b> ⬆️ · <b>בלם ואחורה</b> ⬇️ · <b>הגה</b> ⬅️ ➡️ · <b>צופר</b> 📣 · <b>יציאה</b> 🚪</li>
         <li>במחשב אפשר גם בחיצים או W A S D, ורווח לצופר.</li>
         <li>על <b>כביש</b> נוסעים מהר, על הדשא לאט, ובבניינים מתנגשים 💥</li>
       </ul>
-      <h3>7. 📦 משימות משלוח</h3>
-      <ul>
-        <li>תוך כדי נסיעה מופיע <b>עמוד אור צהוב 📦</b> — סע אליו לאסוף את החבילה.</li>
-        <li>אחר כך סע לעמוד הירוק <b>🏁</b> — ומקבלים כסף! ככל שרחוק יותר, משלמים יותר.</li>
-      </ul>
-      <h3>8. 🚓 גנבים ומשטרה</h3>
+      <h3>9. 🚓 גנבים ומשטרה</h3>
       <ul>
         <li>כשהעיר גדלה מתחיל <b>פשע</b>. אם הוא גבוה — מופיע <b>🦹 גנב</b>.</li>
         <li><b>🚓 תחנת משטרה</b> שולחת ניידת שרודפת אחריו ותופסת אותו.</li>
         <li>אם אין משטרה — הגנב בורח עם <b>90 💰</b> שלך!</li>
         <li><b>אתה יכול לתפוס אותו בעצמך</b> — פשוט סע עליו עם המכונית! +150 💰</li>
       </ul>
-      <h3>9. 📊 לוח הניהול</h3>
+      <h3>10. 📊 לוח הניהול</h3>
       <ul>
         <li>כפתור <b>📊</b> פותח את לוח הניהול של ראש העיר.</li>
         <li><b>💸 מיסים</b> — יותר מיסים = יותר כסף, אבל אנשים כועסים ובורחים.</li>
@@ -353,7 +363,7 @@
         <li><b>📢 קמפיין פרסום</b> — משלמים, ואנשים חדשים מגיעים לעיר הרבה יותר מהר.</li>
         <li>אפשר גם לבנות <b>📢 לוח מודעות</b> בעיר — הוא מפרסם כל הזמן.</li>
       </ul>
-      <div class="tipbox">💡 <b>טיפ זהב:</b> כביש ➜ תחנת כוח ➜ מגדל מים ➜ 3 בתים ➜ חנות ➜ פארק. כשיש 30 תושבים תבנה 🚓 משטרה, ואז תיכנס למכונית ותתחיל להרוויח ממשלוחים!</div>
+      <div class="tipbox">💡 <b>טיפ זהב:</b> כביש ➜ תחנת כוח ➜ מגדל מים ➜ 3 בתים ➜ 🗑️ פחים ➜ חנות ➜ פארק. כשיש 30 תושבים תבנה 🚓 משטרה ו-🏛️ עירייה!</div>
     </div>
     <button class="big" id="btnCloseHelp">בוא נשחק! 🚀</button>
   </div>
@@ -377,8 +387,14 @@ var TYPES = {
   house:      { name:"בית",         e:"🏠", cost:110, up:0.8, pw:2, wt:2, cap:4,  res:true, cat:"homes" },
   apartment:  { name:"בניין דירות", e:"🏢", cost:330, up:2.2, pw:6, wt:6, cap:16, res:true, cat:"homes" },
   villa:      { name:"וילה",        e:"🏡", cost:260, up:1.6, pw:4, wt:4, cap:6,  res:true, lux:true, cat:"homes" },
-  shop:       { name:"חנות",        e:"🏪", cost:150, up:1.5, pw:3, wt:1, jobs:6,  inc:6,  joy:10, joyR:4, cat:"infra" },
-  factory:    { name:"מפעל",        e:"🏭", cost:320, up:3,  pw:8, wt:3, jobs:22, inc:18, pol:20, polR:3, cat:"infra" },
+  shop:       { name:"חנות",        e:"🏪", cost:150, up:1.5, pw:3, wt:1, jobs:6,  inc:6,  joy:10, joyR:4, trash:2, cat:"biz" },
+  factory:    { name:"מפעל",        e:"🏭", cost:320, up:3,  pw:8, wt:3, jobs:22, inc:18, pol:20, polR:3, trash:5, cat:"biz" },
+  supermarket:{ name:"סופרמרקט",    e:"🛒", cost:290, up:3, pw:5, wt:2, jobs:14, inc:12, joy:12, joyR:5, trash:4, cat:"biz" },
+  restaurant: { name:"מסעדה",       e:"🍕", cost:200, up:2.5, pw:4, wt:3, jobs:8, inc:9, joy:11, joyR:4, trash:4, cat:"biz" },
+  bank:       { name:"בנק",         e:"🏦", cost:420, up:4, pw:4, wt:2, jobs:10, inc:24, cat:"biz" },
+  gas:        { name:"תחנת דלק",    e:"⛽", cost:210, up:2, pw:3, jobs:5, inc:10, pol:5, polR:2, cat:"biz" },
+  trashbin:   { name:"פח אשפה",     e:"🗑️", cost:35, up:0.3, trashCap:9, cat:"infra" },
+  recycling:  { name:"מרכז מיחזור", e:"♻️", cost:340, up:3, pw:5, wt:2, jobs:12, trashCap:70, pol:6, polR:2, truck:true, cat:"infra" },
   powerplant: { name:"תחנת כוח",    e:"⚡", cost:280, up:4,  pwGen:48, jobs:6, pol:14, polR:3, cat:"infra" },
   windmill:   { name:"טורבינת רוח", e:"🌬️", cost:200, up:0.8, pwGen:15, jobs:1, cat:"infra" },
   watertower: { name:"מגדל מים",    e:"🚰", cost:170, up:1.5, pw:2, wtGen:48, jobs:2, cat:"infra" },
@@ -387,6 +403,11 @@ var TYPES = {
   fountain:   { name:"מזרקה",       e:"⛲", cost:95,  up:0.7, wt:2, joy:9, joyR:3, cat:"fun" },
   billboard:  { name:"לוח מודעות",  e:"📢", cost:130, up:1, pw:1, jobs:1, joy:9, joyR:5, ad:true, cat:"fun" },
   stadium:    { name:"אצטדיון",     e:"🏟️", cost:650, up:5, pw:10, wt:5, jobs:16, inc:10, joy:18, joyR:8, cat:"fun" },
+  cityhall:   { name:"עירייה",      e:"🏛️", cost:850, up:6, pw:6, wt:4, jobs:14, joy:16, joyR:9, hall:true, one:true, cat:"serv" },
+  synagogue:  { name:"בית כנסת",    e:"🕍", cost:320, up:2, pw:3, wt:2, jobs:3, joy:17, joyR:6, cat:"serv" },
+  library:    { name:"ספרייה",      e:"📚", cost:250, up:2, pw:3, wt:2, jobs:6, joy:12, joyR:5, cat:"serv" },
+  busstop:    { name:"תחנת אוטובוס", e:"🚌", cost:120, up:1, pw:1, jobs:2, joy:8, joyR:4, bus:true, cat:"serv" },
+  pool:       { name:"בריכה",       e:"🏊", cost:260, up:3, pw:4, wt:9, jobs:5, joy:14, joyR:5, cat:"fun" },
   school:     { name:"בית ספר",     e:"🏫", cost:230, up:2,  pw:4, wt:3, jobs:9,  joy:11, joyR:5, cat:"serv" },
   hospital:   { name:"בית חולים",   e:"🏥", cost:300, up:2.5, pw:5, wt:4, jobs:13, joy:11, joyR:6, cat:"serv" },
   police:     { name:"משטרה",       e:"🚓", cost:240, up:2,  pw:3, wt:2, jobs:9,  joy:9,  joyR:6, cat:"serv" },
@@ -396,8 +417,9 @@ var TYPES = {
 var CATS = [
   { id:"homes", name:"🏠 בתים" },
   { id:"infra", name:"🔧 תשתיות" },
-  { id:"fun",   name:"🎉 כיף" },
+  { id:"biz",   name:"🛒 עסקים" },
   { id:"serv",  name:"🏛️ שירותים" },
+  { id:"fun",   name:"🎉 כיף" },
   { id:"tools", name:"🛠️ כלים" }
 ];
 
@@ -405,7 +427,8 @@ var S = {
   money: START_MONEY, day: 1, pop: 0, happy: 60,
   pwCap: 0, pwUse: 0, wtCap: 0, wtUse: 0, jobs: 0, workers: 0,
   grid: [], tool: "road", cat: "infra", speed: 1, started: false, everHadPop: false,
-  tax: 1, salary: 1, adDays: 0, crime: 0, unemployed: 0
+  tax: 1, salary: 1, adDays: 0, crime: 0, unemployed: 0,
+  traUse: 0, traCap: 0, hasHall: false
 };
 function cell(x,z){ return S.grid[z*GRID+x]; }
 function inGrid(x,z){ return x>=0 && z>=0 && x<GRID && z<GRID; }
@@ -1068,6 +1091,377 @@ function buildFire(){
   return g;
 }
 
+/* ---------- עירייה (משרד ראש העיר) ---------- */
+function buildCityHall(){
+  var g = new THREE.Group();
+  var stone = M(0xF2EADA, 0.8), stone2 = M(0xE2D8C4, 0.85);
+  /* מדרגות */
+  g.add(box(3.4, 0.16, 0.5, stone2, 0, 0.08, 1.55));
+  g.add(box(3.1, 0.16, 0.42, stone2, 0, 0.24, 1.38));
+  g.add(box(2.8, 0.16, 0.36, stone2, 0, 0.40, 1.24));
+  /* גוף הבניין */
+  g.add(box(3.4, 2.2, 2.2, stone, 0, 1.55, -0.1));
+  /* עמודים */
+  for (var i=0;i<5;i++){
+    var px = -1.4 + i*0.7;
+    g.add(cyl(0.16, 0.18, 2.0, 10, stone, px, 1.45, 1.02));
+    g.add(box(0.42, 0.12, 0.42, stone2, px, 2.5, 1.02));
+  }
+  g.add(box(3.5, 0.18, 0.7, stone2, 0, 2.58, 1.02));
+  /* גמלון משולש */
+  var ped = cone(1.95, 0.72, 3, M(0xE8E0CE, 0.8), 0, 3.0, 0.75);
+  ped.rotation.y = Math.PI/2; ped.scale.z = 0.42; g.add(ped);
+  /* גג וכיפה */
+  g.add(box(3.5, 0.2, 2.3, stone2, 0, 2.72, -0.1));
+  g.add(cyl(0.95, 1.1, 0.5, 16, stone2, 0, 3.05, -0.3));
+  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.92, 18, 12, 0, Math.PI*2, 0, Math.PI/2), M(0x3FA8B8, 0.5, 0.3));
+  dome.position.set(0, 3.28, -0.3); dome.castShadow = true; g.add(dome);
+  g.add(cyl(0.05, 0.05, 1.0, 6, M(0xD8C068, 0.3, 0.7), 0, 4.6, -0.3));
+  var ball = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), M(0xFFD24E, 0.25, 0.8));
+  ball.position.set(0, 4.3, -0.3); g.add(ball);
+  /* שעון */
+  var clock = cyl(0.42, 0.42, 0.08, 16, M(0xFFFFFF, 0.5), 0, 2.95, 0.98);
+  clock.rotation.x = Math.PI/2; g.add(clock);
+  g.add(box(0.05, 0.3, 0.03, M(0x2A2A38, 0.5), 0, 3.05, 1.03));
+  g.add(box(0.22, 0.05, 0.03, M(0x2A2A38, 0.5), 0.08, 2.95, 1.03));
+  /* דלת וחלונות */
+  g.add(box(0.8, 1.3, 0.14, M(0x7A4A28, 0.7), 0, 1.15, 1.0));
+  var wm = winMat(g, 0xFFE8B0);
+  for (var k=0;k<4;k++) g.add(box(0.1, 0.85, 0.5, wm, (k<2?-1.72:1.72), 1.6, (k%2?-0.7:0.4)));
+  /* דגלים */
+  var flags = [];
+  for (var f=0; f<2; f++){
+    var fx = f ? 1.5 : -1.5;
+    g.add(cyl(0.05,0.05,1.9, 6, M(0xBFBFC8, 0.5, 0.3), fx, 0.95, 1.7));
+    var fl = box(0.72, 0.46, 0.03, M(f ? 0x4EA8DE : 0xFFFFFF, 0.7), fx + (f?0.38:-0.38), 1.72, 1.7);
+    g.add(fl); flags.push(fl);
+  }
+  bush(g, -1.75, 1.6, 0.36); bush(g, 1.75, 1.6, 0.36);
+  flowers(g, 8, 3.2);
+  g.userData.anim = function(t){
+    for (var i=0;i<flags.length;i++){
+      flags[i].scale.x = 1 + Math.sin(t*4 + i)*0.14;
+      flags[i].rotation.y = Math.sin(t*3 + i)*0.12;
+    }
+  };
+  return g;
+}
+
+/* ---------- פח אשפה ---------- */
+function buildTrashBin(seed){
+  var g = new THREE.Group();
+  g.add(box(2.0, 0.1, 1.4, M(0xC8C2B4, 0.9), 0, 0.05, 0));
+  var cols = [0x3FA85C, 0x4EA8DE, 0xE8C44E];
+  for (var i=0;i<3;i++){
+    var bx = -0.62 + i*0.62;
+    var binM = M(cols[i], 0.7);
+    g.add(box(0.52, 0.72, 0.52, binM, bx, 0.46, 0));
+    g.add(box(0.58, 0.1, 0.58, M(0x3A3A46, 0.6), bx, 0.86, 0));
+    g.add(box(0.3, 0.06, 0.3, M(0x2A2A34, 0.6), bx, 0.92, 0));
+    /* גלגלים קטנים */
+    var w1 = cyl(0.07,0.07,0.05, 7, M(0x22222A, 0.8), bx-0.2, 0.08, 0.22);
+    w1.rotation.x = Math.PI/2; g.add(w1);
+    var w2 = cyl(0.07,0.07,0.05, 7, M(0x22222A, 0.8), bx+0.2, 0.08, 0.22);
+    w2.rotation.x = Math.PI/2; g.add(w2);
+    /* סמל מיחזור */
+    g.add(box(0.2, 0.2, 0.02, M(0xFFFFFF, 0.5), bx, 0.5, 0.27));
+  }
+  bush(g, 1.3, 0.8, 0.26);
+  return g;
+}
+
+/* ---------- מרכז מיחזור ---------- */
+function buildRecycling(){
+  var g = new THREE.Group();
+  g.add(box(2.6, 1.6, 2.0, M(0x9AA67E, 0.85), -0.4, 0.8, -0.3));
+  g.add(box(2.8, 0.18, 2.2, M(0x6E7A58, 0.8), -0.4, 1.7, -0.3));
+  g.add(box(1.3, 1.2, 0.12, M(0x4A5240, 0.8), -0.4, 0.6, 0.72));
+  g.add(box(0.1, 0.6, 0.9, winMat(g, 0xFFE8A8), -1.75, 1.0, -0.3));
+  /* מכולות מיון צבעוניות */
+  var cols = [0x3FA85C, 0x4EA8DE, 0xE8C44E, 0xE8534F];
+  for (var i=0;i<4;i++){
+    var cx = -1.4 + i*0.9;
+    g.add(box(0.78, 0.6, 0.7, M(cols[i], 0.75), cx, 0.32, 1.45));
+    g.add(box(0.82, 0.08, 0.74, M(0x2E2E38, 0.7), cx, 0.65, 1.45));
+  }
+  /* מסוע */
+  var belt = box(1.8, 0.1, 0.6, M(0x4A4A56, 0.7), 1.2, 1.1, -0.6);
+  belt.rotation.z = -0.3; g.add(belt);
+  g.add(cyl(0.1,0.1,0.9, 7, M(0x8A8A96, 0.5, 0.3), 1.9, 0.5, -0.6));
+  /* זרוע מנוף מסתובבת */
+  var arm = new THREE.Group(); arm.position.set(1.3, 1.9, -1.2); g.add(arm);
+  g.add(cyl(0.16, 0.2, 1.9, 8, M(0xE8A33C, 0.6, 0.3), 1.3, 0.95, -1.2));
+  arm.add(box(1.5, 0.16, 0.2, M(0xE8A33C, 0.6, 0.3), 0.6, 0, 0));
+  arm.add(box(0.26, 0.4, 0.26, M(0x5A5A66, 0.6), 1.3, -0.25, 0));
+  /* סמל מיחזור גדול על הגג */
+  var rec = cyl(0.42, 0.42, 0.08, 3, M(0x3FA85C, 0.5), -0.4, 1.85, -0.3);
+  g.add(rec);
+  g.userData.anim = function(t, dt){ arm.rotation.y += dt*0.5; rec.rotation.y += dt*0.9; };
+  return g;
+}
+
+/* ---------- בית כנסת ---------- */
+function magenDavid(mat, size, thick){
+  var g = new THREE.Group();
+  var t1 = cyl(size, size, thick, 3, mat, 0, 0, 0);
+  var t2 = cyl(size, size, thick, 3, mat, 0, 0, 0);
+  t1.rotation.x = Math.PI/2; t2.rotation.x = Math.PI/2;
+  t2.rotation.y = Math.PI/3;
+  g.add(t1); g.add(t2);
+  return g;
+}
+function buildSynagogue(){
+  var g = new THREE.Group();
+  var wall = M(0xF0E4CC, 0.82), trim = M(0xD8C8A8, 0.8);
+  g.add(box(3.0, 2.4, 2.4, wall, 0, 1.2, -0.1));
+  g.add(box(3.2, 0.2, 2.6, trim, 0, 2.42, -0.1));
+  /* גג מעוגל */
+  var roof = cyl(1.3, 1.3, 3.1, 14, M(0x6E93B8, 0.6), 0, 2.9, -0.1, 0);
+  roof.rotation.z = Math.PI/2; roof.scale.y = 1; g.add(roof);
+  /* כיפה קטנה */
+  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 11, 0, Math.PI*2, 0, Math.PI/2), M(0x4E86A8, 0.5, 0.25));
+  dome.position.set(0, 3.5, -0.1); dome.castShadow = true; g.add(dome);
+  /* מגן דוד על הגג */
+  var star = magenDavid(M(0xFFD24E, 0.3, 0.7), 0.42, 0.08);
+  star.position.set(0, 4.5, -0.1); g.add(star);
+  g.add(cyl(0.05,0.05,0.7, 6, M(0xD8C068, 0.3, 0.6), 0, 4.0, -0.1));
+  /* חלונות מקושתים */
+  var wm = winMat(g, 0xFFE0A0);
+  for (var i=0;i<3;i++){
+    var wx = -0.9 + i*0.9;
+    g.add(box(0.46, 0.9, 0.1, wm, wx, 1.5, 1.12));
+    var arc = cyl(0.23, 0.23, 0.1, 12, wm, wx, 1.95, 1.12);
+    arc.rotation.x = Math.PI/2; g.add(arc);
+  }
+  g.add(box(0.1, 0.9, 0.5, wm, -1.52, 1.5, -0.5));
+  g.add(box(0.1, 0.9, 0.5, wm,  1.52, 1.5, -0.5));
+  /* דלת וכניסה */
+  g.add(box(0.86, 1.5, 0.16, M(0x7A4A28, 0.75), 0, 0.75, 1.14));
+  var darc = cyl(0.43, 0.43, 0.16, 12, M(0x7A4A28, 0.75), 0, 1.5, 1.14);
+  darc.rotation.x = Math.PI/2; g.add(darc);
+  var smallStar = magenDavid(M(0xFFD24E, 0.4, 0.5), 0.2, 0.05);
+  smallStar.position.set(0, 1.5, 1.24); g.add(smallStar);
+  g.add(box(1.6, 0.14, 0.5, trim, 0, 0.07, 1.5));
+  g.add(cyl(0.12, 0.14, 1.0, 8, trim, -0.75, 0.5, 1.35));
+  g.add(cyl(0.12, 0.14, 1.0, 8, trim,  0.75, 0.5, 1.35));
+  bush(g, -1.6, 1.4, 0.34); bush(g, 1.6, 1.4, 0.34);
+  flowers(g, 6, 3.0);
+  return g;
+}
+
+/* ---------- ספרייה ---------- */
+function buildLibrary(){
+  var g = new THREE.Group();
+  g.add(box(3.0, 2.0, 2.2, M(0xC98A5C, 0.85), 0, 1.0, 0));
+  g.add(box(3.2, 0.2, 2.4, M(0x8A5A38, 0.8), 0, 2.1, 0));
+  g.add(box(2.6, 0.14, 1.9, M(0xA86B42, 0.8), 0, 2.26, 0));
+  /* חלון קשת גדול */
+  var wm = winMat(g, 0xFFE8C0);
+  g.add(box(1.1, 1.0, 0.1, wm, 0, 1.25, 1.12));
+  var arc = cyl(0.55, 0.55, 0.1, 14, wm, 0, 1.75, 1.12);
+  arc.rotation.x = Math.PI/2; g.add(arc);
+  g.add(box(0.5, 0.6, 0.1, wm, -1.1, 1.3, 1.12));
+  g.add(box(0.5, 0.6, 0.1, wm,  1.1, 1.3, 1.12));
+  g.add(box(0.1, 0.7, 1.2, wm, -1.52, 1.3, 0));
+  /* דלת */
+  g.add(box(0.8, 1.1, 0.14, M(0x6B4226, 0.75), 0, 0.55, 1.14));
+  /* פסל ספרים ענק */
+  var bcol = [0xE8534F, 0x4EA8DE, 0xFFD24E];
+  for (var i=0;i<3;i++){
+    var bk = box(0.8, 0.2, 0.6, M(bcol[i], 0.7), 1.45, 0.12 + i*0.21, 1.6);
+    bk.rotation.y = i*0.22; g.add(bk);
+  }
+  /* שלט */
+  g.add(box(1.5, 0.4, 0.08, M(0xF2E4C8, 0.6), 0, 2.4, 0.9));
+  /* ספסל */
+  g.add(box(1.1, 0.08, 0.38, M(0x9A6B3C, 0.9), -1.3, 0.42, 1.6));
+  g.add(box(0.1, 0.34, 0.34, M(0x5A5A66, 0.7), -1.75, 0.22, 1.6));
+  g.add(box(0.1, 0.34, 0.34, M(0x5A5A66, 0.7), -0.9, 0.22, 1.6));
+  bush(g, 1.7, -1.2, 0.34);
+  return g;
+}
+
+/* ---------- בריכה ---------- */
+function buildPool(){
+  var g = new THREE.Group();
+  g.add(box(TILE-0.4, 0.14, TILE-0.4, M(0xE8E2D2, 0.85), 0, 0.07, 0));
+  /* המים */
+  var water = new THREE.MeshStandardMaterial({ color:0x3FC8F0, roughness:0.08, metalness:0.35 });
+  g.add(box(2.4, 0.16, 1.7, M(0xBFE8F5, 0.6), 0, 0.1, -0.2));
+  var surf = box(2.25, 0.1, 1.55, water, 0, 0.18, -0.2);
+  g.add(surf);
+  /* פסי שחייה */
+  for (var i=0;i<3;i++) g.add(box(2.2, 0.02, 0.06, M(0xFFFFFF, 0.5), 0, 0.24, -0.2 + (i-1)*0.5));
+  /* קרש קפיצה */
+  g.add(box(0.5, 0.4, 0.3, M(0xC8C2B4, 0.8), -1.45, 0.3, -0.2));
+  g.add(box(0.6, 0.07, 0.3, M(0xF4F4F8, 0.6), -1.1, 0.52, -0.2));
+  /* סולם */
+  g.add(cyl(0.05,0.05,0.5, 6, M(0xCCCCD4, 0.3, 0.7), 1.3, 0.35, -0.6));
+  g.add(cyl(0.05,0.05,0.5, 6, M(0xCCCCD4, 0.3, 0.7), 1.3, 0.35, 0.2));
+  /* כסאות נוח ושמשייה */
+  for (var c=0;c<2;c++){
+    var ch = box(0.6, 0.07, 0.34, M(0xFFFFFF, 0.6), -0.7 + c*0.9, 0.3, 1.3);
+    ch.rotation.z = -0.18; g.add(ch);
+    g.add(box(0.1, 0.22, 0.3, M(0x6EA8D8, 0.7), -0.95 + c*0.9, 0.2, 1.3));
+  }
+  g.add(cyl(0.05,0.05,1.2, 6, M(0xBFBFC8, 0.5), 1.1, 0.6, 1.3));
+  var umb = cone(0.75, 0.45, 10, M(0xFF6FA0, 0.7), 1.1, 1.35, 1.3);
+  g.add(umb);
+  /* שחיין */
+  var sw = new THREE.Mesh(new THREE.SphereGeometry(0.14, 9, 8), M(0xF0C8A0, 0.8));
+  sw.position.set(-0.5, 0.3, -0.2); g.add(sw);
+  g.userData.anim = function(t, dt){
+    surf.position.y = 0.18 + Math.sin(t*2.2)*0.025;
+    sw.position.x = Math.sin(t*0.8)*0.9;
+    sw.position.y = 0.3 + Math.abs(Math.sin(t*4))*0.06;
+  };
+  return g;
+}
+
+/* ---------- סופרמרקט ---------- */
+function buildSupermarket(){
+  var g = new THREE.Group();
+  g.add(box(3.4, 1.9, 2.3, M(0xF4EFE2, 0.82), 0, 0.95, -0.2));
+  g.add(box(3.6, 0.22, 2.5, M(0x3FA85C, 0.7), 0, 2.0, -0.2));
+  /* חזית זכוכית */
+  g.add(box(3.0, 1.2, 0.12, winMat(g, 0xBFE8FF), 0, 0.85, 0.96));
+  for (var i=0;i<4;i++) g.add(box(0.07, 1.25, 0.16, M(0xD8D4CC, 0.7), -1.2 + i*0.8, 0.85, 1.0));
+  /* שלט גדול */
+  g.add(box(2.4, 0.5, 0.1, M(0xFFD24E, 0.6), 0, 2.3, 0.7));
+  g.add(box(1.9, 0.14, 0.04, M(0x3FA85C, 0.6), 0, 2.3, 0.76));
+  /* עגלות קניות */
+  for (var c=0;c<3;c++){
+    var cx = 1.2 - c*0.26;
+    g.add(box(0.34, 0.26, 0.3, M(0xB8B8C4, 0.4, 0.5), cx, 0.26, 1.55));
+    var w1 = cyl(0.05,0.05,0.04, 6, M(0x2A2A34, 0.8), cx-0.1, 0.06, 1.42);
+    w1.rotation.x = Math.PI/2; g.add(w1);
+  }
+  /* חניה מסומנת */
+  g.add(box(1.6, 0.04, 0.9, M(0x5A5A66, 0.9), -1.0, 0.03, 1.55));
+  g.add(box(0.05, 0.02, 0.8, M(0xFFFFFF, 0.6), -1.45, 0.06, 1.55));
+  g.add(box(0.05, 0.02, 0.8, M(0xFFFFFF, 0.6), -0.55, 0.06, 1.55));
+  /* ארגזי ירקות */
+  g.add(box(0.5, 0.3, 0.4, M(0xC58A4E, 0.9), -1.5, 0.15, 0.9));
+  var ap = new THREE.Mesh(new THREE.SphereGeometry(0.13, 7, 6), M(0xE8534F, 0.6));
+  ap.position.set(-1.5, 0.36, 0.9); g.add(ap);
+  return g;
+}
+
+/* ---------- מסעדה ---------- */
+function buildRestaurant(){
+  var g = new THREE.Group();
+  g.add(box(2.4, 1.8, 1.9, M(0xFFE8CC, 0.82), -0.4, 0.9, -0.4));
+  var roof = cone(1.7, 0.8, 4, M(0xC43C38, 0.75), -0.4, 2.2, -0.4);
+  roof.rotation.y = Math.PI/4; g.add(roof);
+  g.add(cyl(0.18, 0.2, 0.7, 8, M(0xB8B0A0, 0.85), 0.35, 2.3, -0.9));
+  g.add(box(0.8, 0.9, 0.12, winMat(g, 0xFFD890), -0.4, 0.9, 0.57));
+  g.add(box(0.6, 1.2, 0.12, M(0x7A4A28, 0.75), -1.3, 0.6, 0.57));
+  /* שלט פיצה */
+  g.add(box(1.2, 0.4, 0.08, M(0xFFD24E, 0.6), -0.4, 1.9, 0.5));
+  /* שולחנות עם שמשיות */
+  for (var i=0;i<2;i++){
+    var tx = 1.0, tz = -0.4 + i*1.3;
+    g.add(cyl(0.42, 0.42, 0.07, 12, M(0xF4F4F8, 0.6), tx, 0.62, tz));
+    g.add(cyl(0.07, 0.09, 0.6, 7, M(0xBFBFC8, 0.5), tx, 0.3, tz));
+    g.add(cyl(0.04,0.04,1.5, 6, M(0xBFBFC8, 0.5), tx, 0.75, tz));
+    var umb = cone(0.8, 0.4, 10, M(i ? 0x3FBF7F : 0xE8534F, 0.7), tx, 1.6, tz);
+    g.add(umb);
+    /* כיסאות */
+    g.add(box(0.26, 0.06, 0.26, M(0x9A6B3C, 0.8), tx - 0.55, 0.36, tz));
+    g.add(box(0.26, 0.06, 0.26, M(0x9A6B3C, 0.8), tx + 0.55, 0.36, tz));
+  }
+  bush(g, -1.6, -1.5, 0.3);
+  var smk = smoke(g, 0.35, 2.7, -0.9, 0.2, 0xE8E4DC);
+  g.userData.anim = function(t, dt){ smk(dt); };
+  return g;
+}
+
+/* ---------- בנק ---------- */
+function buildBank(){
+  var g = new THREE.Group();
+  var stone = M(0xDCD6C6, 0.8);
+  g.add(box(3.0, 2.4, 2.2, stone, 0, 1.2, -0.1));
+  g.add(box(3.2, 0.2, 2.4, M(0xB8B0A0, 0.8), 0, 2.42, -0.1));
+  /* עמודים בכניסה */
+  for (var i=0;i<4;i++){
+    var px = -1.1 + i*0.73;
+    g.add(cyl(0.14, 0.16, 2.1, 10, M(0xF0EADC, 0.75), px, 1.45, 1.0));
+  }
+  g.add(box(3.1, 0.16, 0.6, M(0xB8B0A0, 0.8), 0, 2.58, 1.0));
+  var ped = cone(1.7, 0.6, 3, M(0xE8E2D2, 0.8), 0, 2.95, 0.72);
+  ped.rotation.y = Math.PI/2; ped.scale.z = 0.4; g.add(ped);
+  /* דלת כספת */
+  g.add(box(1.0, 1.4, 0.16, M(0x8A8A96, 0.4, 0.6), 0, 0.72, 1.06));
+  var vault = cyl(0.42, 0.42, 0.1, 16, M(0xC8C8D4, 0.3, 0.7), 0, 1.0, 1.16);
+  vault.rotation.x = Math.PI/2; g.add(vault);
+  g.add(box(0.5, 0.07, 0.04, M(0x6A6A76, 0.4, 0.5), 0, 1.0, 1.22));
+  g.add(box(0.07, 0.5, 0.04, M(0x6A6A76, 0.4, 0.5), 0, 1.0, 1.22));
+  /* שלט ₪ זהב */
+  g.add(box(1.3, 0.42, 0.08, M(0x2E4468, 0.5), 0, 2.2, 0.68));
+  var coin = cyl(0.26, 0.26, 0.06, 16, M(0xFFD24E, 0.3, 0.8), 0, 2.2, 0.75);
+  coin.rotation.x = Math.PI/2; g.add(coin);
+  /* כספומט */
+  g.add(box(0.4, 0.9, 0.3, M(0x3A4458, 0.6), 1.4, 0.45, 1.2));
+  g.add(box(0.28, 0.3, 0.06, winMat(g, 0x9FE8B0), 1.4, 0.62, 1.37));
+  var wm = winMat(g, 0xFFE8B0);
+  g.add(box(0.1, 0.8, 0.6, wm, -1.52, 1.6, -0.3));
+  g.add(box(0.1, 0.8, 0.6, wm,  1.52, 1.6, -0.3));
+  g.userData.anim = function(t, dt){ coin.rotation.y += dt*1.4; };
+  return g;
+}
+
+/* ---------- תחנת דלק ---------- */
+function buildGas(){
+  var g = new THREE.Group();
+  g.add(box(TILE-0.5, 0.08, TILE-0.5, M(0x5A5A66, 0.9), 0, 0.04, 0));
+  /* חנות קטנה */
+  g.add(box(1.5, 1.4, 1.5, M(0xF4EFE2, 0.8), -1.1, 0.7, -0.9));
+  g.add(box(1.7, 0.16, 1.7, M(0xE8534F, 0.7), -1.1, 1.48, -0.9));
+  g.add(box(0.9, 0.7, 0.1, winMat(g, 0xBFE8FF), -1.1, 0.8, -0.12));
+  /* גגון */
+  g.add(cyl(0.13, 0.15, 2.4, 8, M(0xC8C8D4, 0.5, 0.3), 0.7, 1.2, -0.9));
+  g.add(cyl(0.13, 0.15, 2.4, 8, M(0xC8C8D4, 0.5, 0.3), 0.7, 1.2, 1.0));
+  g.add(box(2.3, 0.2, 2.6, M(0xF4F4F8, 0.6), 0.7, 2.4, 0.05));
+  g.add(box(2.35, 0.16, 2.65, M(0xE8534F, 0.6), 0.7, 2.25, 0.05));
+  /* משאבות */
+  for (var i=0;i<2;i++){
+    var pz = -0.6 + i*1.3;
+    g.add(box(0.36, 0.95, 0.5, M(0xE8534F, 0.6), 0.7, 0.48, pz));
+    g.add(box(0.26, 0.3, 0.06, winMat(g, 0x9FE8B0), 0.7, 0.72, pz + 0.27));
+    g.add(cyl(0.05,0.05,0.4, 6, M(0x2A2A34, 0.7), 0.95, 0.78, pz));
+  }
+  /* שלט מחירים */
+  g.add(cyl(0.1,0.1,2.2, 8, M(0xBFBFC8, 0.5, 0.3), -1.5, 1.1, 1.3));
+  g.add(box(0.9, 0.8, 0.12, M(0x2E4468, 0.5), -1.5, 2.4, 1.3));
+  g.add(box(0.7, 0.2, 0.04, winMat(g, 0xFFD24E), -1.5, 2.55, 1.38));
+  g.add(box(0.7, 0.2, 0.04, winMat(g, 0x9FE8B0), -1.5, 2.25, 1.38));
+  return g;
+}
+
+/* ---------- תחנת אוטובוס ---------- */
+function buildBusStop(){
+  var g = new THREE.Group();
+  g.add(box(2.6, 0.1, 1.2, M(0xD8D4CC, 0.9), 0, 0.05, 0.3));
+  /* סככה */
+  g.add(cyl(0.07,0.07,1.9, 6, M(0x5A6478, 0.5, 0.3), -1.1, 0.95, -0.1));
+  g.add(cyl(0.07,0.07,1.9, 6, M(0x5A6478, 0.5, 0.3),  1.1, 0.95, -0.1));
+  g.add(box(2.5, 0.1, 1.0, M(0x4E86A8, 0.5, 0.2), 0, 1.95, 0.1));
+  g.add(box(2.4, 1.3, 0.07, winMat(g, 0xCFEAFF), 0, 1.25, -0.42));
+  /* ספסל */
+  g.add(box(1.8, 0.09, 0.36, M(0x9A6B3C, 0.9), 0, 0.5, -0.12));
+  g.add(box(1.8, 0.4, 0.07, M(0x9A6B3C, 0.9), 0, 0.7, -0.32));
+  g.add(box(0.1, 0.42, 0.34, M(0x5A5A66, 0.7), -0.85, 0.26, -0.12));
+  g.add(box(0.1, 0.42, 0.34, M(0x5A5A66, 0.7),  0.85, 0.26, -0.12));
+  /* עמוד תחנה עם שלט */
+  g.add(cyl(0.06,0.06,2.2, 6, M(0xBFBFC8, 0.5, 0.3), 1.6, 1.1, 0.8));
+  g.add(box(0.5, 0.6, 0.07, M(0xFFD24E, 0.6), 1.6, 2.1, 0.8));
+  g.add(box(0.32, 0.2, 0.03, M(0x2E4468, 0.5), 1.6, 2.2, 0.85));
+  /* לוח זמנים */
+  g.add(box(0.5, 0.7, 0.05, winMat(g, 0xFFF4D0), -1.4, 1.3, 0.3));
+  bush(g, -1.6, 1.3, 0.28);
+  return g;
+}
+
 /* ---------- לוח מודעות ---------- */
 function adTex(i){
   var c = document.createElement("canvas"); c.width = 160; c.height = 96;
@@ -1170,7 +1564,9 @@ var BUILDERS = {
   shop: buildShop, factory: buildFactory, powerplant: buildPower, windmill: buildWindmill,
   watertower: buildWaterTower, park: buildPark, tree: buildTree, fountain: buildFountain,
   stadium: buildStadium, school: buildSchool, hospital: buildHospital, police: buildPolice, fire: buildFire,
-  billboard: buildBillboard
+  billboard: buildBillboard, cityhall: buildCityHall, trashbin: buildTrashBin, recycling: buildRecycling,
+  synagogue: buildSynagogue, library: buildLibrary, pool: buildPool, supermarket: buildSupermarket,
+  restaurant: buildRestaurant, bank: buildBank, gas: buildGas, busstop: buildBusStop
 };
 var nightFactor = 0;
 
@@ -1230,6 +1626,11 @@ function place(x,z,type){
   var T = TYPES[type];
   if (!T) return;
   if (c.t){ toast("כאן כבר יש " + TYPES[c.t].name + " — תשתמש בדחפור 💥", "bad"); beep(160,0.08); return; }
+  if (T.one){
+    for (var q=0; q<S.grid.length; q++) if (S.grid[q].t === type){
+      toast("אפשר רק " + T.name + " אחת בעיר! 🏛️", "bad"); beep(160,0.08); return;
+    }
+  }
   if (S.money < T.cost){ toast("אין לך מספיק כסף ל" + T.name + " (צריך " + T.cost + " 💰)", "bad"); beep(150,0.1); return; }
   S.money -= T.cost;
   c.t = type; c.seed = Math.random(); c.res = 0; c.cap = T.cap || 0;
@@ -1312,6 +1713,58 @@ function setWarn(c, x, z, icon){
   fxGroup.add(sp); c.warnSp = sp;
   warnSprites.push({ sp:sp, y0:4.2, ph:Math.random()*6 });
 }
+/* ערימות זבל שמופיעות כשאין מספיק פחים */
+var garbage = [];
+function makeGarbagePile(){
+  var g = new THREE.Group();
+  var bagCols = [0x3A4038, 0x2E3430, 0x4A5246];
+  for (var i=0;i<4;i++){
+    var b = new THREE.Mesh(new THREE.SphereGeometry(0.2 + Math.random()*0.12, 7, 6), M(bagCols[i%3], 0.95));
+    b.position.set((Math.random()-0.5)*0.9, 0.18 + Math.random()*0.12, (Math.random()-0.5)*0.9);
+    b.scale.y = 0.85; b.castShadow = true;
+    g.add(b);
+  }
+  g.add(box(0.3, 0.18, 0.24, M(0xB8A878, 0.95), 0.36, 0.09, -0.3));
+  var peel = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 5), M(0xE8C44E, 0.9));
+  peel.position.set(-0.4, 0.07, 0.35); peel.scale.y = 0.5; g.add(peel);
+  /* זבובים */
+  var flies = [];
+  for (var f=0; f<3; f++){
+    var fly = new THREE.Mesh(new THREE.SphereGeometry(0.045, 5, 4), M(0x1A1A1A, 0.9));
+    g.add(fly); flies.push(fly);
+  }
+  g.userData.flies = flies;
+  return g;
+}
+function setGarbageCount(n){
+  n = Math.max(0, Math.min(12, n));
+  while (garbage.length > n){
+    var last = garbage.pop();
+    fxGroup.remove(last); disposeGroup(last);
+  }
+  if (garbage.length >= n) return;
+  /* מחפשים משבצות ריקות ליד בניינים */
+  var spots = [];
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++){
+    if (cell(x,z).t) continue;
+    var near = false;
+    if (inGrid(x-1,z) && cell(x-1,z).t) near = true;
+    if (inGrid(x+1,z) && cell(x+1,z).t) near = true;
+    if (inGrid(x,z-1) && cell(x,z-1).t) near = true;
+    if (inGrid(x,z+1) && cell(x,z+1).t) near = true;
+    if (near) spots.push({ x:x, z:z });
+  }
+  while (garbage.length < n && spots.length){
+    var s = spots.splice(Math.floor(Math.random()*spots.length), 1)[0];
+    var g = makeGarbagePile();
+    var w = tileToWorld(s.x, s.z);
+    g.position.set(w.x + (Math.random()-0.5)*1.4, 0, w.z + (Math.random()-0.5)*1.4);
+    fxGroup.add(g); garbage.push(g);
+  }
+}
+function clearGarbage(){
+  while (garbage.length){ var g = garbage.pop(); fxGroup.remove(g); disposeGroup(g); }
+}
 var rings = [];
 function puffRing(wx, wz, color){
   var m = new THREE.Mesh(new THREE.RingGeometry(0.4, 1.2, 20),
@@ -1330,6 +1783,13 @@ function updateFx(dt){
   for (var w=0; w<warnSprites.length; w++){
     var ws = warnSprites[w];
     ws.sp.position.y = ws.y0 + Math.sin(tAcc*2.4 + ws.ph)*0.22;
+  }
+  for (var gi=0; gi<garbage.length; gi++){
+    var fl = garbage[gi].userData.flies;
+    for (var fi=0; fi<fl.length; fi++){
+      var a = tAcc*3.4 + fi*2.1 + gi;
+      fl[fi].position.set(Math.cos(a)*0.45, 0.5 + Math.sin(a*1.7)*0.18, Math.sin(a*1.3)*0.45);
+    }
   }
   for (var j=rings.length-1; j>=0; j--){
     var r = rings[j];
@@ -1372,6 +1832,7 @@ function warnOnce(key, msg, kind){
 function simulate(){
   S.day++;
   var pwCap=0, pwUse=0, wtCap=0, wtUse=0, jobs=0, upkeep=0, fixedInc=0;
+  var traCap=0, traUse=0, hasHall=false;
   var list = [], joySrc = [], polSrc = [], i, c, x, z, T;
 
   for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
@@ -1382,6 +1843,9 @@ function simulate(){
     if (T.wtGen) wtCap += T.wtGen;
     if (T.jobs)  jobs  += T.jobs;
     if (T.inc)   fixedInc += T.inc;
+    if (T.trashCap) traCap += T.trashCap;
+    if (T.trash)    traUse += T.trash;
+    if (T.hall)     hasHall = true;
     if (T.joy)   joySrc.push({ x:x, z:z, v:T.joy, r:T.joyR });
     if (T.pol)   polSrc.push({ x:x, z:z, v:T.pol, r:T.polR });
     list.push({ x:x, z:z, c:c, T:T });
@@ -1410,7 +1874,15 @@ function simulate(){
     if (list[i].c.t === "police") polCount++;
     if (list[i].c.t === "factory") factCount++;
   }
-  S.crime = Math.max(0, Math.min(100, Math.round(S.pop*0.42 + factCount*5 + jobGap*22 - polCount*26)));
+  S.hasHall = hasHall;
+  S.crime = Math.max(0, Math.min(100, Math.round(S.pop*0.42 + factCount*5 + jobGap*22 - polCount*26 - (hasHall?12:0))));
+
+  /* אשפה: כל תושב מייצר זבל, פחים ומרכז מיחזור מפנים.
+     יש קיבולת בסיסית קטנה מהמדינה כדי שעיר קטנה לא תקרוס מיד */
+  traUse += Math.round(S.pop * 0.7);
+  traCap += 14;
+  S.traUse = traUse; S.traCap = traCap;
+  var trashOver = traUse > traCap ? (traUse - traCap) / Math.max(1, traUse) : 0;
 
   /* פרסום */
   if (S.adDays > 0) S.adDays--;
@@ -1446,6 +1918,7 @@ function simulate(){
     h -= Math.min(40, pol);
     h -= jobGap * 26;
     h -= S.crime * 0.22;
+    h -= trashOver * 34;
     h -= taxPain;
     h += payJoy + adBonus;
     if (T.lux && joy < 8) h -= 10;
@@ -1486,7 +1959,7 @@ function simulate(){
   if (pop > 0) S.everHadPop = true;
 
   /* מיסים + תמיכה קטנה מהמדינה כדי שאי אפשר להיתקע לנצח */
-  var income = Math.round(pop * 2.6 * S.tax + fixedInc + 12);
+  var income = Math.round((pop * 2.6 * S.tax + fixedInc + 12) * (hasHall ? 1.15 : 1));
   var pay = Math.round(upkeep * S.salary);
   S.money += income - pay;
   if (S.money < 0) S.money = 0;
@@ -1500,6 +1973,8 @@ function simulate(){
   if (leaving > 2)   warnOnce("lv", "🏃 " + leaving + " בתים מתרוקנים! תבדוק חשמל, מים ושמחה");
   if (S.everHadPop && pop === 0) warnOnce("zero", "😱 כל האנשים ברחו מהעיר! תתקן את הבעיות");
   if (S.money < 60)  warnOnce("mn", "💰 נגמר הכסף! תחכה שהמיסים ייכנסו או תמכור בניין בדחפור");
+  setGarbageCount(Math.round(trashOver * 20));
+  if (trashOver > 0)  warnOnce("tr", "🗑️ העיר מתמלאת בזבל! תבנה פחים או מרכז מיחזור");
   if (S.crime > 55)  warnOnce("cr", "🚓 הפשע בעיר גבוה! תבנה תחנת משטרה");
   if (S.adDays === 1) toast("📢 הקמפיין נגמר", "bad");
   /* גנבים מופיעים כשהפשע גבוה */
@@ -1543,7 +2018,39 @@ function makePed(){
   g.userData.legs = [l1, l2];
   return g;
 }
-var cars = [], peds = [];
+function makeGarbageTruck(){
+  var g = new THREE.Group();
+  var body = M(0x4FA85C, 0.6);
+  g.add(box(1.5, 0.78, 0.9, body, -0.25, 0.68, 0));
+  g.add(box(0.72, 0.6, 0.86, M(0x3E8A4A, 0.5), 0.78, 0.58, 0));
+  g.add(box(0.66, 0.34, 0.8, winMat(g, 0x9FD8FF), 0.8, 0.78, 0));
+  g.add(box(0.3, 0.5, 0.86, M(0x2E6A38, 0.6), -1.05, 0.5, 0));
+  g.add(box(1.4, 0.08, 0.1, M(0xFFD24E, 0.6), -0.25, 0.9, 0.46));
+  g.add(box(1.4, 0.08, 0.1, M(0xFFD24E, 0.6), -0.25, 0.9, -0.46));
+  for (var w=0;w<6;w++){
+    var wx = w<2 ? -0.85 : (w<4 ? -0.3 : 0.8);
+    var wh = cyl(0.21,0.21,0.12, 9, M(0x18181E, 0.85), wx, 0.21, (w%2?-0.44:0.44));
+    wh.rotation.x = Math.PI/2; g.add(wh);
+  }
+  return g;
+}
+function makeBus(){
+  var g = new THREE.Group();
+  var body = M(0x4E86C8, 0.5);
+  g.add(box(2.4, 0.95, 0.95, body, 0, 0.72, 0));
+  g.add(box(2.1, 0.42, 0.98, winMat(g, 0xCFEAFF), -0.1, 0.92, 0));
+  g.add(box(0.5, 0.55, 0.92, winMat(g, 0xCFEAFF), 1.1, 0.8, 0));
+  g.add(box(2.45, 0.1, 1.0, M(0xF4F4F8, 0.5), 0, 1.22, 0));
+  g.add(box(2.42, 0.14, 0.99, M(0xFFD24E, 0.6), 0, 0.42, 0));
+  g.add(box(0.1, 0.16, 0.2, M(0xFFF4C0, 0.4), 1.22, 0.55, 0.32));
+  g.add(box(0.1, 0.16, 0.2, M(0xFFF4C0, 0.4), 1.22, 0.55, -0.32));
+  for (var w=0;w<4;w++){
+    var wh = cyl(0.22,0.22,0.13, 9, M(0x18181E, 0.85), (w<2?-0.85:0.85), 0.22, (w%2?-0.46:0.46));
+    wh.rotation.x = Math.PI/2; g.add(wh);
+  }
+  return g;
+}
+var cars = [], peds = [], trucks = [], buses = [];
 function randRoad(){ return roadList.length ? roadList[Math.floor(Math.random()*roadList.length)] : null; }
 function roadNeighbors(x,z){
   var out = [];
@@ -1562,13 +2069,24 @@ function spawnAgent(arr, maker, speed, side){
 function killAgent(arr, i){
   fxGroup.remove(arr[i].g); disposeGroup(arr[i].g); arr.splice(i,1);
 }
+function countType(id){
+  var n = 0;
+  for (var i=0;i<S.grid.length;i++) if (S.grid[i].t === id) n++;
+  return n;
+}
 function updateAgents(){
   var wantCars = roadList.length < 2 ? 0 : Math.min(12, 1 + Math.floor(S.pop/9));
   var wantPeds = roadList.length < 1 ? 0 : Math.min(26, Math.floor(S.pop/2));
+  var wantTrucks = roadList.length < 2 ? 0 : Math.min(3, countType("recycling"));
+  var wantBuses  = roadList.length < 2 ? 0 : Math.min(4, countType("busstop"));
   while (cars.length < wantCars) spawnAgent(cars, makeCar, 2.4, 0.85);
   while (cars.length > wantCars) killAgent(cars, cars.length-1);
   while (peds.length < wantPeds) spawnAgent(peds, makePed, 1.05, -1.2);
   while (peds.length > wantPeds) killAgent(peds, peds.length-1);
+  while (trucks.length < wantTrucks) spawnAgent(trucks, makeGarbageTruck, 1.6, 0.85);
+  while (trucks.length > wantTrucks) killAgent(trucks, trucks.length-1);
+  while (buses.length < wantBuses) spawnAgent(buses, makeBus, 1.9, 0.85);
+  while (buses.length > wantBuses) killAgent(buses, buses.length-1);
 }
 function moveAgents(arr, dt, t){
   for (var i=arr.length-1; i>=0; i--){
@@ -1620,6 +2138,8 @@ var elMoney = document.getElementById("sMoney"), elPop = document.getElementById
     elWat = document.getElementById("sWat"), elPwrF = document.getElementById("pwrFill"),
     elWatF = document.getElementById("watFill"), elPwrB = document.getElementById("pwrBar"),
     elWatB = document.getElementById("watBar"), elItems = document.getElementById("items"),
+    elTra = document.getElementById("sTra"), elTraF = document.getElementById("traFill"),
+    elTraB = document.getElementById("traBar"),
     elTabs = document.getElementById("tabs");
 
 function toast(msg, kind){
@@ -1646,11 +2166,14 @@ function updateUI(){
   elDay.textContent = S.day;
   elPwr.textContent = S.pwUse + "/" + S.pwCap;
   elWat.textContent = S.wtUse + "/" + S.wtCap;
+  elTra.textContent = S.traUse + "/" + S.traCap;
   var pp = S.pwCap ? Math.min(100, S.pwUse/S.pwCap*100) : (S.pwUse ? 100 : 0);
   var wp = S.wtCap ? Math.min(100, S.wtUse/S.wtCap*100) : (S.wtUse ? 100 : 0);
-  elPwrF.style.width = pp + "%"; elWatF.style.width = wp + "%";
+  var tp = S.traCap ? Math.min(100, S.traUse/S.traCap*100) : (S.traUse ? 100 : 0);
+  elPwrF.style.width = pp + "%"; elWatF.style.width = wp + "%"; elTraF.style.width = tp + "%";
   if (S.pwUse > S.pwCap) elPwrB.className = "bar over"; else elPwrB.className = "bar";
   if (S.wtUse > S.wtCap) elWatB.className = "bar over"; else elWatB.className = "bar";
+  if (S.traUse > S.traCap) elTraB.className = "bar over"; else elTraB.className = "bar";
   if (document.getElementById("manageScreen").className === "overlay") updateManage();
   var kids = elItems.children;
   for (var i=0;i<kids.length;i++){
@@ -1914,6 +2437,13 @@ function updateManage(){
   cb.style.background = S.crime > 55 ? "linear-gradient(90deg,#FF6B6B,#E53935)"
                       : S.crime > 25 ? "linear-gradient(90deg,#FFD84E,#FF9E2C)"
                                      : "linear-gradient(90deg,#7CFFB2,#3FBF7F)";
+  var mt = document.getElementById("mTrash");
+  mt.textContent = S.traUse + " / " + S.traCap;
+  mt.style.color = S.traUse > S.traCap ? "#FF9A9A" : "#8CF4B6";
+  var mh = document.getElementById("mHall");
+  mh.textContent = S.hasHall ? "יש ✔ (+15% מיסים, פחות פשע, פרסום זול ב-30%)" : "אין ✖";
+  mh.style.color = S.hasHall ? "#8CF4B6" : "#FF9A9A";
+  mh.style.fontSize = "12px";
   var profit = (S.income||0) - (S.pay||0);
   var pe = document.getElementById("mProfit");
   pe.textContent = (profit >= 0 ? "+" : "") + profit;
@@ -1941,6 +2471,7 @@ document.getElementById("btnCloseManage").onclick = function(){
 document.getElementById("sTax").oninput = function(){ S.tax = this.value/100; updateManage(); };
 document.getElementById("sSal").oninput = function(){ S.salary = this.value/100; updateManage(); };
 function runCampaign(cost, days){
+  if (S.hasHall) cost = Math.round(cost * 0.7);
   if (S.money < cost){ toast("אין מספיק כסף לקמפיין (" + cost + " 💰)", "bad"); beep(160,0.1); return; }
   S.money -= cost; S.adDays += days;
   toast("📢 הקמפיין יצא לדרך! " + days + " ימים של פרסום", "good");
@@ -2013,7 +2544,9 @@ function clearCity(){
   }
   while (cars.length) killAgent(cars, 0);
   while (peds.length) killAgent(peds, 0);
-  clearCrime();
+  while (trucks.length) killAgent(trucks, 0);
+  while (buses.length) killAgent(buses, 0);
+  clearCrime(); clearGarbage();
   refreshRoadList();
   S.money = START_MONEY; S.day = 1; S.pop = 0; S.happy = 60;
   S.pwCap = S.pwUse = S.wtCap = S.wtUse = S.jobs = 0;
@@ -2185,7 +2718,7 @@ function updateCrime(dt, t){
 var DRV = {
   on:false, g:null, x:0, z:0, ang:0, spd:0,
   keys:{ up:false, down:false, left:false, right:false },
-  save:null, mission:null, marker:null, delivered:0, hitCool:0, hornCool:0
+  save:null, hitCool:0, hornCool:0
 };
 var ACC = 30, BRAKE = 34, FRIC = 1.1, ROAD_MAX = 25, GRASS_MAX = 9, REV_MAX = -8, TURN = 1.75;
 
@@ -2255,15 +2788,14 @@ function enterDrive(){
   document.getElementById("bDrive").title = "חזרה לבנייה";
   toast("🚗 נכנסת למכונית! גז עם ⬆️ או חץ למעלה", "good");
   beep(420,0.08); setTimeout(function(){ beep(620,0.12); }, 90);
-  newMission();
 }
 function exitDrive(){
   if (!DRV.on) return;
   DRV.on = false;
   document.body.className = "";
   if (DRV.g){ scene.remove(DRV.g); disposeGroup(DRV.g); DRV.g = null; }
-  clearMarker();
-  DRV.mission = null;
+
+
   if (DRV.save){
     camYaw = DRV.save.yaw; camPitch = DRV.save.pitch; camDist = DRV.save.dist;
     camTarget.set(DRV.save.tx, 0, DRV.save.tz);
@@ -2274,80 +2806,6 @@ function exitDrive(){
   beep(380,0.1);
 }
 document.getElementById("bDrive").onclick = function(){ DRV.on ? exitDrive() : enterDrive(); };
-
-/* --- משימות משלוח --- */
-function clearMarker(){
-  if (DRV.marker){ fxGroup.remove(DRV.marker); disposeGroup(DRV.marker); DRV.marker = null; }
-}
-function setMarker(x, z, icon, color){
-  clearMarker();
-  var g = new THREE.Group();
-  var beam = cyl(0.55, 0.9, 9, 12, new THREE.MeshBasicMaterial({
-    color:color, transparent:true, opacity:0.28, depthWrite:false }), 0, 4.5, 0);
-  beam.castShadow = false; beam.receiveShadow = false;
-  g.add(beam);
-  var c = document.createElement("canvas"); c.width = 96; c.height = 96;
-  var ctx = c.getContext("2d");
-  ctx.beginPath(); ctx.arc(48,48,42,0,Math.PI*2);
-  ctx.fillStyle = "rgba(14,18,44,.88)"; ctx.fill();
-  ctx.lineWidth = 6; ctx.strokeStyle = "#" + color.toString(16).padStart(6,"0"); ctx.stroke();
-  ctx.font = "50px -apple-system, Segoe UI, Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(icon, 48, 54);
-  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true, depthTest:false }));
-  sp.position.y = 6.4; sp.scale.set(2.1, 2.1, 1);
-  g.add(sp);
-  var w = tileToWorld(x, z);
-  g.position.set(w.x, 0, w.z);
-  g.userData.sp = sp;
-  fxGroup.add(g);
-  DRV.marker = g;
-}
-function builtTiles(){
-  var out = [];
-  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++){
-    var c = cell(x,z);
-    if (c.t && c.t !== "road" && c.t !== "tree") out.push({ x:x, z:z });
-  }
-  return out;
-}
-function newMission(){
-  var list = builtTiles();
-  if (list.length < 2){
-    DRV.mission = null; clearMarker();
-    document.getElementById("missionTxt").textContent = "תבנה עוד בניינים בשביל משימות";
-    return;
-  }
-  var a = list[Math.floor(Math.random()*list.length)], b = a, guard = 0;
-  while ((b.x === a.x && b.z === a.z) && guard++ < 40) b = list[Math.floor(Math.random()*list.length)];
-  DRV.mission = { stage:"pick", from:a, to:b };
-  setMarker(a.x, a.z, "📦", 0xFFC94E);
-  document.getElementById("missionTxt").textContent = "סע לחבילה 📦 (" + TYPES[cell(a.x,a.z).t].name + ")";
-}
-function checkMission(){
-  var m = DRV.mission;
-  if (!m) return;
-  var tgt = m.stage === "pick" ? m.from : m.to;
-  var w = tileToWorld(tgt.x, tgt.z);
-  var d = Math.hypot(DRV.x - w.x, DRV.z - w.z);
-  if (d > 3.4) return;
-  if (m.stage === "pick"){
-    m.stage = "drop";
-    setMarker(m.to.x, m.to.z, "🏁", 0x7CFFB2);
-    var nm = cell(m.to.x, m.to.z);
-    document.getElementById("missionTxt").textContent = "קח ל" + (nm.t ? TYPES[nm.t].name : "יעד") + " 🏁";
-    floatText("📦 נאספה!", w.x, w.z, 3.5, "#FFD24E");
-    beep(700,0.08);
-  } else {
-    var dist = Math.hypot(m.to.x-m.from.x, m.to.z-m.from.z);
-    var pay = Math.round(45 + dist*9);
-    S.money += pay; DRV.delivered++;
-    floatText("+" + pay + " 💰", w.x, w.z, 3.5, "#8CF4B6");
-    toast("📦 משלוח " + DRV.delivered + " הושלם! קיבלת " + pay + " 💰", "good");
-    beep(780,0.08); setTimeout(function(){ beep(980,0.12); }, 90);
-    updateUI();
-    newMission();
-  }
-}
 
 /* --- פיזיקה של הנהיגה --- */
 function blockedAt(wx, wz){
@@ -2417,7 +2875,6 @@ function updateDrive(dt, t){
     DRV.marker.userData.sp.position.y = 6.4 + Math.sin(t*3)*0.3;
 
   document.getElementById("speedTxt").textContent = Math.round(Math.abs(DRV.spd)*4);
-  checkMission();
 }
 
 /* --- מקשים וכפתורים --- */
@@ -2493,6 +2950,8 @@ function animate(){
 
   moveAgents(cars, dt, t);
   moveAgents(peds, dt, t);
+  moveAgents(trucks, dt, t);
+  moveAgents(buses, dt, t);
   updateFx(dt);
 
   /* עננים + ים */
@@ -2559,6 +3018,7 @@ window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:c
                   renderer:renderer, scene:scene, camera:camera, DRV:DRV,
                   enterDrive:enterDrive, exitDrive:exitDrive, updateDrive:updateDrive,
                   spawnThief:spawnThief, updateCrime:updateCrime, thieves:thieves, copCars:copCars,
+                  garbage:garbage, trucks:trucks, buses:buses,
                   draw:function(){ if(!DRV.on) updateCam(); renderer.render(scene, camera); } };
 
 })();
