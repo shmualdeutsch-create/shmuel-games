@@ -46,7 +46,13 @@
   .bar.over i{ background:linear-gradient(90deg,#FF6B6B,#E53935) !important; }
 
   /* ===== side buttons ===== */
-  #side{ position:fixed; top:58px; left:10px; z-index:21; display:flex; flex-direction:column; gap:8px; }
+  #side{ position:fixed; top:58px; left:10px; z-index:21; display:flex; flex-direction:column; gap:8px;
+    max-height:calc(100vh - 200px); overflow-y:auto; scrollbar-width:none; padding-bottom:4px; }
+  #side::-webkit-scrollbar{ display:none; }
+  @media (max-height:760px){
+    #side{ gap:5px; }
+    .rbtn{ width:38px; height:38px; font-size:17px; border-radius:12px; }
+  }
   .rbtn{
     width:44px; height:44px; border-radius:14px; border:1.5px solid rgba(255,255,255,.25);
     background:rgba(20,26,56,.75); backdrop-filter:blur(6px); color:#fff;
@@ -164,6 +170,30 @@
   .adbtns button:active{ transform:translateY(3px); box-shadow:0 1px 0 #C97E12; }
   .adbtns button.off{ opacity:.45; }
 
+  /* ===== פס המשימה ===== */
+  #goalPill{
+    position:fixed; z-index:21; top:112px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:8px; cursor:pointer; max-width:min(440px, 92vw);
+    background:linear-gradient(135deg,rgba(255,214,90,.26),rgba(170,110,255,.24));
+    border:1.5px solid rgba(255,224,140,.55); border-radius:16px; padding:6px 13px;
+    font-weight:800; font-size:13.5px; box-shadow:0 5px 16px rgba(0,0,0,.4);
+    backdrop-filter:blur(8px); white-space:nowrap;
+  }
+  #goalPill:hover{ background:linear-gradient(135deg,rgba(255,214,90,.4),rgba(170,110,255,.34)); }
+  #goalPill .gt{ overflow:hidden; text-overflow:ellipsis; }
+  #goalNum{ background:rgba(0,0,0,.3); border-radius:99px; padding:2px 8px; font-size:11.5px; }
+  body.driving #goalPill{ display:none; }
+  .lvrow{ display:flex; align-items:center; gap:9px; text-align:right;
+    background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
+    border-radius:13px; padding:9px 12px; margin:6px 0; font-size:13.5px; font-weight:700; }
+  .lvrow.done{ background:rgba(90,220,150,.14); border-color:rgba(124,255,178,.3); color:#BFF5D6; }
+  .lvrow.cur{ background:linear-gradient(135deg,rgba(255,214,90,.24),rgba(255,160,60,.16));
+    border-color:#FFD24E; box-shadow:0 0 0 3px rgba(255,214,90,.14); }
+  .lvrow .lvi{ font-size:16px; }
+  .lvrow .lvt{ flex:1; }
+  .lvrow .lvm{ color:#FFD96B; font-size:12px; }
+  #lvCount{ color:#FFD24E; font-weight:800; }
+
   /* ===== מצב נהיגה ===== */
   body.driving #dock{ display:none; }
   body.driving #side{ display:none; }
@@ -228,6 +258,7 @@
   <a class="rbtn" href="index.html" title="חזרה למשחקים של שמואל">⬅️</a>
   <div class="rbtn" id="bDrive" title="כניסה למכונית">🚗</div>
   <div class="rbtn" id="bWalk" title="ללכת ברגל בעיר">🚶</div>
+  <div class="rbtn" id="bGoals" title="המשימות שלי">🎯</div>
   <div class="rbtn" id="bManage" title="לוח ניהול העיר">📊</div>
   <div class="rbtn" id="bHelp" title="הוראות">❓</div>
   <div class="rbtn" id="bZoomIn" title="התקרב">➕</div>
@@ -236,6 +267,8 @@
   <div class="rbtn" id="bSpeed" title="מהירות הזמן">⏩</div>
   <div class="rbtn" id="bSave" title="שמור">💾</div>
 </div>
+
+<div id="goalPill"><span>🎯</span><span id="goalNum">1/21</span><span class="gt" id="goalTxt">...</span></div>
 
 <div id="toasts"></div>
 
@@ -268,6 +301,16 @@
     <button class="big" id="btnNew">🎬 עיר חדשה</button>
     <button class="big alt" id="btnCont">📂 תמשיך את העיר שלי</button>
     <button class="big alt2" id="btnHelp2">📖 איך משחקים</button>
+  </div>
+</div>
+
+<div class="overlay hide" id="levelScreen">
+  <div class="panel">
+    <div class="logo">🎯</div>
+    <h1>המשימות שלי</h1>
+    <p class="sub">השלמת <span id="lvCount">0 / 21</span> משימות</p>
+    <div id="levelList" style="max-height:52vh; overflow-y:auto;"></div>
+    <button class="big" id="btnCloseLevels">קדימה לעבודה! 💪</button>
   </div>
 </div>
 
@@ -375,14 +418,27 @@
         <li><b>המפה על הקיר 🗺️</b> — לחזור לתצוגת העיר מלמעלה.</li>
         <li><b>הכספת 💰</b> — לספור כמה כסף יש לעיר.</li>
       </ul>
-      <h3>11. 🚓 גנבים ומשטרה</h3>
+      <h3>11. 🎯 המשימות שלך</h3>
+      <ul>
+        <li>למעלה באמצע יש פס <b>🎯 משימה</b> שאומר מה לעשות עכשיו.</li>
+        <li>יש <b>21 משימות</b> מהקלה לקשה — על כל אחת מקבלים <b>כסף</b>!</li>
+        <li>לוחצים על הפס (או על 🎯 בצד) כדי לראות את כל הרשימה.</li>
+      </ul>
+      <h3>12. 🚑 אמבולנס והצלות</h3>
+      <ul>
+        <li>מדי פעם מישהו בעיר <b>צריך עזרה</b> — מופיע סימן <b>🆘</b> ברחוב.</li>
+        <li>אם יש לך <b>🏥 בית חולים</b> — יוצא <b>אמבולנס עם סירנה</b> שנוסע אליו ומציל אותו.</li>
+        <li>אם אין בית חולים — <b>לא מספיקים</b>, ואתה מפסיד 120 💰.</li>
+        <li><b>אתה יכול להציל בעצמך!</b> סע או לך אל ה-🆘 ותקבל <b>+120 💰</b>.</li>
+      </ul>
+      <h3>13. 🚓 גנבים ומשטרה</h3>
       <ul>
         <li>כשהעיר גדלה מתחיל <b>פשע</b>. אם הוא גבוה — מופיע <b>🦹 גנב</b>.</li>
         <li><b>🚓 תחנת משטרה</b> שולחת ניידת שרודפת אחריו ותופסת אותו.</li>
         <li>אם אין משטרה — הגנב בורח עם <b>90 💰</b> שלך!</li>
         <li><b>אתה יכול לתפוס אותו בעצמך</b> — פשוט סע עליו עם המכונית! +150 💰</li>
       </ul>
-      <h3>12. 📊 לוח הניהול</h3>
+      <h3>14. 📊 לוח הניהול</h3>
       <ul>
         <li>כפתור <b>📊</b> פותח את לוח הניהול של ראש העיר.</li>
         <li><b>💸 מיסים</b> — יותר מיסים = יותר כסף, אבל אנשים כועסים ובורחים.</li>
@@ -455,7 +511,8 @@ var S = {
   pwCap: 0, pwUse: 0, wtCap: 0, wtUse: 0, jobs: 0, workers: 0,
   grid: [], tool: "road", cat: "infra", speed: 1, started: false, everHadPop: false,
   tax: 1, salary: 1, adDays: 0, crime: 0, unemployed: 0,
-  traUse: 0, traCap: 0, hasHall: false
+  traUse: 0, traCap: 0, hasHall: false,
+  level: 0, rescued: 0, flags: {}
 };
 function cell(x,z){ return S.grid[z*GRID+x]; }
 function inGrid(x,z){ return x>=0 && z>=0 && x<GRID && z<GRID; }
@@ -2010,8 +2067,12 @@ function simulate(){
   if (S.pop >= 150)  warnOnce("m150", "🏆 150 תושבים! אתה ראש עיר מקצועי!", "good");
   if (S.pop >= 300)  warnOnce("m300", "👑 300 תושבים! מטרופולין!", "good");
 
+  /* מצבי חירום — צריך בית חולים */
+  if (S.pop >= 8 && Math.random() < Math.min(0.035, S.pop/1800)) spawnEmergency();
+
   updateUI();
   updateAgents();
+  checkLevels();
   if (S.day % 14 === 0) saveGame(true);
 }
 
@@ -2452,6 +2513,11 @@ document.getElementById("bSpeed").onclick = function(){
 document.getElementById("bHelp").onclick = function(){
   document.getElementById("helpScreen").className = "overlay";
 };
+document.getElementById("goalPill").onclick = openLevels;
+document.getElementById("bGoals").onclick = openLevels;
+document.getElementById("btnCloseLevels").onclick = function(){
+  document.getElementById("levelScreen").className = "overlay hide";
+};
 
 /* --- לוח הניהול --- */
 function updateManage(){
@@ -2529,7 +2595,8 @@ function saveGame(silent){
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       money:S.money, day:S.day, cells:cells,
-      tax:S.tax, salary:S.salary, adDays:S.adDays
+      tax:S.tax, salary:S.salary, adDays:S.adDays,
+      level:S.level, rescued:S.rescued, flags:S.flags
     }));
     if (!silent){ toast("💾 העיר נשמרה!", "good"); beep(820,0.08); }
   }catch(e){ if (!silent) toast("לא הצלחתי לשמור 😕", "bad"); }
@@ -2544,6 +2611,8 @@ function loadGame(){
     clearCity();
     S.money = d.money; S.day = d.day || 1;
     S.tax = d.tax || 1; S.salary = d.salary || 1; S.adDays = d.adDays || 0;
+    S.level = d.level || 0; S.rescued = d.rescued || 0; S.flags = d.flags || {};
+    updateGoalPill();
     var st = document.getElementById("sTax"), ss = document.getElementById("sSal");
     if (st) st.value = Math.round(S.tax*100);
     if (ss) ss.value = Math.round(S.salary*100);
@@ -2573,7 +2642,9 @@ function clearCity(){
   while (peds.length) killAgent(peds, 0);
   while (trucks.length) killAgent(trucks, 0);
   while (buses.length) killAgent(buses, 0);
-  clearCrime(); clearGarbage();
+  clearCrime(); clearGarbage(); clearEmergencies();
+  S.level = 0; S.rescued = 0; S.flags = {};
+  updateGoalPill();
   if (INS.on) exitInterior();
   if (WALK.on) exitWalk();
   refreshRoadList();
@@ -2583,6 +2654,238 @@ function clearCity(){
   var st = document.getElementById("sTax"), ss = document.getElementById("sSal");
   if (st) st.value = 100; if (ss) ss.value = 100;
   S.everHadPop = false; warnCool = {};
+}
+
+/* ============================================================
+   17. מצבי חירום ואמבולנס 🚑
+   ============================================================ */
+var emergencies = [], ambulances = [];
+function makeAmbulance(){
+  var g = new THREE.Group();
+  var white = M(0xF8F8FC, 0.5);
+  g.add(box(1.7, 0.62, 0.92, white, -0.15, 0.62, 0));
+  g.add(box(0.72, 0.5, 0.88, white, 0.92, 0.56, 0));
+  g.add(box(0.62, 0.3, 0.84, winMat(g, 0x9FD8FF), 0.95, 0.68, 0));
+  g.add(box(0.1, 0.34, 0.8, winMat(g, 0x9FD8FF), -1.0, 0.72, 0));
+  /* צלב אדום משני הצדדים */
+  g.add(box(0.62, 0.16, 0.04, M(0xE8342E, 0.5), -0.2, 0.62, 0.47));
+  g.add(box(0.16, 0.42, 0.04, M(0xE8342E, 0.5), -0.2, 0.62, 0.47));
+  g.add(box(0.62, 0.16, 0.04, M(0xE8342E, 0.5), -0.2, 0.62, -0.47));
+  g.add(box(0.16, 0.42, 0.04, M(0xE8342E, 0.5), -0.2, 0.62, -0.47));
+  g.add(box(1.75, 0.1, 0.94, M(0xE8342E, 0.5), -0.15, 0.3, 0));
+  /* סירנה */
+  var r = new THREE.MeshStandardMaterial({ color:0xFF5555, emissive:new THREE.Color(0xFF0000), emissiveIntensity:2 });
+  var b = new THREE.MeshStandardMaterial({ color:0x5599FF, emissive:new THREE.Color(0x0044FF), emissiveIntensity:2 });
+  g.add(box(0.22, 0.13, 0.22, r, -0.3, 1.0, 0));
+  g.add(box(0.22, 0.13, 0.22, b,  0.0, 1.0, 0));
+  g.userData.lights = [r, b];
+  for (var w=0; w<4; w++){
+    var wh = cyl(0.2,0.2,0.11, 9, M(0x18181E, 0.85), (w<2?-0.62:0.72), 0.2, (w%2?-0.46:0.46));
+    wh.rotation.x = Math.PI/2; g.add(wh);
+  }
+  return g;
+}
+function makePatient(){
+  var g = new THREE.Group();
+  /* אדם שוכב */
+  var body = cyl(0.13, 0.15, 0.62, 8, M(0xE8A33C, 0.85), 0, 0.15, 0);
+  body.rotation.x = Math.PI/2; g.add(body);
+  var head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 9, 8), M(0xF0C8A0, 0.8));
+  head.position.set(0, 0.16, 0.44); g.add(head);
+  var c = document.createElement("canvas"); c.width = 72; c.height = 72;
+  var ctx = c.getContext("2d");
+  ctx.beginPath(); ctx.arc(36,36,31,0,Math.PI*2); ctx.fillStyle = "rgba(64,10,14,.92)"; ctx.fill();
+  ctx.lineWidth = 6; ctx.strokeStyle = "#FF6B6B"; ctx.stroke();
+  ctx.font = "36px -apple-system, Segoe UI, Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText("🆘", 36, 40);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true, depthTest:false }));
+  sp.position.y = 1.7; sp.scale.set(1.4, 1.4, 1);
+  g.add(sp); g.userData.sp = sp;
+  return g;
+}
+function hospitalTiles(){
+  var out = [];
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++)
+    if (cell(x,z).t === "hospital") out.push({ x:x, z:z });
+  return out;
+}
+function spawnEmergency(){
+  if (!roadList.length || emergencies.length >= 2) return;
+  var r = roadList[Math.floor(Math.random()*roadList.length)];
+  var w = tileToWorld(r.x, r.z);
+  var g = makePatient();
+  var px = w.x + (Math.random()-0.5)*2.2, pz = w.z + (Math.random()-0.5)*2.2;
+  g.position.set(px, 0, pz);
+  fxGroup.add(g);
+  var em = { g:g, x:px, z:pz, life:0, amb:null };
+  emergencies.push(em);
+  toast("🆘 מישהו צריך עזרה! שלח אמבולנס מהר", "bad");
+  beep(880,0.12); setTimeout(function(){ beep(660,0.14); }, 150);
+  var hts = hospitalTiles();
+  if (hts.length){
+    var best = hts[0], bd = 1e9;
+    for (var i=0;i<hts.length;i++){
+      var hw = tileToWorld(hts[i].x, hts[i].z);
+      var d = (hw.x-px)*(hw.x-px) + (hw.z-pz)*(hw.z-pz);
+      if (d < bd){ bd = d; best = hts[i]; }
+    }
+    var sw = tileToWorld(best.x, best.z);
+    var ag = makeAmbulance();
+    ag.position.set(sw.x, 0.22, sw.z);
+    fxGroup.add(ag);
+    var amb = { g:ag, x:sw.x, z:sw.z, target:em };
+    ambulances.push(amb); em.amb = amb;
+  }
+}
+function removeEmergency(i, saved, byPlayer){
+  var em = emergencies[i];
+  if (saved){
+    S.rescued = (S.rescued||0) + 1;
+    floatText("🚑 ניצל!", em.x, em.z, 2.6, "#8CF4B6");
+    if (byPlayer){
+      S.money += 120;
+      toast("🦸 הצלת אותו בעצמך! +120 💰", "good");
+    } else {
+      toast("🚑 האמבולנס הציל אותו! (" + S.rescued + " הצלות)", "good");
+    }
+    beep(740,0.08); setTimeout(function(){ beep(980,0.12); }, 80);
+  } else {
+    S.money = Math.max(0, S.money - 120);
+    floatText("😢 לא הספיקו", em.x, em.z, 2.6, "#FF9A9A");
+    toast("😢 לא היה אמבולנס בזמן! תבנה 🏥 בית חולים", "bad");
+    beep(160,0.25,"sawtooth");
+  }
+  fxGroup.remove(em.g); disposeGroup(em.g);
+  if (em.amb){
+    var ai = ambulances.indexOf(em.amb);
+    if (ai >= 0){ fxGroup.remove(em.amb.g); disposeGroup(em.amb.g); ambulances.splice(ai,1); }
+  }
+  emergencies.splice(i,1);
+  updateUI();
+}
+function clearEmergencies(){
+  while (emergencies.length){ var e = emergencies[0]; fxGroup.remove(e.g); disposeGroup(e.g); emergencies.shift(); }
+  while (ambulances.length){ var a = ambulances[0]; fxGroup.remove(a.g); disposeGroup(a.g); ambulances.shift(); }
+}
+function updateEmergencies(dt, t){
+  var i;
+  for (i=emergencies.length-1; i>=0; i--){
+    var em = emergencies[i];
+    em.life += dt;
+    if (em.g.userData.sp) em.g.userData.sp.position.y = 1.7 + Math.sin(t*4)*0.18;
+    /* השחקן מציל */
+    var px = DRV.on ? DRV.x : (WALK.on && !INS.on ? WALK.x : null);
+    var pz = DRV.on ? DRV.z : (WALK.on && !INS.on ? WALK.z : null);
+    if (px !== null && Math.hypot(px-em.x, pz-em.z) < 2.6){ removeEmergency(i, true, true); continue; }
+    if (em.life > 38){ removeEmergency(i, false); continue; }
+  }
+  for (i=ambulances.length-1; i>=0; i--){
+    var ab = ambulances[i];
+    if (!ab.target || emergencies.indexOf(ab.target) < 0){
+      fxGroup.remove(ab.g); disposeGroup(ab.g); ambulances.splice(i,1); continue;
+    }
+    var tx = ab.target.x - ab.x, tz = ab.target.z - ab.z;
+    var d = Math.hypot(tx, tz);
+    if (d < 1.6){
+      var ei = emergencies.indexOf(ab.target);
+      if (ei >= 0) removeEmergency(ei, true, false);
+      continue;
+    }
+    var sp = 5.2;
+    ab.x += tx/d * sp * dt; ab.z += tz/d * sp * dt;
+    ab.g.position.set(ab.x, 0.22, ab.z);
+    ab.g.rotation.y = Math.atan2(tx, tz) - Math.PI/2;
+    var fl = Math.sin(t*10) > 0;
+    ab.g.userData.lights[0].emissiveIntensity = fl ? 3.2 : 0.1;
+    ab.g.userData.lights[1].emissiveIntensity = fl ? 0.1 : 3.2;
+  }
+}
+
+/* ============================================================
+   18. רמות ומשימות 🎯
+   ============================================================ */
+var LEVELS = [
+  { t:"תבנה 3 בתים 🏠",                 c:function(){ return countType("house") >= 3; },                 m:150 },
+  { t:"תבנה תחנת כוח ⚡",                c:function(){ return countType("powerplant")+countType("windmill") >= 1; }, m:150 },
+  { t:"תבנה מגדל מים 🚰",                c:function(){ return countType("watertower") >= 1; },            m:150 },
+  { t:"הגע ל-10 תושבים 👨‍👩‍👧",              c:function(){ return S.pop >= 10; },                             m:200 },
+  { t:"תבנה חנות — צריך עבודה! 🏪",      c:function(){ return countType("shop")+countType("supermarket") >= 1; }, m:200 },
+  { t:"תבנה פח אשפה 🗑️",                c:function(){ return countType("trashbin")+countType("recycling") >= 1; }, m:150 },
+  { t:"סע במכונית בעיר שלך 🚗",          c:function(){ return !!S.flags.drove; },                         m:200 },
+  { t:"הגע ל-25 תושבים 👨‍👩‍👧",              c:function(){ return S.pop >= 25; },                             m:300 },
+  { t:"הגע ל-70% שמחה 😊",               c:function(){ return S.happy >= 70; },                           m:300 },
+  { t:"תבנה תחנת משטרה 🚓",              c:function(){ return countType("police") >= 1; },                m:350 },
+  { t:"תבנה בית חולים 🏥",               c:function(){ return countType("hospital") >= 1; },              m:400 },
+  { t:"תציל מישהו עם אמבולנס 🚑",        c:function(){ return (S.rescued||0) >= 1; },                     m:400 },
+  { t:"תבנה בית ספר ופארק 🏫🌳",         c:function(){ return countType("school") >= 1 && countType("park") >= 1; }, m:350 },
+  { t:"תפוס גנב 🦹",                     c:function(){ return !!S.flags.caught; },                        m:400 },
+  { t:"הגע ל-50 תושבים 🏙️",             c:function(){ return S.pop >= 50; },                             m:500 },
+  { t:"תבנה את העירייה 🏛️",             c:function(){ return countType("cityhall") >= 1; },              m:600 },
+  { t:"תיכנס למשרד שלך בעירייה 🚪",      c:function(){ return !!S.flags.office; },                        m:400 },
+  { t:"תבנה בית כנסת 🕍",                c:function(){ return countType("synagogue") >= 1; },             m:450 },
+  { t:"הגע ל-100 תושבים 🌆",             c:function(){ return S.pop >= 100; },                            m:800 },
+  { t:"תבנה אצטדיון 🏟️",                c:function(){ return countType("stadium") >= 1; },               m:900 },
+  { t:"150 תושבים ו-80% שמחה 👑",        c:function(){ return S.pop >= 150 && S.happy >= 80; },           m:1500 }
+];
+function currentLevel(){ return S.level < LEVELS.length ? LEVELS[S.level] : null; }
+function checkLevels(){
+  var guard = 0;
+  while (S.level < LEVELS.length && LEVELS[S.level].c() && guard++ < 5){
+    var L = LEVELS[S.level];
+    S.money += L.m;
+    S.level++;
+    celebrate(L.t, L.m);
+  }
+  updateGoalPill();
+}
+function celebrate(txt, money){
+  toast("🎉 משימה הושלמה: " + txt + "  +" + money + " 💰", "good");
+  beep(660,0.09);
+  setTimeout(function(){ beep(880,0.09); }, 110);
+  setTimeout(function(){ beep(1180,0.16); }, 230);
+  var cx = camTarget.x, cz = camTarget.z;
+  if (DRV.on){ cx = DRV.x; cz = DRV.z; }
+  else if (WALK.on && !INS.on){ cx = WALK.x; cz = WALK.z; }
+  for (var i=0;i<10;i++){
+    (function(k){
+      setTimeout(function(){
+        var a = Math.random()*Math.PI*2, r = Math.random()*7;
+        floatText(["🎉","⭐","🎊","✨"][k%4], cx + Math.cos(a)*r, cz + Math.sin(a)*r, 2 + Math.random()*3, "#FFD24E");
+      }, k*70);
+    })(i);
+  }
+  if (S.level >= LEVELS.length)
+    setTimeout(function(){ toast("👑 סיימת את כל " + LEVELS.length + " המשימות! העיר שלך מושלמת", "good"); }, 900);
+}
+function updateGoalPill(){
+  var L = currentLevel();
+  var el = document.getElementById("goalTxt");
+  var num = document.getElementById("goalNum");
+  if (!el) return;
+  if (L){
+    num.textContent = (S.level+1) + "/" + LEVELS.length;
+    el.textContent = L.t;
+  } else {
+    num.textContent = "👑";
+    el.textContent = "סיימת הכול! תבנה מה שבא לך";
+  }
+}
+function openLevels(){
+  var box = document.getElementById("levelList");
+  var h = "";
+  for (var i=0;i<LEVELS.length;i++){
+    var done = i < S.level, cur = i === S.level;
+    h += '<div class="lvrow' + (done ? " done" : cur ? " cur" : "") + '">' +
+         '<span class="lvi">' + (done ? "✅" : cur ? "👉" : "🔒") + '</span>' +
+         '<span class="lvt">' + LEVELS[i].t + '</span>' +
+         '<span class="lvm">' + LEVELS[i].m + ' 💰</span></div>';
+  }
+  box.innerHTML = h;
+  document.getElementById("lvCount").textContent = S.level + " / " + LEVELS.length;
+  document.getElementById("levelScreen").className = "overlay";
+  var cur2 = box.querySelector(".cur");
+  if (cur2) cur2.scrollIntoView({ block:"center" });
+  beep(620,0.05);
 }
 
 /* ============================================================
@@ -2931,6 +3234,7 @@ function enterInterior(tx, tz){
   interiorGroup.add(room);
   addInteract(0, RD-0.4, 1.5, "לצאת החוצה", "🚪", function(){ exitInterior(); });
   INS.on = true; INS.type = c.t; INS.tx = tx; INS.tz = tz; INS.near = null;
+  if (c.t === "cityhall"){ S.flags.office = true; checkLevels(); }
   document.body.className = "driving inside";
   interiorGroup.visible = true;
   roomLight.visible = true; roomLight2.intensity = 0.45;
@@ -3202,6 +3506,7 @@ function removeThief(i, caught, byPlayer){
   var th = thieves[i];
   floatText(caught ? "🚔 נתפס!" : "💸 ברח עם הכסף", th.x, th.z, 2.4, caught ? "#8CF4B6" : "#FF9A9A");
   if (caught){
+    S.flags.caught = true;
     var pay = byPlayer ? 150 : 60;
     S.money += pay;
     toast(byPlayer ? "🚗 תפסת את הגנב בעצמך! +" + pay + " 💰" : "🚓 המשטרה תפסה את הגנב! +" + pay + " 💰", "good");
@@ -3349,7 +3654,8 @@ function enterDrive(){
   camera.position.set(DRV.x - Math.sin(DRV.ang)*10, 5, DRV.z - Math.cos(DRV.ang)*10);
   document.getElementById("bDrive").textContent = "🏙️";
   document.getElementById("bDrive").title = "חזרה לבנייה";
-  toast("🚗 נכנסת למכונית! גז עם ⬆️ או חץ למעלה", "good");
+  S.flags.drove = true; checkLevels();
+  toast("🚗 נכנסת למכונית! גז עם ⬆️ · 🚪 לצאת ברגל", "good");
   beep(420,0.08); setTimeout(function(){ beep(620,0.12); }, 90);
 }
 function exitDrive(){
@@ -3567,6 +3873,7 @@ function animate(){
     for (var ii=0; ii<ik.length; ii++) if (ik[ii].userData.anim) ik[ii].userData.anim(t, dt);
   }
   if (thieves.length || copCars.length) updateCrime(dt, t);
+  if (emergencies.length || ambulances.length) updateEmergencies(dt, t);
 
   /* פעימת הסימולציה */
   if (S.started && S.speed > 0){
@@ -3611,6 +3918,7 @@ resize();
 updateCam();
 buildDock();
 updateUI();
+updateGoalPill();
 if (!hasSave()) document.getElementById("btnCont").style.display = "none";
 document.getElementById("loading").style.display = "none";
 animate();
@@ -3625,6 +3933,9 @@ window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:c
                   WALK:WALK, INS:INS, enterWalk:enterWalk, exitWalk:exitWalk, updateWalk:updateWalk,
                   enterInterior:enterInterior, exitInterior:exitInterior, getOutOfCar:getOutOfCar,
                   getAction:function(){ return walkAction; },
+                  LEVELS:LEVELS, checkLevels:checkLevels, openLevels:openLevels,
+                  spawnEmergency:spawnEmergency, updateEmergencies:updateEmergencies,
+                  emergencies:emergencies, ambulances:ambulances,
                   draw:function(){ if(!DRV.on) updateCam(); renderer.render(scene, camera); } };
 
 })();
