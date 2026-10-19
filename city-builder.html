@@ -156,6 +156,45 @@
   .big:active{ transform:translateY(4px); box-shadow:0 1px 0 #C97E12; }
   .big.alt{ background:linear-gradient(135deg,#6CE4FF,#4A9CFF); box-shadow:0 5px 0 #2A62B8; color:#07214A; }
   .big.alt2{ background:linear-gradient(135deg,#B18CFF,#8257FF); box-shadow:0 5px 0 #5A32C0; color:#fff; }
+  #cityPill{ background:linear-gradient(135deg,rgba(180,140,255,.3),rgba(120,90,255,.2)); border-color:rgba(200,170,255,.5); }
+  #cityTxt{ display:inline-block; max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
+
+  /* ===== עיר חדשה + רשימת הערים ===== */
+  #cityNameIn{
+    width:100%; box-sizing:border-box; padding:13px 14px; margin:4px 0 12px;
+    border-radius:16px; border:2px solid rgba(255,255,255,.22); font-family:inherit;
+    font-size:17px; font-weight:800; text-align:center; color:#fff;
+    background:rgba(255,255,255,.1);
+  }
+  #cityNameIn:focus{ outline:none; border-color:#FFD24E; background:rgba(255,255,255,.16); }
+  #themeGrid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:4px 0 14px; }
+  .thc{
+    cursor:pointer; border-radius:18px; padding:11px 8px; text-align:center;
+    background:rgba(255,255,255,.07); border:2.5px solid rgba(255,255,255,.14);
+    transition:transform .1s, border-color .12s, background .12s;
+  }
+  .thc:hover{ transform:translateY(-2px); background:rgba(255,255,255,.14); }
+  .thc.on{ border-color:#7CFFB2; background:linear-gradient(160deg,rgba(124,255,178,.26),rgba(60,200,140,.12));
+    box-shadow:0 0 0 3px rgba(124,255,178,.18); }
+  .thc .te{ font-size:30px; line-height:1.1; }
+  .thc .tn{ font-size:14.5px; font-weight:800; margin-top:3px; }
+  .thc .td{ font-size:11.5px; color:#B9AEE6; font-weight:600; }
+  .ccard{
+    display:flex; align-items:center; gap:10px; text-align:right; margin:8px 0;
+    background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.14);
+    border-radius:16px; padding:9px 11px;
+  }
+  .ccard .ce{ font-size:28px; }
+  .ccard .cinfo{ flex:1; min-width:0; }
+  .ccard .cn{ display:block; font-size:16px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ccard .cs{ display:block; font-size:12px; color:#B9AEE6; font-weight:600; }
+  .ccard button{
+    border:none; border-radius:13px; padding:9px 12px; font-family:inherit;
+    font-size:14px; font-weight:800; cursor:pointer;
+    background:linear-gradient(135deg,#7CFFB2,#3FD98A); color:#073A22;
+  }
+  .ccard button.del{ background:rgba(255,120,120,.25); color:#FFD6D6; padding:9px 10px; }
+  #cityList .empty{ color:#B9AEE6; font-size:14px; font-weight:700; margin:10px 0; }
   .help{ text-align:right; color:#DCD5FF; font-size:14px; line-height:1.75; }
   .help h3{ color:#FFD24E; font-size:16px; margin:16px 0 6px; }
   .help li{ margin:3px 0; }
@@ -266,6 +305,7 @@
     <span class="rciWrap"><span class="rciCol"><i id="rciI"></i></span><span class="rciLbl">🏭</span></span>
   </div>
   <div class="stat"><span class="ico">📅</span><span id="sDay">1</span></div>
+  <div class="stat" id="cityPill" title="העיר שאתה בונה"><span class="ico" id="cityIco">🌴</span><span id="cityTxt">העיר שלי</span></div>
 </div>
 
 <div id="side">
@@ -281,6 +321,7 @@
   <div class="rbtn" id="bRot" title="סובב">🔄</div>
   <div class="rbtn" id="bSpeed" title="מהירות הזמן">⏩</div>
   <div class="rbtn" id="bSave" title="שמור">💾</div>
+  <div class="rbtn" id="bCities" title="הערים שלי">🗂️</div>
 </div>
 
 <div id="goalPill"><span>🎯</span><span id="goalNum">1/21</span><span class="gt" id="goalTxt">...</span></div>
@@ -314,8 +355,31 @@
     <h1>העיר של שמואל</h1>
     <p class="sub">בנה עיר, תביא אנשים — ותדאג שהם לא יברחו!</p>
     <button class="big" id="btnNew">🎬 עיר חדשה</button>
-    <button class="big alt" id="btnCont">📂 תמשיך את העיר שלי</button>
+    <button class="big alt" id="btnCont">📂 הערים שלי</button>
     <button class="big alt2" id="btnHelp2">📖 איך משחקים</button>
+  </div>
+</div>
+
+<div class="overlay hide" id="newCityScreen">
+  <div class="panel">
+    <div class="logo">🏗️</div>
+    <h1>עיר חדשה</h1>
+    <p class="sub">תן לה שם ותבחר איזה סוג עיר אתה רוצה</p>
+    <input id="cityNameIn" type="text" maxlength="16" placeholder="איך קוראים לעיר שלך?">
+    <div id="themeGrid"></div>
+    <button class="big" id="btnBuildCity">בונים! 🚜</button>
+    <button class="big alt2" id="btnNewBack">⬅️ חזרה</button>
+  </div>
+</div>
+
+<div class="overlay hide" id="citiesScreen">
+  <div class="panel">
+    <div class="logo">🗂️</div>
+    <h1>הערים שלי</h1>
+    <p class="sub">כל עיר נשמרת לבד — שום דבר לא נמחק</p>
+    <div id="cityList"></div>
+    <button class="big" id="btnCitiesNew">➕ עיר חדשה</button>
+    <button class="big alt2" id="btnCitiesBack">⬅️ חזרה</button>
   </div>
 </div>
 
@@ -512,6 +576,12 @@
         <li><b>📢 קמפיין פרסום</b> — משלמים, ואנשים חדשים מגיעים לעיר הרבה יותר מהר.</li>
         <li>אפשר גם לבנות <b>📢 לוח מודעות</b> בעיר — הוא מפרסם כל הזמן.</li>
       </ul>
+      <h3>19. 🗂️ כמה ערים ביחד</h3>
+      <ul>
+        <li>בכל עיר חדשה אתה בוחר <b>שם</b> ו<b>סוג עיר</b>: 🌴 אי ירוק, 🏜️ מדבר, ❄️ שלג או 🌃 לילה.</li>
+        <li>כפתור <b>🗂️</b> מראה את <b>כל הערים שלך</b> — לוחצים "שחק" וקופצים לעיר אחרת.</li>
+        <li><b>שום עיר לא נמחקת!</b> כל עיר נשמרת לבד, גם כשאתה בונה עיר חדשה. רק אם תלחץ 🗑️ ותאשר — היא תימחק.</li>
+      </ul>
       <div class="tipbox">💡 <b>טיפ זהב (סדר הבנייה):</b> 🛣️ כביש ➜ ⚡ תחנת כוח ➜ 🚰 מגדל מים ➜ 🏘️ כמה אזורי מגורים ליד הכביש ➜ 🏬 אזור מסחרי ➜ 🏭 אזור תעשייה. ואז תחכה — הבניינים יגדלו לבד! אחר כך 🗑️ פחים, 🌳 פארק, 🚓 משטרה ו-🏛️ עירייה.</div>
     </div>
     <button class="big" id="btnCloseHelp">בוא נשחק! 🚀</button>
@@ -592,7 +662,33 @@ var CATS = [
   { id:"tools", name:"🛠️ כלים" }
 ];
 
+/* ===== סוגי ערים — כל אחד נראה אחרת לגמרי ===== */
+var THEMES = {
+  island: { id:"island", name:"אי ירוק", e:"🌴", desc:"דשא ירוק, ים כחול ושמש",
+    skyTop:"#4FA8F5", skyBot:"#DFF2FF", bg:0x8FD3FF, fog:0xBFE6FF, sea:0x2E9BD6,
+    g1:"#79C765", g2:"#6FBE5B", dirt:0xB98A5A, beach:0xF2DCA8, hill:0x4E8F6E,
+    hemiSky:0xEAF6FF, hemiGnd:0x6E9A58, hemiI:0.95,
+    sun:0xFFF3D6, sunI:1.15, fillC:0xBFD9FF, fillI:0.3, cloud:0xFFFFFF },
+  desert: { id:"desert", name:"עיר במדבר", e:"🏜️", desc:"חול זהוב עד האופק",
+    skyTop:"#5BB6EE", skyBot:"#FFE9BE", bg:0xF0D79F, fog:0xF6E4BC, sea:0xE3C78C,
+    g1:"#E0BE7E", g2:"#D6B272", dirt:0xB08552, beach:0xEBD3A0, hill:0xC9A469,
+    hemiSky:0xFFF3DC, hemiGnd:0xC9A469, hemiI:1,
+    sun:0xFFE9B8, sunI:1.3, fillC:0xFFD9A8, fillI:0.3, cloud:0xFFF6E6 },
+  snow: { id:"snow", name:"עיר בשלג", e:"❄️", desc:"הכל לבן וקפוא",
+    skyTop:"#7FB8E8", skyBot:"#EAF4FF", bg:0xCDE6F7, fog:0xE6F2FC, sea:0x7FC4E8,
+    g1:"#EAF2FA", g2:"#DCE8F5", dirt:0x9AA7B8, beach:0xF4FAFF, hill:0xD6E5F2,
+    hemiSky:0xFFFFFF, hemiGnd:0xC6D8E8, hemiI:1.05,
+    sun:0xFFFFFF, sunI:1.05, fillC:0xCCE2FF, fillI:0.35, cloud:0xFFFFFF },
+  night: { id:"night", name:"עיר בלילה", e:"🌃", desc:"אורות בחושך וכוכבים",
+    skyTop:"#0A0E2E", skyBot:"#2B3C7C", bg:0x121A3C, fog:0x1B2448, sea:0x12285A,
+    g1:"#2F4A3A", g2:"#2A4334", dirt:0x4A3A2E, beach:0x5A5240, hill:0x27403A,
+    hemiSky:0x4E63A6, hemiGnd:0x161C30, hemiI:0.6,
+    sun:0xC2D2FF, sunI:0.4, fillC:0x8898FF, fillI:0.28, cloud:0x5B6594 }
+};
+var THEME_LIST = ["island", "desert", "snow", "night"];
+
 var S = {
+  theme: "island", cityId: null, cityName: "העיר שלי",
   money: START_MONEY, day: 1, pop: 0, happy: 60,
   pwCap: 0, pwUse: 0, wtCap: 0, wtUse: 0, jobs: 0, workers: 0,
   grid: [], tool: "road", cat: "infra", speed: 1, started: false, everHadPop: false,
@@ -676,11 +772,11 @@ sea.rotation.x = -Math.PI/2; sea.position.y = -1.6;
 scene.add(sea);
 
 /* --- האי (קרקע הבנייה) --- */
-function grassTex(){
+function grassTex(c1, c2){
   var c = document.createElement("canvas"); c.width = 128; c.height = 128;
   var g = c.getContext("2d");
-  g.fillStyle = "#79C765"; g.fillRect(0,0,128,128);
-  g.fillStyle = "#6FBE5B"; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
+  g.fillStyle = c1 || "#79C765"; g.fillRect(0,0,128,128);
+  g.fillStyle = c2 || "#6FBE5B"; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
   g.strokeStyle = "rgba(255,255,255,.10)"; g.lineWidth = 2;
   g.strokeRect(0,0,64,64); g.strokeRect(64,64,64,64);
   for (var i=0;i<90;i++){
@@ -700,9 +796,10 @@ var island = new THREE.Mesh(
 );
 island.position.y = -1.5; island.receiveShadow = true;
 scene.add(island);
+var beachMat = new THREE.MeshStandardMaterial({ color:0xF2DCA8, roughness:0.95 });
 var beach = new THREE.Mesh(
   new THREE.BoxGeometry(GRID*TILE+9, 2.2, GRID*TILE+9),
-  new THREE.MeshStandardMaterial({ color:0xF2DCA8, roughness:0.95 })
+  beachMat
 );
 beach.position.y = -2.1; beach.receiveShadow = true;
 scene.add(beach);
@@ -728,6 +825,39 @@ for (var ci=0; ci<12; ci++){
   }
   cg.position.set(Math.random()*300-150, 58+Math.random()*34, Math.random()*300-150);
   clouds.push(cg); scene.add(cg);
+}
+
+/* --- כוכבים (נדלקים רק בעיר של הלילה) --- */
+var starGeo = new THREE.BufferGeometry();
+var starPos = [];
+for (var si=0; si<420; si++){
+  var sa = Math.random()*Math.PI*2, sb = Math.random()*0.75 + 0.06, sr = 395;
+  starPos.push(Math.cos(sa)*Math.cos(sb)*sr, Math.sin(sb)*sr, Math.sin(sa)*Math.cos(sb)*sr);
+}
+starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+var stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color:0xFFFFFF, size:2.6, fog:false }));
+stars.visible = false;
+scene.add(stars);
+
+/* --- צביעת העולם לפי סוג העיר --- */
+function applyTheme(id){
+  var T = THEMES[id] || THEMES.island;
+  S.theme = T.id;
+  scene.background = new THREE.Color(T.bg);
+  scene.fog.color.setHex(T.fog);
+  if (skyMat.map) skyMat.map.dispose();
+  skyMat.map = gradTex(T.skyTop, T.skyBot); skyMat.needsUpdate = true;
+  seaMat.color.setHex(T.sea);
+  if (grassMat.map) grassMat.map.dispose();
+  grassMat.map = grassTex(T.g1, T.g2); grassMat.needsUpdate = true;
+  dirtMat.color.setHex(T.dirt);
+  beachMat.color.setHex(T.beach);
+  hillMat.color.setHex(T.hill);
+  hemi.color.setHex(T.hemiSky); hemi.groundColor.setHex(T.hemiGnd); hemi.intensity = T.hemiI;
+  sun.color.setHex(T.sun); sun.intensity = T.sunI;
+  fill.color.setHex(T.fillC); fill.intensity = T.fillI;
+  cloudMat.color.setHex(T.cloud);
+  stars.visible = (T.id === "night");
 }
 
 /* --- סמן הבנייה --- */
@@ -3097,30 +3227,90 @@ document.getElementById("btnHelp2").onclick = function(){
 /* ============================================================
    11. שמירה וטעינה
    ============================================================ */
-var SAVE_KEY = "shmuelCity_v1";
+var SAVE_KEY   = "shmuelCity_v1";      /* השמירה הישנה — נשארת כגיבוי, לא נמחקת */
+var CITIES_KEY = "shmuelCities_v1";    /* כל הערים ביחד */
+
+function readCities(){
+  try{
+    var d = JSON.parse(localStorage.getItem(CITIES_KEY));
+    if (d && d.list && d.list.length >= 0) return d;
+  }catch(e){}
+  return { list:[], cur:null };
+}
+function writeCities(db){
+  try{ localStorage.setItem(CITIES_KEY, JSON.stringify(db)); return true; }
+  catch(e){ return false; }
+}
+function cityIdx(db, id){
+  for (var i=0;i<db.list.length;i++) if (db.list[i].id === id) return i;
+  return -1;
+}
+function makeCityId(){ return "c" + Date.now() + "_" + Math.floor(Math.random()*9999); }
+
+/* מעביר שמירה ישנה (מלפני הערים המרובות) לרשימת הערים — בלי למחוק כלום */
+function migrateOldSave(){
+  var db = readCities();
+  if (db.list.length) return db;
+  var old = null;
+  try{ old = JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){}
+  if (old && old.cells){
+    db.list.push({ id:makeCityId(), name:"העיר שלי", theme:"island",
+                   pop:0, day:old.day||1, money:Math.round(old.money||0),
+                   ts:Date.now(), data:old });
+    db.cur = db.list[0].id;
+    writeCities(db);
+  }
+  return db;
+}
+
+function cityData(){
+  var cells = [];
+  for (var i=0;i<S.grid.length;i++){
+    var c = S.grid[i];
+    cells.push((c.t || c.zone)
+      ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0, c.wire?1:0]
+      : 0);
+  }
+  return {
+    money:S.money, day:S.day, cells:cells,
+    tax:S.tax, salary:S.salary, adDays:S.adDays,
+    level:S.level, rescued:S.rescued, flags:S.flags
+  };
+}
+
 function saveGame(silent){
   try{
-    var cells = [];
-    for (var i=0;i<S.grid.length;i++){
-      var c = S.grid[i];
-      cells.push((c.t || c.zone)
-        ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0, c.wire?1:0]
-        : 0);
-    }
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      money:S.money, day:S.day, cells:cells,
-      tax:S.tax, salary:S.salary, adDays:S.adDays,
-      level:S.level, rescued:S.rescued, flags:S.flags
-    }));
-    if (!silent){ toast("💾 העיר נשמרה!", "good"); beep(820,0.08); }
+    var db = readCities();
+    if (!S.cityId) S.cityId = makeCityId();
+    var e = { id:S.cityId, name:S.cityName || "העיר שלי", theme:S.theme || "island",
+              pop:S.pop, day:S.day, money:Math.round(S.money), ts:Date.now(), data:cityData() };
+    var i = cityIdx(db, S.cityId);
+    if (i < 0) db.list.push(e); else db.list[i] = e;
+    db.cur = S.cityId;
+    if (!writeCities(db)) throw new Error("no space");
+    if (!silent){ toast("💾 " + e.name + " נשמרה!", "good"); beep(820,0.08); }
   }catch(e){ if (!silent) toast("לא הצלחתי לשמור 😕", "bad"); }
 }
 function hasSave(){
-  try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; }
+  return readCities().list.length > 0;
 }
-function loadGame(){
+/* טוען עיר מתוך הרשימה לפי מזהה */
+function loadCity(id){
+  var db = readCities();
+  var i = cityIdx(db, id);
+  if (i < 0) return false;
+  var e = db.list[i];
+  if (DRV.on) exitDrive();
+  S.cityId = e.id;
+  S.cityName = e.name || "העיר שלי";
+  applyTheme(e.theme || "island");
+  if (!loadGame(e.data)) return false;
+  db.cur = e.id; writeCities(db);
+  updateCityPill();
+  return true;
+}
+function loadGame(d){
   try{
-    var d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!d) return false;
     clearCity();
     S.money = d.money; S.day = d.day || 1;
@@ -3151,7 +3341,7 @@ function loadGame(){
     refreshRoadList();
     for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++) if (cell(x,z).t || cell(x,z).zone) renderCell(x,z);
     simulate();
-    toast("📂 העיר שלך חזרה!", "good");
+    toast("📂 " + (S.cityName || "העיר שלך") + " חזרה!", "good");
     return true;
   }catch(e){ return false; }
 }
@@ -4698,8 +4888,12 @@ function animate(){
 /* ============================================================
    13. התחלה
    ============================================================ */
-function newGame(){
+function newGame(name, theme){
   clearCity();
+  S.cityId = makeCityId();
+  S.cityName = (name && name.trim()) ? name.trim().slice(0,16) : "העיר שלי";
+  applyTheme(theme || "island");
+  updateCityPill();
   /* כביש פתיחה קטן כדי שיהיה ממה להתחיל */
   var mid = Math.floor(GRID/2);
   for (var i=-2;i<=2;i++){
@@ -4711,20 +4905,136 @@ function newGame(){
   S.money = START_MONEY; S.day = 1;
   updateUI();
   drawDemand();
+  saveGame(true);   /* העיר נרשמת מיד ברשימה כדי שלא תאבד */
   toast("🛣️ בניתי כביש להתחלה. עכשיו: ⚡ תחנת כוח, 🚰 מים, ואז סמן 🏘️ אזורי מגורים ליד הכביש!", "good");
 }
 function start(){
   S.started = true;
   document.getElementById("startScreen").className = "overlay hide";
+  document.getElementById("newCityScreen").className = "overlay hide";
+  document.getElementById("citiesScreen").className = "overlay hide";
+  updateCityPill();
   buildItems("infra");
   setTool("road");
   drawDemand();
   beep(680,0.08); setTimeout(function(){ beep(880,0.1); }, 90);
 }
-document.getElementById("btnNew").onclick = function(){ newGame(); start(); };
-document.getElementById("btnCont").onclick = function(){
-  if (!loadGame()){ toast("לא מצאתי עיר שמורה — מתחילים חדש!", "bad"); newGame(); }
+/* ===== שם העיר למעלה במסך ===== */
+function updateCityPill(){
+  var T = THEMES[S.theme] || THEMES.island;
+  var ic = document.getElementById("cityIco"), tx = document.getElementById("cityTxt");
+  if (ic) ic.textContent = T.e;
+  if (tx) tx.textContent = S.cityName || "העיר שלי";
+  document.title = (S.cityName || "העיר שלי") + " · בניית עיר";
+}
+
+/* ===== מסכי הערים ===== */
+function showScreen(id){
+  var all = ["startScreen", "newCityScreen", "citiesScreen"];
+  for (var i=0;i<all.length;i++){
+    var el = document.getElementById(all[i]);
+    if (el) el.className = "overlay" + (all[i] === id ? "" : " hide");
+  }
+}
+var pickedTheme = "island";
+function buildThemeGrid(){
+  var box = document.getElementById("themeGrid");
+  box.innerHTML = "";
+  for (var i=0;i<THEME_LIST.length;i++){
+    (function(id){
+      var T = THEMES[id];
+      var d = document.createElement("div");
+      d.className = "thc" + (id === pickedTheme ? " on" : "");
+      d.innerHTML = '<div class="te">' + T.e + '</div><div class="tn">' + T.name +
+                    '</div><div class="td">' + T.desc + '</div>';
+      d.onclick = function(){ pickedTheme = id; buildThemeGrid(); beep(700,0.05); };
+      box.appendChild(d);
+    })(THEME_LIST[i]);
+  }
+}
+function openNewCity(){
+  pickedTheme = "island";
+  buildThemeGrid();
+  var inp = document.getElementById("cityNameIn");
+  inp.value = "";
+  showScreen("newCityScreen");
+  setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 120);
+}
+function buildCityList(){
+  var box = document.getElementById("cityList");
+  var db = readCities();
+  box.innerHTML = "";
+  if (!db.list.length){
+    box.innerHTML = '<div class="empty">עוד אין ערים שמורות — תתחיל עיר חדשה! 🏗️</div>';
+    return;
+  }
+  db.list.sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+  for (var i=0;i<db.list.length;i++){
+    (function(e){
+      var T = THEMES[e.theme] || THEMES.island;
+      var row = document.createElement("div");
+      row.className = "ccard";
+      row.innerHTML = '<span class="ce">' + T.e + '</span>' +
+        '<span class="cinfo"><span class="cn">' + esc(e.name || "העיר שלי") + '</span>' +
+        '<span class="cs">' + T.name + ' · 📅 יום ' + (e.day||1) +
+        ' · 👨‍👩‍👧‍👦 ' + (e.pop||0) + ' · 💰 ' + (e.money||0) + '</span></span>';
+      var play = document.createElement("button");
+      play.textContent = "▶️ שחק";
+      play.onclick = function(){
+        if (S.started) saveGame(true);
+        if (loadCity(e.id)){ start(); }
+        else toast("לא הצלחתי לפתוח את העיר 😕", "bad");
+      };
+      var del = document.createElement("button");
+      del.className = "del"; del.textContent = "🗑️";
+      del.onclick = function(){
+        if (!confirm('למחוק את "' + (e.name||"העיר שלי") + '" לגמרי? אי אפשר להחזיר!')) return;
+        var db2 = readCities();
+        var j = cityIdx(db2, e.id);
+        if (j >= 0) db2.list.splice(j, 1);
+        if (db2.cur === e.id) db2.cur = db2.list.length ? db2.list[0].id : null;
+        writeCities(db2);
+        /* אם מחקנו את העיר שמשחקים בה עכשיו — יוצאים ממנה שלא תישמר שוב */
+        if (S.cityId === e.id){
+          S.cityId = null; S.started = false;
+          clearCity();
+          S.cityName = "העיר שלי"; applyTheme("island"); updateCityPill(); updateUI();
+        }
+        buildCityList();
+        beep(200,0.1);
+      };
+      row.appendChild(play); row.appendChild(del);
+      box.appendChild(row);
+    })(db.list[i]);
+  }
+}
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c];
+  });
+}
+
+document.getElementById("btnNew").onclick      = function(){ openNewCity(); };
+document.getElementById("btnNewBack").onclick  = function(){
+  if (S.started) showScreen(null); else showScreen("startScreen");
+};
+document.getElementById("btnCitiesNew").onclick= function(){ openNewCity(); };
+document.getElementById("btnCitiesBack").onclick = function(){
+  if (S.started) showScreen(null); else showScreen("startScreen");
+};
+document.getElementById("btnBuildCity").onclick = function(){
+  var nm = document.getElementById("cityNameIn").value;
+  if (!nm.trim()){ toast("תן שם לעיר שלך 🙂", "bad"); return; }
+  newGame(nm, pickedTheme);
+  showScreen(null);
   start();
+};
+document.getElementById("btnCont").onclick = function(){ buildCityList(); showScreen("citiesScreen"); };
+document.getElementById("bCities").onclick = function(){
+  saveGame(true);
+  buildCityList();
+  showScreen("citiesScreen");
+  beep(680,0.06);
 };
 window.addEventListener("beforeunload", function(){ if (S.started) saveGame(true); });
 
@@ -4733,6 +5043,9 @@ updateCam();
 buildDock();
 updateUI();
 updateGoalPill();
+applyTheme("island");
+migrateOldSave();
+updateCityPill();
 if (!hasSave()) document.getElementById("btnCont").style.display = "none";
 document.getElementById("loading").style.display = "none";
 animate();
