@@ -45,8 +45,10 @@
   #traFill{ background:linear-gradient(90deg,#9FE07A,#4FA85C); }
   .bar.over i{ background:linear-gradient(90deg,#FF6B6B,#E53935) !important; }
   /* מד הביקוש RCI */
-  .stat.rci{ gap:5px; padding:4px 10px; align-items:flex-end; height:auto; }
-  .rciCol{ position:relative; width:11px; height:26px; display:block;
+  .stat.rci{ gap:7px; padding:3px 10px 2px; align-items:flex-end; height:auto; cursor:pointer; }
+  .rciWrap{ display:flex; flex-direction:column; align-items:center; gap:1px; }
+  .rciLbl{ font-size:10px; line-height:1; }
+  .rciCol{ position:relative; width:12px; height:26px; display:block;
     border-bottom:2px solid rgba(255,255,255,.4); }
   .rciCol i{ position:absolute; left:0; right:0; bottom:11px; display:block;
     height:2px; border-radius:2px; transition:height .4s ease, bottom .4s ease; }
@@ -258,10 +260,10 @@
     <div class="bar-row"><span>💧</span><span class="bar" id="watBar"><i id="watFill"></i></span><span id="sWat">0/0</span></div>
     <div class="bar-row"><span>🗑️</span><span class="bar" id="traBar"><i id="traFill"></i></span><span id="sTra">0/0</span></div>
   </div>
-  <div class="stat rci" id="rciBox" title="ביקוש: מגורים · מסחר · תעשייה">
-    <span class="rciCol"><i id="rciR"></i></span>
-    <span class="rciCol"><i id="rciC"></i></span>
-    <span class="rciCol"><i id="rciI"></i></span>
+  <div class="stat rci" id="rciBox" title="ביקוש: לחץ להסבר">
+    <span class="rciWrap"><span class="rciCol"><i id="rciR"></i></span><span class="rciLbl">🏘️</span></span>
+    <span class="rciWrap"><span class="rciCol"><i id="rciC"></i></span><span class="rciLbl">🏬</span></span>
+    <span class="rciWrap"><span class="rciCol"><i id="rciI"></i></span><span class="rciLbl">🏭</span></span>
   </div>
   <div class="stat"><span class="ico">📅</span><span id="sDay">1</span></div>
 </div>
@@ -270,6 +272,7 @@
   <a class="rbtn" href="index.html" title="חזרה למשחקים של שמואל">⬅️</a>
   <div class="rbtn" id="bDrive" title="כניסה למכונית">🚗</div>
   <div class="rbtn" id="bWalk" title="ללכת ברגל בעיר">🚶</div>
+  <div class="rbtn" id="bMap" title="מפות נתונים">🗺️</div>
   <div class="rbtn" id="bGoals" title="המשימות שלי">🎯</div>
   <div class="rbtn" id="bManage" title="לוח ניהול העיר">📊</div>
   <div class="rbtn" id="bHelp" title="הוראות">❓</div>
@@ -398,26 +401,44 @@
         <li>תעשייה: 📦 מחסן ← 🏭 מפעל ← 🏗️ מפעל ענק</li>
         <li>אם אין כביש, אין חשמל, יש זיהום או אין ביקוש — <b>הבניין מתרוקן וננטש</b> 🚫</li>
       </ul>
-      <h3>6. 🗑️ אשפה</h3>
+      <h3>6. 🔌 קווי חשמל — חדש!</h3>
+      <div class="tipbox">⚡ <b>החשמל לא מגיע לבד לכל מקום!</b> הוא זורם <b>מתחנת הכוח</b> דרך <b>בניינים צמודים</b> ודרך <b>🔌 קווי חשמל</b>.</div>
+      <ul>
+        <li>בניינים שצמודים זה לזה <b>מעבירים חשמל</b> אחד לשני.</li>
+        <li>אם יש לך שכונה <b>רחוקה</b> מתחנת הכוח — תמתח אליה <b>🔌 קווי חשמל</b> (רק 10 💰 למשבצת).</li>
+        <li><b>כבישים לא מעבירים חשמל!</b> בדיוק כמו בסים סיטי.</li>
+        <li>בניין בלי חשמל מסומן ב-<b>⚡</b> ולא גדל.</li>
+        <li>לחץ 🗺️ ובחר <b>⚡ מפת חשמל</b> כדי לראות בדיוק לאן החשמל מגיע.</li>
+      </ul>
+      <h3>7. 🗺️ מפות הנתונים — חדש!</h3>
+      <ul>
+        <li>כפתור <b>🗺️</b> בצד מחליף בין <b>4 מפות</b> שצובעות את העיר:</li>
+        <li><b>🚓 מפת פשע</b> — אדום = מסוכן, ירוק = בטוח</li>
+        <li><b>😷 מפת זיהום</b> — אדום = מלוכלך מהמפעלים</li>
+        <li><b>💎 ערך הקרקע</b> — ירוק = מקום טוב לגור בו</li>
+        <li><b>⚡ מפת חשמל</b> — ירוק = מחובר, אדום = אין חשמל</li>
+        <li>ככה אתה רואה בדיוק איפה הבעיות בעיר!</li>
+      </ul>
+      <h3>8. 🗑️ אשפה</h3>
       <ul>
         <li>כל תושב מייצר <b>זבל</b> כל יום. יש פס 🗑️ למעלה שמראה כמה זבל יש.</li>
         <li>בונים <b>🗑️ פח אשפה</b> (זול, רק 35 💰) או <b>♻️ מרכז מיחזור</b> (מפנה הרבה).</li>
         <li>אם הפס נהיה אדום — <b>ערימות זבל מופיעות בעיר עם זבובים</b> 🪰 והאנשים בורחים!</li>
         <li>למרכז מיחזור יוצאת <b>משאית זבל</b> שנוסעת בעיר.</li>
       </ul>
-      <h3>7. 🏛️ העירייה — משרד ראש העיר</h3>
+      <h3>9. 🏛️ העירייה — משרד ראש העיר</h3>
       <ul>
         <li>אפשר לבנות <b>רק עירייה אחת</b> בעיר (850 💰).</li>
         <li>היא נותנת: <b>+15% מיסים</b>, <b>פחות פשע</b>, <b>פרסום זול ב-30%</b> והרבה שמחה.</li>
       </ul>
-      <h3>8. שמחה</h3>
+      <h3>10. שמחה</h3>
       <ul>
         <li>🌳 פארק · ⛲ מזרקה · 🏊 בריכה · 🏟️ אצטדיון · 🕍 בית כנסת · 📚 ספרייה · 🏫 בית ספר · 🏥 חולים · 🚓 משטרה · 🚌 תחנת אוטובוס — כולם מעלים שמחה.</li>
         <li>🛒 סופרמרקט · 🍕 מסעדה · 🏦 בנק · ⛽ תחנת דלק — נותנים עבודה והכנסה.</li>
         <li>🏭 מפעל נותן הרבה כסף ועבודה — אבל מלכלך! בונים אותו <b>רחוק</b> מהבתים.</li>
         <li>צריך <b>עבודה</b> לכולם: 🏪 חנויות ו-🏭 מפעלים נותנים עבודה.</li>
       </ul>
-      <h3>9. איך מזיזים את המצלמה</h3>
+      <h3>11. איך מזיזים את המצלמה</h3>
       <ul>
         <li><b>לחיצה</b> על הקרקע = בונה.</li>
         <li><b>גרירה</b> (אצבע או עכבר) = מסתובבים מסביב לעיר.</li>
@@ -425,14 +446,14 @@
         <li>💥 <b>דחפור</b> = מוחק בניין (מקבלים חצי כסף בחזרה).</li>
         <li>👆 <b>מידע</b> = לוחצים על בניין ורואים מה קורה לו.</li>
       </ul>
-      <h3>10. 🚗 להיכנס למכונית ולנסוע!</h3>
+      <h3>12. 🚗 להיכנס למכונית ולנסוע!</h3>
       <ul>
         <li>לוחצים על כפתור <b>🚗</b> בצד — ואתה בתוך מכונית בעיר שבנית.</li>
         <li><b>גז</b> ⬆️ · <b>בלם ואחורה</b> ⬇️ · <b>הגה</b> ⬅️ ➡️ · <b>צופר</b> 📣 · <b>יציאה</b> 🚪</li>
         <li>במחשב אפשר גם בחיצים או W A S D, ורווח לצופר.</li>
         <li>על <b>כביש</b> נוסעים מהר, על הדשא לאט, ובבניינים מתנגשים 💥</li>
       </ul>
-      <h3>11. 🚶 לצאת מהמכונית ולהיכנס לבניינים!</h3>
+      <h3>13. 🚶 לצאת מהמכונית ולהיכנס לבניינים!</h3>
       <ul>
         <li>כשאתה בתוך המכונית, לוחצים <b>🚪</b> — ואתה <b>יוצא ועומד ליד האוטו</b>.</li>
         <li>אפשר גם ללחוץ <b>🚶</b> בצד כדי ללכת ברגל בלי מכונית בכלל.</li>
@@ -441,34 +462,34 @@
         <li>אפשר להיכנס ל-<b>19 בניינים</b>: בתים, חנויות, בית ספר, בית כנסת, מפעל, העירייה ועוד.</li>
         <li>בתוך הבניין מסתובבים חופשי. ליד הדלת לוחצים <b>🚪</b> כדי לצאת.</li>
       </ul>
-      <h3>12. 🏛️ המשרד שלך בעירייה</h3>
+      <h3>14. 🏛️ המשרד שלך בעירייה</h3>
       <ul>
         <li>תיכנס לעירייה — יש לך שם <b>משרד אמיתי</b>: שולחן, מחשב, כיסא מנהלים, דגלים, ספרייה, כספת ומפת העיר.</li>
         <li><b>השולחן 📊</b> — לנהל את כל העיר מהמשרד (מיסים, שכר, פרסום).</li>
         <li><b>המפה על הקיר 🗺️</b> — לחזור לתצוגת העיר מלמעלה.</li>
         <li><b>הכספת 💰</b> — לספור כמה כסף יש לעיר.</li>
       </ul>
-      <h3>13. 🎯 המשימות שלך</h3>
+      <h3>15. 🎯 המשימות שלך</h3>
       <ul>
         <li>למעלה באמצע יש פס <b>🎯 משימה</b> שאומר מה לעשות עכשיו.</li>
         <li>יש <b>21 משימות</b> מהקלה לקשה — על כל אחת מקבלים <b>כסף</b>!</li>
         <li>לוחצים על הפס (או על 🎯 בצד) כדי לראות את כל הרשימה.</li>
       </ul>
-      <h3>14. 🚑 אמבולנס והצלות</h3>
+      <h3>16. 🚑 אמבולנס והצלות</h3>
       <ul>
         <li>מדי פעם מישהו בעיר <b>צריך עזרה</b> — מופיע סימן <b>🆘</b> ברחוב.</li>
         <li>אם יש לך <b>🏥 בית חולים</b> — יוצא <b>אמבולנס עם סירנה</b> שנוסע אליו ומציל אותו.</li>
         <li>אם אין בית חולים — <b>לא מספיקים</b>, ואתה מפסיד 120 💰.</li>
         <li><b>אתה יכול להציל בעצמך!</b> סע או לך אל ה-🆘 ותקבל <b>+120 💰</b>.</li>
       </ul>
-      <h3>15. 🚓 גנבים ומשטרה</h3>
+      <h3>17. 🚓 גנבים ומשטרה</h3>
       <ul>
         <li>כשהעיר גדלה מתחיל <b>פשע</b>. אם הוא גבוה — מופיע <b>🦹 גנב</b>.</li>
         <li><b>🚓 תחנת משטרה</b> שולחת ניידת שרודפת אחריו ותופסת אותו.</li>
         <li>אם אין משטרה — הגנב בורח עם <b>90 💰</b> שלך!</li>
         <li><b>אתה יכול לתפוס אותו בעצמך</b> — פשוט סע עליו עם המכונית! +150 💰</li>
       </ul>
-      <h3>16. 📊 לוח הניהול</h3>
+      <h3>18. 📊 לוח הניהול</h3>
       <ul>
         <li>כפתור <b>📊</b> פותח את לוח הניהול של ראש העיר.</li>
         <li><b>💸 מיסים</b> — יותר מיסים = יותר כסף, אבל אנשים כועסים ובורחים.</li>
@@ -509,6 +530,7 @@ var TYPES = {
   officetower:{ name:"מגדל משרדים", e:"🏢", cost:0, up:4, pw:8, wt:4, inside:"shop", cat:"grown" },
   warehouse:  { name:"מחסן",        e:"📦", cost:0, up:1.5, pw:3, wt:1, inside:"industrial", cat:"grown" },
   bigfactory: { name:"מפעל ענק",    e:"🏗️", cost:0, up:4.5, pw:12, wt:5, inside:"industrial", cat:"grown" },
+  powerline:  { name:"קו חשמל",     e:"🔌", cost:10, up:0.05, wire:true, cat:"infra" },
   trashbin:   { name:"פח אשפה",     e:"🗑️", cost:35, up:0.3, trashCap:9, cat:"infra" },
   recycling:  { name:"מרכז מיחזור", e:"♻️", cost:340, up:3, pw:5, wt:2, jobs:12, trashCap:70, pol:6, polR:2, truck:true, inside:"industrial", cat:"infra" },
   powerplant: { name:"תחנת כוח",    e:"⚡", cost:280, up:4,  pwGen:72, jobs:6, pol:14, polR:3, inside:"industrial", cat:"infra" },
@@ -708,6 +730,35 @@ cursor.add(cursorRing);
 cursor.visible = false;
 scene.add(cursor);
 
+/* --- מפות נתונים צבעוניות על העיר --- */
+var MAPS = [
+  { id:"off",   name:"בלי מפה",     e:"🗺️" },
+  { id:"crime", name:"מפת פשע",     e:"🚓" },
+  { id:"pol",   name:"מפת זיהום",   e:"😷" },
+  { id:"land",  name:"ערך הקרקע",   e:"💎" },
+  { id:"power", name:"מפת חשמל",    e:"⚡" }
+];
+var mapMode = 0;
+var overlayGeo = new THREE.BufferGeometry();
+(function(){
+  var pos = [], col = [], idx = [], v = 0;
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++){
+    var x0 = x*TILE - HALF, z0 = z*TILE - HALF, x1 = x0+TILE, z1 = z0+TILE;
+    pos.push(x0,0,z0, x1,0,z0, x1,0,z1, x0,0,z1);
+    for (var k=0;k<4;k++) col.push(0,0,0);
+    idx.push(v, v+2, v+1, v, v+3, v+2);
+    v += 4;
+  }
+  overlayGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  overlayGeo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  overlayGeo.setIndex(idx);
+})();
+var overlayMesh = new THREE.Mesh(overlayGeo, new THREE.MeshBasicMaterial({
+  vertexColors:true, transparent:true, opacity:0.72, depthWrite:false }));
+overlayMesh.position.y = 0.42;
+overlayMesh.visible = false;
+scene.add(overlayMesh);
+
 var cityGroup = new THREE.Group(); scene.add(cityGroup);
 var fxGroup   = new THREE.Group(); scene.add(fxGroup);
 
@@ -825,6 +876,21 @@ function buildRoad(seed, x, z){
   if (s) g.add(box(0.22, 0.03, 1.1, LINE, 0, 0.23,  1.3));
   if (w) g.add(box(1.1, 0.03, 0.22, LINE, -1.3, 0.23, 0));
   if (e) g.add(box(1.1, 0.03, 0.22, LINE,  1.3, 0.23, 0));
+  /* קו חשמל שעובר מעל הכביש */
+  if (cell(x,z).wire){
+    g.add(cyl(0.1, 0.13, 3.2, 7, POLE_M, -TILE/2+0.3, 1.6, -TILE/2+0.3));
+    g.add(cyl(0.1, 0.13, 3.2, 7, POLE_M,  TILE/2-0.3, 1.6,  TILE/2-0.3));
+    g.add(box(1.1, 0.1, 0.1, POLE_M, -TILE/2+0.3, 2.9, -TILE/2+0.3));
+    g.add(box(1.1, 0.1, 0.1, POLE_M,  TILE/2-0.3, 2.9,  TILE/2-0.3));
+    var wd = [[0,-1],[0,1],[-1,0],[1,0]];
+    for (var wi=0; wi<4; wi++){
+      var wx = x+wd[wi][0], wz = z+wd[wi][1];
+      if (!inGrid(wx,wz) || !conductsAt(wx,wz)) continue;
+      var hz = wd[wi][0] !== 0;
+      g.add(box(hz ? TILE/2 : 0.05, 0.05, hz ? 0.05 : TILE/2, WIRE_M,
+                wd[wi][0]*TILE/4, 2.95, wd[wi][1]*TILE/4));
+    }
+  }
   /* פנס רחוב בפינה */
   if ((x+z) % 4 === 0){
     var pole = M(0x3A3A46, 0.6, 0.3);
@@ -1596,6 +1662,47 @@ function buildBusStop(){
   return g;
 }
 
+/* ---------- קו חשמל ---------- */
+var POLE_M = M(0x8A7A62, 0.9);
+var WIRE_M = M(0x2A2A32, 0.6, 0.2);
+POLE_M.userData.keep = true; WIRE_M.userData.keep = true;
+function buildPowerLine(seed, x, z){
+  var g = new THREE.Group();
+  /* עמוד */
+  g.add(cyl(0.11, 0.14, 3.0, 7, POLE_M, 0, 1.5, 0));
+  g.add(box(1.5, 0.12, 0.12, POLE_M, 0, 2.7, 0));
+  g.add(box(0.12, 0.12, 1.5, POLE_M, 0, 2.45, 0));
+  /* מבודדים */
+  for (var i=0;i<2;i++){
+    g.add(cyl(0.07,0.07,0.14, 6, M(0xE8E2D2, 0.5), (i?0.7:-0.7), 2.82, 0));
+    g.add(cyl(0.07,0.07,0.14, 6, M(0xE8E2D2, 0.5), 0, 2.57, (i?0.7:-0.7)));
+  }
+  /* חוטים לשכנים שיש בהם חשמל */
+  var dirs = [[0,-1,0,-TILE/2],[0,1,0,TILE/2],[-1,0,-TILE/2,0],[1,0,TILE/2,0]];
+  for (var d=0; d<dirs.length; d++){
+    var nx = x + dirs[d][0], nz = z + dirs[d][1];
+    if (!inGrid(nx,nz) || !conductsAt(nx,nz)) continue;
+    var ex = dirs[d][2], ez = dirs[d][3];
+    var horiz = dirs[d][0] !== 0;
+    var w1 = box(horiz ? TILE/2 : 0.05, 0.05, horiz ? 0.05 : TILE/2, WIRE_M, ex/2, 2.78, ez/2);
+    g.add(w1);
+    var off = horiz ? 0.45 : 0.45;
+    var w2 = box(horiz ? TILE/2 : 0.05, 0.05, horiz ? 0.05 : TILE/2, WIRE_M,
+                 ex/2 + (horiz?0:off), 2.6, ez/2 + (horiz?off:0));
+    g.add(w2);
+  }
+  return g;
+}
+function conductsAt(x,z){
+  var c = cell(x,z);
+  if (!c) return false;
+  if (c.t === "road") return !!c.wire;   /* כביש מעביר חשמל רק אם מתחת לקו חשמל */
+  if (c.zone) return true;
+  if (!c.t) return false;
+  var T = TYPES[c.t];
+  return !!(T.wire || T.pw || T.pwGen);
+}
+
 /* ---------- מגדל משרדים (מסחרי רמה 3) ---------- */
 function buildOfficeTower(seed){
   var g = new THREE.Group();
@@ -1821,7 +1928,8 @@ var BUILDERS = {
   billboard: buildBillboard, cityhall: buildCityHall, trashbin: buildTrashBin, recycling: buildRecycling,
   synagogue: buildSynagogue, library: buildLibrary, pool: buildPool, supermarket: buildSupermarket,
   restaurant: buildRestaurant, bank: buildBank, gas: buildGas, busstop: buildBusStop,
-  officetower: buildOfficeTower, warehouse: buildWarehouse, bigfactory: buildBigFactory
+  officetower: buildOfficeTower, warehouse: buildWarehouse, bigfactory: buildBigFactory,
+  powerline: buildPowerLine
 };
 var nightFactor = 0;
 
@@ -1882,13 +1990,28 @@ function refreshRoadsAround(x,z){
   var d = [[0,0],[1,0],[-1,0],[0,1],[0,-1]];
   for (var i=0;i<d.length;i++){
     var nx = x+d[i][0], nz = z+d[i][1];
-    if (inGrid(nx,nz) && cell(nx,nz).t === "road") renderCell(nx,nz);
+    if (!inGrid(nx,nz)) continue;
+    var t = cell(nx,nz).t;
+    if (t === "road" || t === "powerline") renderCell(nx,nz);
   }
 }
 function place(x,z,type){
   var c = cell(x,z);
   var T = TYPES[type];
   if (!T) return;
+  /* קו חשמל מעל כביש קיים — בדיוק כמו בסים סיטי */
+  if (type === "powerline" && c.t === "road"){
+    if (c.wire){ toast("כבר יש כאן קו חשמל 🔌"); return; }
+    if (S.money < T.cost){ toast("אין מספיק כסף לקו חשמל", "bad"); beep(150,0.1); return; }
+    S.money -= T.cost;
+    c.wire = true;
+    renderCell(x,z); refreshRoadsAround(x,z);
+    var ww = tileToWorld(x,z);
+    floatText("🔌", ww.x, ww.z, 3, "#FFD24E");
+    beep(540,0.06);
+    updateUI(); checkLevels();
+    return;
+  }
   if (c.t){ toast("כאן כבר יש " + TYPES[c.t].name + " — תשתמש בדחפור 💥", "bad"); beep(160,0.08); return; }
   if (T.one){
     for (var q=0; q<S.grid.length; q++) if (S.grid[q].t === type){
@@ -1930,7 +2053,7 @@ function demolish(x,z){
   var w = tileToWorld(x,z);
   setWarn(c, x, z, null);
   c.t = null; c.res = 0; c.cap = 0; c.jobs = 0; c.inc = 0; c.pol = 0; c.trash = 0;
-  c.zone = null; c.level = 0; c.grow = 0;
+  c.zone = null; c.level = 0; c.grow = 0; c.wire = false; c.grid = false;
   if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
   refreshRoadsAround(x,z); refreshRoadList();
   floatText("+" + back + " 💰", w.x, w.z, 3, "#8CF4B6");
@@ -2097,6 +2220,31 @@ function beep(freq, dur, type){
    7. הסימולציה — אנשים באים ובורחים
    ============================================================ */
 function dist(ax,az,bx,bz){ var dx=ax-bx, dz=az-bz; return Math.sqrt(dx*dx+dz*dz); }
+
+/* מוצא לאן החשמל מגיע: חיפוש רוחב מכל תחנת כוח */
+function computeGrid(){
+  var i, q = [];
+  for (i=0;i<S.grid.length;i++) S.grid[i].grid = false;
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++){
+    var c = cell(x,z);
+    if (c.t && TYPES[c.t].pwGen){ c.grid = true; q.push(z*GRID+x); }
+  }
+  var head = 0;
+  while (head < q.length){
+    var idx = q[head++];
+    var cx = idx % GRID, cz = Math.floor(idx / GRID);
+    var d = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (i=0;i<4;i++){
+      var nx = cx+d[i][0], nz = cz+d[i][1];
+      if (!inGrid(nx,nz)) continue;
+      var nc = cell(nx,nz);
+      if (nc.grid) continue;
+      if (!conductsAt(nx,nz)) continue;
+      nc.grid = true;
+      q.push(nz*GRID+nx);
+    }
+  }
+}
 var warnCool = {};
 function warnOnce(key, msg, kind){
   var now = S.day;
@@ -2141,12 +2289,19 @@ function simulate(){
     list.push({ x:x, z:z, c:c, T:T });
   }
 
+  /* רשת החשמל: זורם מהתחנות דרך קווי חשמל ובניינים (כמו בסים סיטי) */
+  computeGrid();
+
   /* חלוקת חשמל ומים — מי שנבנה קודם מקבל קודם */
   var remP = pwCap, remW = wtCap;
   for (i=0;i<list.length;i++){
     var it = list[i];
     var needP = it.T.pw || 0, needW = it.T.wt || 0;
-    if (needP){ if (remP >= needP){ it.c.pwOk = true; remP -= needP; } else it.c.pwOk = false; }
+    /* צריך גם להיות מחובר לרשת וגם שיהיה מספיק חשמל */
+    if (needP){
+      if (it.c.grid && remP >= needP){ it.c.pwOk = true; remP -= needP; }
+      else it.c.pwOk = false;
+    }
     else it.c.pwOk = true;
     if (needW){ if (remW >= needW){ it.c.wtOk = true; remW -= needW; } else it.c.wtOk = false; }
     else it.c.wtOk = true;
@@ -2158,7 +2313,7 @@ function simulate(){
   for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
     c = cell(x,z);
     if (!c.zone || c.t) continue;
-    c.pwOk = sparePower;
+    c.pwOk = c.grid && sparePower;
     setWarn(c, x, z, !hasRoadNear(x,z) ? "🛣️" : !c.pwOk ? "⚡" : null);
   }
 
@@ -2273,6 +2428,12 @@ function simulate(){
   if (leaving > 2)   warnOnce("lv", "🏃 " + leaving + " בתים מתרוקנים! תבדוק חשמל, מים ושמחה");
   if (S.everHadPop && pop === 0) warnOnce("zero", "😱 כל האנשים ברחו מהעיר! תתקן את הבעיות");
   if (S.money < 60)  warnOnce("mn", "💰 נגמר הכסף! תחכה שהמיסים ייכנסו או תמכור בניין בדחפור");
+  /* שומרים את הנתונים בשביל מפות הנתונים */
+  lastJoy = joySrc; lastPol = polSrc;
+  policeCache = [];
+  for (i=0;i<list.length;i++) if (list[i].c.t === "police") policeCache.push({ x:list[i].x, z:list[i].z });
+  updateOverlay();
+
   /* הביקוש והצמיחה של האזורים — הלב של סים סיטי */
   updateDemand(cJobs, iJobs, cCount, iCount, rCap);
   growthStep(joySrc, polSrc);
@@ -2779,6 +2940,8 @@ document.getElementById("bSpeed").onclick = function(){
 document.getElementById("bHelp").onclick = function(){
   document.getElementById("helpScreen").className = "overlay";
 };
+document.getElementById("bMap").onclick = function(){ setMapMode(mapMode + 1); };
+document.getElementById("rciBox").onclick = explainDemand;
 document.getElementById("goalPill").onclick = openLevels;
 document.getElementById("bGoals").onclick = openLevels;
 document.getElementById("btnCloseLevels").onclick = function(){
@@ -2858,7 +3021,7 @@ function saveGame(silent){
     for (var i=0;i<S.grid.length;i++){
       var c = S.grid[i];
       cells.push((c.t || c.zone)
-        ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0]
+        ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0, c.wire?1:0]
         : 0);
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify({
@@ -2891,6 +3054,7 @@ function loadGame(){
       c.seed = v[2];
       c.zone = v[3] || null;
       c.level = v[4] || 0;
+      c.wire = !!v[5];
       if (TYPES[v[0]]){
         c.t = v[0]; c.res = v[1]||0;
         c.cap = TYPES[v[0]].cap || 0;
@@ -2914,7 +3078,7 @@ function clearCity(){
     setWarn(c, i % GRID, Math.floor(i / GRID), null);
     if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
     c.t = null; c.res = 0; c.cap = 0; c.happy = 60; c.pwOk = true; c.wtOk = true;
-    c.zone = null; c.level = 0; c.grow = 0;
+    c.zone = null; c.level = 0; c.grow = 0; c.wire = false; c.grid = false;
     c.jobs = 0; c.inc = 0; c.pol = 0; c.trash = 0;
   }
   S.demR = 0.6; S.demC = 0; S.demI = 0;
@@ -3057,6 +3221,31 @@ function updateDemand(cJobs, iJobs, cCount, iCount, rCap){
   S.demC += (Math.max(-1, Math.min(1, c)) - S.demC) * sm;
   S.demI += (Math.max(-1, Math.min(1, i)) - S.demI) * sm;
 }
+/* הסבר בעברית פשוטה מה המד אומר עכשיו */
+function demandWord(v){
+  if (v > 0.5)  return "ביקוש גבוה מאוד! 🔥";
+  if (v > 0.2)  return "יש ביקוש 👍";
+  if (v > -0.2) return "מאוזן — לא צריך עוד";
+  return "יותר מדי! אל תסמן עוד ✋";
+}
+function explainDemand(){
+  var best = null, bv = -9;
+  var rows = [
+    { e:"🏘️", n:"מגורים",  v:S.demR, a:"סמן עוד אזורי מגורים" },
+    { e:"🏬", n:"מסחר",    v:S.demC, a:"סמן עוד אזורים מסחריים" },
+    { e:"🏭", n:"תעשייה",  v:S.demI, a:"סמן עוד אזורי תעשייה" }
+  ];
+  for (var i=0;i<rows.length;i++){
+    toast(rows[i].e + " " + rows[i].n + ": " + demandWord(rows[i].v),
+          rows[i].v > 0.2 ? "good" : rows[i].v < -0.2 ? "bad" : "");
+    if (rows[i].v > bv){ bv = rows[i].v; best = rows[i]; }
+  }
+  if (best && bv > 0.2)
+    setTimeout(function(){ toast("👉 הכי כדאי עכשיו: " + best.a, "good"); }, 120);
+  else
+    setTimeout(function(){ toast("👉 הכול מאוזן. תבנה שירותים: 🌳 פארק, 🚓 משטרה, 🏫 בית ספר"); }, 120);
+  beep(640,0.05);
+}
 function drawDemand(){
   var set = [["rciR", S.demR], ["rciC", S.demC], ["rciI", S.demI]];
   for (var i=0;i<set.length;i++){
@@ -3068,6 +3257,81 @@ function drawDemand(){
     el.style.bottom = v >= 0 ? "11px" : (11 - h) + "px";
     el.style.opacity = Math.abs(v) < 0.08 ? 0.35 : 1;
   }
+}
+
+/* ============================================================
+   20. מפות נתונים 🗺️
+   ============================================================ */
+var lastJoy = [], lastPol = [];
+function heatColor(v, out){
+  /* 0 = כחול (טוב) ← צהוב ← אדום (רע). כחול כדי שלא יתבלבל עם הדשא */
+  v = Math.max(0, Math.min(1, v));
+  if (v < 0.5){
+    var k = v*2;
+    out[0] = 0.1 + k*0.9; out[1] = 0.45 + k*0.45; out[2] = 1 - k*0.9;
+  } else {
+    var k2 = (v-0.5)*2;
+    out[0] = 1; out[1] = 0.9 - k2*0.82; out[2] = 0.1;
+  }
+}
+function updateOverlay(){
+  var mode = MAPS[mapMode].id;
+  overlayMesh.visible = (mode !== "off");
+  if (!overlayMesh.visible) return;
+  var col = overlayGeo.getAttribute("color");
+  var rgb = [0,0,0], x, z, i, k, d, v;
+  for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
+    var c = cell(x,z);
+    var base = (z*GRID + x) * 4;
+    var alpha = 1;
+    if (mode === "crime"){
+      v = S.crime/100;
+      /* קרוב לתחנת משטרה = פחות פשע */
+      var near = 99;
+      for (i=0;i<policeCache.length;i++){
+        d = dist(x,z, policeCache[i].x, policeCache[i].z);
+        if (d < near) near = d;
+      }
+      if (near < 7) v *= (near/7);
+      heatColor(v, rgb);
+    } else if (mode === "pol"){
+      var p = 0;
+      for (i=0;i<lastPol.length;i++){
+        d = dist(x,z, lastPol[i].x, lastPol[i].z);
+        if (d <= lastPol[i].r) p += lastPol[i].v * (1 - d/(lastPol[i].r+1.2));
+      }
+      heatColor(Math.min(1, p/30), rgb);
+    } else if (mode === "land"){
+      var j = 0, p2 = 0;
+      for (i=0;i<lastJoy.length;i++){
+        d = dist(x,z, lastJoy[i].x, lastJoy[i].z);
+        if (d <= lastJoy[i].r) j += lastJoy[i].v * (1 - d/(lastJoy[i].r+1.5));
+      }
+      for (i=0;i<lastPol.length;i++){
+        d = dist(x,z, lastPol[i].x, lastPol[i].z);
+        if (d <= lastPol[i].r) p2 += lastPol[i].v * (1 - d/(lastPol[i].r+1.2));
+      }
+      heatColor(1 - Math.max(0, Math.min(1, (j - p2 + 10)/45)), rgb);
+    } else if (mode === "power"){
+      if (!c.t && !c.zone){ alpha = 0; rgb[0]=rgb[1]=rgb[2]=0; }
+      else if (c.grid){ rgb[0]=0.15; rgb[1]=0.95; rgb[2]=0.3; }
+      else { rgb[0]=1; rgb[1]=0.15; rgb[2]=0.15; }
+    }
+    for (k=0;k<4;k++){
+      col.setXYZ(base+k, rgb[0]*alpha, rgb[1]*alpha, rgb[2]*alpha);
+    }
+  }
+  col.needsUpdate = true;
+}
+var policeCache = [];
+function setMapMode(m){
+  mapMode = m % MAPS.length;
+  var b = document.getElementById("bMap");
+  b.textContent = MAPS[mapMode].e;
+  b.title = MAPS[mapMode].name;
+  updateOverlay();
+  toast(MAPS[mapMode].e + " " + MAPS[mapMode].name);
+  beep(600, 0.05);
 }
 
 /* ============================================================
