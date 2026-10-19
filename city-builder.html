@@ -866,10 +866,13 @@ function flowers(g, n, spread){
 
 /* ---------- כביש ---------- */
 var ASPHALT = M(0x4C4C58, 0.92);
-var CURB    = M(0xD8D4CC, 0.9);
+var CURB    = M(0xBFBAB0, 0.9);
+var SIDEWALK_TOP = M(0xE4E0D6, 0.85);
+var CROSSWALK = M(0xF4F4F8, 0.5);
 var LINE    = M(0xFFE873, 0.6);
 /* חומרים משותפים — אסור למחוק אותם כשמוחקים בניין */
 ASPHALT.userData.keep = true; CURB.userData.keep = true; LINE.userData.keep = true;
+SIDEWALK_TOP.userData.keep = true; CROSSWALK.userData.keep = true;
 function buildRoad(seed, x, z){
   var g = new THREE.Group();
   var pad = box(TILE, 0.22, TILE, ASPHALT, 0, 0.11, 0);
@@ -879,11 +882,29 @@ function buildRoad(seed, x, z){
   var s = (inGrid(x,z+1) && cell(x,z+1).t==="road");
   var w = (inGrid(x-1,z) && cell(x-1,z).t==="road");
   var e = (inGrid(x+1,z) && cell(x+1,z).t==="road");
-  /* מדרכות בצדדים שאין בהם כביש */
-  if (!n) g.add(box(TILE, 0.34, 0.5, CURB, 0, 0.17, -TILE/2+0.25));
-  if (!s) g.add(box(TILE, 0.34, 0.5, CURB, 0, 0.17,  TILE/2-0.25));
-  if (!w) g.add(box(0.5, 0.34, TILE, CURB, -TILE/2+0.25, 0.17, 0));
-  if (!e) g.add(box(0.5, 0.34, TILE, CURB,  TILE/2-0.25, 0.17, 0));
+  /* מדרכות רחבות בצדדים שאין בהם כביש — אפשר ללכת עליהן */
+  var SW = 0.9, SH = 0.3, half2 = TILE/2 - SW/2;
+  function sidewalk(ww, dd, px, pz){
+    var base = box(ww, SH, dd, CURB, px, SH/2, pz);
+    g.add(base);
+    /* משטח בהיר יותר למעלה, כמו אריחי מדרכה */
+    g.add(box(ww-0.12, 0.04, dd-0.12, SIDEWALK_TOP, px, SH+0.015, pz));
+  }
+  if (!n) sidewalk(TILE, SW, 0, -half2);
+  if (!s) sidewalk(TILE, SW, 0,  half2);
+  if (!w) sidewalk(SW, TILE, -half2, 0);
+  if (!e) sidewalk(SW, TILE,  half2, 0);
+  /* מעבר חצייה בצמתים */
+  var links = (n?1:0)+(s?1:0)+(w?1:0)+(e?1:0);
+  if (links >= 3){
+    for (var cwi=0; cwi<4; cwi++){
+      var cwo = -0.75 + cwi*0.5;
+      if (n) g.add(box(0.3, 0.03, 0.9, CROSSWALK, cwo, 0.23, -TILE/2+0.75));
+      if (s) g.add(box(0.3, 0.03, 0.9, CROSSWALK, cwo, 0.23,  TILE/2-0.75));
+      if (w) g.add(box(0.9, 0.03, 0.3, CROSSWALK, -TILE/2+0.75, 0.23, cwo));
+      if (e) g.add(box(0.9, 0.03, 0.3, CROSSWALK,  TILE/2-0.75, 0.23, cwo));
+    }
+  }
   /* פסים לבנים לכיוונים המחוברים */
   var any = n||s||w||e;
   if (!any){ g.add(box(1.4, 0.03, 0.22, LINE, 0, 0.23, 0)); }
@@ -1692,19 +1713,24 @@ function buildPowerLine(seed, x, z){
     g.add(cyl(0.07,0.07,0.14, 6, M(0xE8E2D2, 0.5), (i?0.7:-0.7), 2.82, 0));
     g.add(cyl(0.07,0.07,0.14, 6, M(0xE8E2D2, 0.5), 0, 2.57, (i?0.7:-0.7)));
   }
-  /* חוטים לשכנים שיש בהם חשמל */
-  var dirs = [[0,-1,0,-TILE/2],[0,1,0,TILE/2],[-1,0,-TILE/2,0],[1,0,TILE/2,0]];
+  /* חוטים לשכנים. לעמוד אחר — חוט מלא עד קצה המשבצת, כך
+     ששני העמודים נפגשים. לבניין או אזור — חוט קצר שנוגע בו. */
+  var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
   for (var d=0; d<dirs.length; d++){
-    var nx = x + dirs[d][0], nz = z + dirs[d][1];
+    var dx = dirs[d][0], dz = dirs[d][1];
+    var nx = x + dx, nz = z + dz;
     if (!inGrid(nx,nz) || !conductsAt(nx,nz)) continue;
-    var ex = dirs[d][2], ez = dirs[d][3];
-    var horiz = dirs[d][0] !== 0;
-    var w1 = box(horiz ? TILE/2 : 0.05, 0.05, horiz ? 0.05 : TILE/2, WIRE_M, ex/2, 2.78, ez/2);
-    g.add(w1);
-    var off = horiz ? 0.45 : 0.45;
-    var w2 = box(horiz ? TILE/2 : 0.05, 0.05, horiz ? 0.05 : TILE/2, WIRE_M,
-                 ex/2 + (horiz?0:off), 2.6, ez/2 + (horiz?off:0));
-    g.add(w2);
+    var nc = cell(nx,nz);
+    var toPole = (nc.t === "powerline") || (nc.t === "road" && nc.wire);
+    var len = toPole ? TILE/2 : TILE*0.34;
+    var horiz = dx !== 0;
+    var cx = dx*len/2, cz2 = dz*len/2;
+    g.add(box(horiz ? len : 0.055, 0.055, horiz ? 0.055 : len, WIRE_M, cx, 2.8, cz2));
+    var o = 0.45;
+    g.add(box(horiz ? len : 0.055, 0.055, horiz ? 0.055 : len, WIRE_M,
+              cx + (horiz ? 0 : o), 2.58, cz2 + (horiz ? o : 0)));
+    g.add(box(horiz ? len : 0.055, 0.055, horiz ? 0.055 : len, WIRE_M,
+              cx - (horiz ? 0 : o), 2.58, cz2 - (horiz ? o : 0)));
   }
   return g;
 }
@@ -2040,8 +2066,9 @@ function place(x,z,type){
   c.t = type; c.seed = Math.random(); c.res = 0; c.cap = T.cap || 0;
   c.happy = 60; c.pwOk = true; c.wtOk = true;
   renderCell(x,z);
-  if (type === "road"){ refreshRoadsAround(x,z); refreshRoadList(); }
-  else if (hasRoadNear(x,z)) { /* ok */ }
+  if (type === "road") refreshRoadList();
+  /* תמיד מרעננים את השכנים כדי שהחוטים והכבישים יתחברו למה שנבנה */
+  refreshRoadsAround(x,z);
   var w = tileToWorld(x,z);
   floatText("-" + T.cost + " 💰", w.x, w.z, 3, "#FFD24E");
   puffRing(w.x, w.z);
@@ -2592,7 +2619,7 @@ function updateAgents(){
   var wantBuses  = roadList.length < 2 ? 0 : Math.min(4, countType("busstop"));
   while (cars.length < wantCars) spawnAgent(cars, makeCar, 2.4, 0.85);
   while (cars.length > wantCars) killAgent(cars, cars.length-1);
-  while (peds.length < wantPeds) spawnAgent(peds, makePed, 1.05, -1.2);
+  while (peds.length < wantPeds) spawnAgent(peds, makePed, 1.05, -1.55);
   while (peds.length > wantPeds) killAgent(peds, peds.length-1);
   while (trucks.length < wantTrucks) spawnAgent(trucks, makeGarbageTruck, 1.6, 0.85);
   while (trucks.length > wantTrucks) killAgent(trucks, trucks.length-1);
@@ -2629,13 +2656,15 @@ function moveAgents(arr, dt, t){
     /* הזזה לצד הנסיעה/מדרכה */
     var offx = Math.cos(ang) * a.side * 0.5;
     var offz = -Math.sin(ang) * a.side * 0.5;
-    a.g.position.set(wx + offx, 0.24, wz + offz);
+    /* הולכי רגל עומדים על המדרכה (גבוהה יותר מהכביש) */
+    var baseY = a.g.userData.legs ? 0.36 : 0.24;
+    a.g.position.set(wx + offx, baseY, wz + offz);
     a.g.rotation.y = ang - Math.PI/2;
     if (a.g.userData.legs){
       var sw = Math.sin(t*9 + i)*0.22;
       a.g.userData.legs[0].position.z = sw;
       a.g.userData.legs[1].position.z = -sw;
-      a.g.position.y = 0.24 + Math.abs(Math.sin(t*9+i))*0.04;
+      a.g.position.y = baseY + Math.abs(Math.sin(t*9+i))*0.04;
     }
   }
 }
@@ -3151,6 +3180,7 @@ function placeZone(x, z, kind){
   S.money -= Z.cost;
   c.zone = kind; c.level = 0; c.grow = 0; c.seed = Math.random();
   renderCell(x,z);
+  refreshRoadsAround(x,z);   /* שהחוטים ליד יתחברו לאזור החדש */
   var w = tileToWorld(x,z);
   puffRing(w.x, w.z, ZONES[kind].col);
   beep(480, 0.05);
@@ -4122,7 +4152,7 @@ function updateWalk(dt, t){
       var px = WALK.x - Math.sin(WALK.ang)*s, pz = WALK.z - Math.cos(WALK.ang)*s;
       var ptx = Math.floor((px + HALF)/TILE), ptz = Math.floor((pz + HALF)/TILE);
       var pt = inGrid(ptx,ptz) ? cell(ptx,ptz).t : null;
-      if (!inGrid(ptx,ptz) || (pt && pt !== "road" && pt !== "tree")){ back = Math.max(2.4, s - 0.9); break; }
+      if (!inGrid(ptx,ptz) || (pt && !PASSABLE[pt])){ back = Math.max(2.4, s - 0.9); break; }
     }
     camY = 3.2 + (6 - back)*0.35;
   } else {
@@ -4457,11 +4487,14 @@ document.getElementById("bWalk").onclick = function(){
 };
 
 /* --- פיזיקה של הנהיגה --- */
+/* על מה אפשר לנסוע ולהלך: כביש, קרקע פנויה, אזור ריק,
+   ומתחת לקווי חשמל ועצים — רק בניינים חוסמים */
+var PASSABLE = { road:1, powerline:1, tree:1, trashbin:1 };
 function blockedAt(wx, wz){
   var tx = Math.floor((wx + HALF)/TILE), tz = Math.floor((wz + HALF)/TILE);
   if (!inGrid(tx,tz)) return true;
   var t = cell(tx,tz).t;
-  return !!(t && t !== "road");
+  return !!(t && !PASSABLE[t]);
 }
 function surfaceMax(wx, wz){
   var tx = Math.floor((wx + HALF)/TILE), tz = Math.floor((wz + HALF)/TILE);
@@ -4510,7 +4543,7 @@ function updateDrive(dt, t){
     var px = DRV.x - Math.sin(DRV.ang)*s, pz = DRV.z - Math.cos(DRV.ang)*s;
     var ptx = Math.floor((px + HALF)/TILE), ptz = Math.floor((pz + HALF)/TILE);
     var pt = inGrid(ptx,ptz) ? cell(ptx,ptz).t : null;
-    if (!inGrid(ptx,ptz) || (pt && pt !== "road" && pt !== "tree")){ back = Math.max(3.4, s - 1.1); break; }
+    if (!inGrid(ptx,ptz) || (pt && !PASSABLE[pt])){ back = Math.max(3.4, s - 1.1); break; }
   }
   var camY = 4.6 + (want - back) * 0.42;
   var bx = DRV.x - Math.sin(DRV.ang)*back, bz = DRV.z - Math.cos(DRV.ang)*back;
