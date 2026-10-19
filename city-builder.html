@@ -402,13 +402,18 @@
         <li>אם אין כביש, אין חשמל, יש זיהום או אין ביקוש — <b>הבניין מתרוקן וננטש</b> 🚫</li>
       </ul>
       <h3>6. 🔌 קווי חשמל — חדש!</h3>
-      <div class="tipbox">⚡ <b>החשמל לא מגיע לבד לכל מקום!</b> הוא זורם <b>מתחנת הכוח</b> דרך <b>בניינים צמודים</b> ודרך <b>🔌 קווי חשמל</b>.</div>
+      <div class="tipbox">⚡ <b>החשמל זורם</b> מתחנת הכוח דרך <b>הכבישים</b>, דרך <b>בניינים צמודים</b>, ודרך <b>🔌 קווי חשמל</b>.</div>
       <ul>
-        <li>בניינים שצמודים זה לזה <b>מעבירים חשמל</b> אחד לשני.</li>
-        <li>אם יש לך שכונה <b>רחוקה</b> מתחנת הכוח — תמתח אליה <b>🔌 קווי חשמל</b> (רק 10 💰 למשבצת).</li>
-        <li><b>כבישים לא מעבירים חשמל!</b> בדיוק כמו בסים סיטי.</li>
-        <li>בניין בלי חשמל מסומן ב-<b>⚡</b> ולא גדל.</li>
-        <li>לחץ 🗺️ ובחר <b>⚡ מפת חשמל</b> כדי לראות בדיוק לאן החשמל מגיע.</li>
+        <li>בדרך כלל מספיק שהכול מחובר לאותה רשת כבישים.</li>
+        <li>אם יש לך שכונה <b>רחוקה בלי כביש</b> — תמתח אליה <b>🔌 קווי חשמל</b> (10 💰 למשבצת).</li>
+        <li>אפשר למתוח קו חשמל <b>גם מעל כביש</b> — הוא נשאר כביש.</li>
+      </ul>
+      <div class="tipbox">⚠️ <b>שים לב — יש שתי בעיות חשמל שונות!</b><br>
+        <b>🔌 = אין חיבור</b> — הבניין מנותק מהרשת. תמתח כביש או קו חשמל אליו.<br>
+        <b>⚡ = אין מספיק חשמל</b> — הוא מחובר, אבל התחנות לא מייצרות מספיק לכל העיר. <b>תבנה עוד תחנת כוח!</b></div>
+      <ul>
+        <li>תסתכל על הפס ⚡ למעלה: אם כתוב <b>180/72</b> — אתה צורך 180 ויש לך רק 72!</li>
+        <li>לחץ 🗺️ ובחר <b>⚡ מפת חשמל</b>: 🟩 ירוק = תקין · 🟧 כתום = אין מספיק · 🟥 אדום = מנותק.</li>
       </ul>
       <h3>7. 🗺️ מפות הנתונים — חדש!</h3>
       <ul>
@@ -1693,10 +1698,12 @@ function buildPowerLine(seed, x, z){
   }
   return g;
 }
+/* מה מעביר חשמל: כבישים (כמו בסים סיטי החדש), קווי חשמל,
+   אזורים וכל בניין שמשתמש או מייצר חשמל */
 function conductsAt(x,z){
   var c = cell(x,z);
   if (!c) return false;
-  if (c.t === "road") return !!c.wire;   /* כביש מעביר חשמל רק אם מתחת לקו חשמל */
+  if (c.t === "road") return true;
   if (c.zone) return true;
   if (!c.t) return false;
   var T = TYPES[c.t];
@@ -2314,7 +2321,10 @@ function simulate(){
     c = cell(x,z);
     if (!c.zone || c.t) continue;
     c.pwOk = c.grid && sparePower;
-    setWarn(c, x, z, !hasRoadNear(x,z) ? "🛣️" : !c.pwOk ? "⚡" : null);
+    setWarn(c, x, z, !hasRoadNear(x,z) ? "🛣️"
+                   : !c.grid ? "🔌"        /* לא מחובר לרשת */
+                   : !c.pwOk ? "⚡"        /* מחובר אבל אין מספיק חשמל */
+                   : null);
   }
 
   /* תעסוקה */
@@ -2400,13 +2410,18 @@ function simulate(){
   }
 
   /* סימני אזהרה מעל בניינים שלא עובדים */
+  var noGrid = 0, brownout = 0;
   for (i=0;i<list.length;i++){
     var q = list[i], icon = null;
-    if (q.T.pw && !q.c.pwOk) icon = "⚡";
+    if (q.T.pw && !q.c.pwOk){
+      if (!q.c.grid){ icon = "🔌"; noGrid++; }   /* אין חיבור לרשת */
+      else { icon = "⚡"; brownout++; }           /* מחובר אבל אין מספיק חשמל */
+    }
     else if (q.T.wt && !q.c.wtOk) icon = "💧";
-    else if (q.T.res && !hasRoadNear(q.x, q.z)) icon = "🛣️";
+    else if ((q.T.res || q.c.zone) && !hasRoadNear(q.x, q.z)) icon = "🛣️";
     setWarn(q.c, q.x, q.z, icon);
   }
+  S.noGrid = noGrid; S.brownout = brownout;
 
   S.pop = pop; S.pwCap = pwCap; S.pwUse = pwUse; S.wtCap = wtCap; S.wtUse = wtUse;
   S.jobs = jobs; S.workers = workersNeeded;
@@ -2421,7 +2436,10 @@ function simulate(){
   S.income = income; S.pay = pay;
 
   /* התראות */
-  if (pwUse > pwCap) warnOnce("pw", "⚡ אין מספיק חשמל! תבנה תחנת כוח או טורבינה");
+  if (pwUse > pwCap)
+    warnOnce("pw", "⚡ אין מספיק חשמל! " + pwUse + "/" + pwCap + " — תבנה עוד ⚡ תחנת כוח");
+  if (noGrid > 0)
+    warnOnce("grid", "🔌 " + noGrid + " בניינים לא מחוברים לרשת! תמתח קווי חשמל מתחנת הכוח אליהם");
   if (wtUse > wtCap) warnOnce("wt", "💧 אין מספיק מים! תבנה מגדל מים");
   if (noRoad > 0)    warnOnce("rd", "🛣️ יש " + noRoad + " בתים בלי כביש — אף אחד לא גר בהם");
   if (jobGap > 0.3)  warnOnce("jb", "💼 אין מספיק עבודה! תבנה חנות או מפעל");
@@ -2750,7 +2768,7 @@ function showInfo(x,z){
     if (c.inc) line("הכנסה ליום", "+" + c.inc + " 💰", "ok");
     if (c.pol) line("מזהם", "-" + c.pol + " 😷", "warn");
     line("כביש", hasRoadNear(x,z) ? "יש ✔" : "אין ✖", hasRoadNear(x,z)?"ok":"warn");
-    line("חשמל", c.pwOk ? "מחובר ✔" : "אין ✖", c.pwOk?"ok":"warn");
+    line("חשמל", c.pwOk ? "מחובר ✔" : !c.grid ? "🔌 אין חיבור לרשת" : "⚡ אין מספיק בעיר", c.pwOk?"ok":"warn");
     if (c.level < 3) line("שדרוג", Math.round(Math.max(0,c.grow)*100) + "%");
     else line("רמה", "מקסימום! 🏆", "ok");
     document.getElementById("infoBody").innerHTML = h;
@@ -2762,7 +2780,7 @@ function showInfo(x,z){
     line("שמחה", c.happy + "% " + face(c.happy), c.happy>=50?"ok":"warn");
     line("כביש", hasRoadNear(x,z) ? "יש ✔" : "אין ✖", hasRoadNear(x,z)?"ok":"warn");
   }
-  if (T.pw) line("חשמל", c.pwOk ? "מחובר ✔" : "אין ✖", c.pwOk?"ok":"warn");
+  if (T.pw) line("חשמל", c.pwOk ? "מחובר ✔" : !c.grid ? "🔌 אין חיבור לרשת" : "⚡ אין מספיק בעיר", c.pwOk?"ok":"warn");
   if (T.wt) line("מים", c.wtOk ? "מחובר ✔" : "אין ✖", c.wtOk?"ok":"warn");
   if (T.pwGen) line("מייצר חשמל", "+" + T.pwGen + " ⚡", "ok");
   if (T.wtGen) line("מייצר מים", "+" + T.wtGen + " 💧", "ok");
@@ -3314,8 +3332,9 @@ function updateOverlay(){
       heatColor(1 - Math.max(0, Math.min(1, (j - p2 + 10)/45)), rgb);
     } else if (mode === "power"){
       if (!c.t && !c.zone){ alpha = 0; rgb[0]=rgb[1]=rgb[2]=0; }
-      else if (c.grid){ rgb[0]=0.15; rgb[1]=0.95; rgb[2]=0.3; }
-      else { rgb[0]=1; rgb[1]=0.15; rgb[2]=0.15; }
+      else if (!c.grid){ rgb[0]=1; rgb[1]=0.12; rgb[2]=0.12; }          /* אדום: אין חיבור */
+      else if (c.pwOk === false){ rgb[0]=1; rgb[1]=0.65; rgb[2]=0.05; } /* כתום: אין מספיק חשמל */
+      else { rgb[0]=0.15; rgb[1]=0.95; rgb[2]=0.3; }                    /* ירוק: הכול טוב */
     }
     for (k=0;k<4;k++){
       col.setXYZ(base+k, rgb[0]*alpha, rgb[1]*alpha, rgb[2]*alpha);
