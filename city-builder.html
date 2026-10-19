@@ -319,6 +319,16 @@
   </div>
 </div>
 
+<div class="overlay hide" id="demandScreen">
+  <div class="panel">
+    <div class="logo">📊</div>
+    <h1>מה חסר לעיר?</h1>
+    <p class="sub">מד הביקוש אומר לך מה לסמן עכשיו</p>
+    <div class="msec" id="demandBody"></div>
+    <button class="big" id="btnCloseDemand">הבנתי! 👍</button>
+  </div>
+</div>
+
 <div class="overlay hide" id="levelScreen">
   <div class="panel">
     <div class="logo">🎯</div>
@@ -2317,15 +2327,21 @@ function simulate(){
 
   /* אזורים ריקים: מסמנים למה שום דבר לא גדל בהם */
   var sparePower = (pwCap - pwUse) > 0;
+  var zNoRoad = 0, zNoGrid = 0, rZones = 0;
   for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
     c = cell(x,z);
-    if (!c.zone || c.t) continue;
+    if (!c.zone) continue;
+    if (c.zone === "r") rZones++;
+    if (!hasRoadNear(x,z)) zNoRoad++;
+    else if (!c.grid) zNoGrid++;
+    if (c.t) continue;
     c.pwOk = c.grid && sparePower;
     setWarn(c, x, z, !hasRoadNear(x,z) ? "🛣️"
                    : !c.grid ? "🔌"        /* לא מחובר לרשת */
                    : !c.pwOk ? "⚡"        /* מחובר אבל אין מספיק חשמל */
                    : null);
   }
+  S.zNoRoad = zNoRoad; S.zNoGrid = zNoGrid; S.rZones = rZones;
 
   /* תעסוקה */
   var workersNeeded = Math.ceil(S.pop * 0.55);
@@ -2453,6 +2469,7 @@ function simulate(){
   updateOverlay();
 
   /* הביקוש והצמיחה של האזורים — הלב של סים סיטי */
+  S.cCount = cCount; S.iCount = iCount; S.rCap = rCap; S.jobsCI = cJobs + iJobs;
   updateDemand(cJobs, iJobs, cCount, iCount, rCap);
   growthStep(joySrc, polSrc);
   drawDemand();
@@ -2960,6 +2977,9 @@ document.getElementById("bHelp").onclick = function(){
 };
 document.getElementById("bMap").onclick = function(){ setMapMode(mapMode + 1); };
 document.getElementById("rciBox").onclick = explainDemand;
+document.getElementById("btnCloseDemand").onclick = function(){
+  document.getElementById("demandScreen").className = "overlay hide";
+};
 document.getElementById("goalPill").onclick = openLevels;
 document.getElementById("bGoals").onclick = openLevels;
 document.getElementById("btnCloseLevels").onclick = function(){
@@ -3239,29 +3259,70 @@ function updateDemand(cJobs, iJobs, cCount, iCount, rCap){
   S.demC += (Math.max(-1, Math.min(1, c)) - S.demC) * sm;
   S.demI += (Math.max(-1, Math.min(1, i)) - S.demI) * sm;
 }
-/* הסבר בעברית פשוטה מה המד אומר עכשיו */
-function demandWord(v){
-  if (v > 0.5)  return "ביקוש גבוה מאוד! 🔥";
-  if (v > 0.2)  return "יש ביקוש 👍";
-  if (v > -0.2) return "מאוזן — לא צריך עוד";
-  return "יותר מדי! אל תסמן עוד ✋";
+/* כמה משבצות חסרות מכל סוג — מספר אמיתי, לא רק מקל */
+function zoneAdvice(){
+  var pop = S.pop, jobs = S.jobsCI || 0;
+  var cCount = S.cCount || 0, iCount = S.iCount || 0, rCap = S.rCap || 0;
+  /* מגורים: צריך מספיק מקום לכל מי שיכול לעבוד */
+  var popTarget = Math.round(jobs / 0.55);
+  var needR = Math.max(0, Math.ceil((popTarget - rCap) / 6));
+  if (pop < 10 && (S.rZones || 0) < 4) needR = Math.max(needR, 4 - (S.rZones || 0));
+  if (S.demR < -0.1) needR = 0;
+  /* מסחר: חנות אחת לכל ~8 תושבים */
+  var needC = Math.max(0, Math.ceil(pop/8 - cCount));
+  if (S.demC < -0.1) needC = 0;
+  /* תעשייה: לפי האוכלוסייה והמסחר */
+  var needI = Math.max(0, Math.ceil((pop/4 + cCount*1.1)/2 - iCount));
+  if (S.demI < -0.1) needI = 0;
+  return [
+    { e:"🏘️", n:"מגורים", v:S.demR, need:needR, tool:"zone_r" },
+    { e:"🏬", n:"מסחר",   v:S.demC, need:needC, tool:"zone_c" },
+    { e:"🏭", n:"תעשייה", v:S.demI, need:needI, tool:"zone_i" }
+  ];
+}
+function demandWord(r){
+  if (r.v < -0.2) return "יש לך יותר מדי ✋";
+  if (r.need >= 1) return "חסרות לך בערך <b>" + r.need + "</b> משבצות";
+  if (r.v > 0.2)   return "אפשר עוד קצת 👍";
+  return "יש מספיק ✔";
 }
 function explainDemand(){
-  var best = null, bv = -9;
-  var rows = [
-    { e:"🏘️", n:"מגורים",  v:S.demR, a:"סמן עוד אזורי מגורים" },
-    { e:"🏬", n:"מסחר",    v:S.demC, a:"סמן עוד אזורים מסחריים" },
-    { e:"🏭", n:"תעשייה",  v:S.demI, a:"סמן עוד אזורי תעשייה" }
-  ];
-  for (var i=0;i<rows.length;i++){
-    toast(rows[i].e + " " + rows[i].n + ": " + demandWord(rows[i].v),
-          rows[i].v > 0.2 ? "good" : rows[i].v < -0.2 ? "bad" : "");
-    if (rows[i].v > bv){ bv = rows[i].v; best = rows[i]; }
+  var rows = zoneAdvice(), h = "", best = null, bn = 0;
+  /* קודם כל: בעיות שחוסמות את כל הצמיחה */
+  var blockers = [];
+  if ((S.zNoRoad||0) > 0)
+    blockers.push("🛣️ <b>" + S.zNoRoad + "</b> אזורים בלי כביש צמוד — שום דבר לא ייבנה בהם");
+  if ((S.zNoGrid||0) > 0 || (S.noGrid||0) > 0)
+    blockers.push("🔌 <b>" + ((S.zNoGrid||0) + (S.noGrid||0)) + "</b> מקומות בלי חיבור חשמל — תמתח אליהם כביש או קו חשמל");
+  if (S.pwUse > S.pwCap)
+    blockers.push("⚡ אין מספיק חשמל (<b>" + S.pwUse + "/" + S.pwCap + "</b>) — תבנה עוד תחנת כוח");
+  if (S.wtUse > S.wtCap)
+    blockers.push("💧 אין מספיק מים (<b>" + S.wtUse + "/" + S.wtCap + "</b>) — תבנה עוד מגדל מים");
+  if (S.traUse > S.traCap)
+    blockers.push("🗑️ יותר מדי זבל (<b>" + S.traUse + "/" + S.traCap + "</b>) — תבנה פחים או מרכז מיחזור");
+  if (blockers.length){
+    h += '<div class="tipbox" style="border-color:#FF8A8A">⛔ <b>קודם כל תתקן את זה:</b><br>' +
+         blockers.join("<br>") + '</div>';
   }
-  if (best && bv > 0.2)
-    setTimeout(function(){ toast("👉 הכי כדאי עכשיו: " + best.a, "good"); }, 120);
+  for (var i=0;i<rows.length;i++){
+    var r = rows[i];
+    var pct = Math.round(r.v*100);
+    var cls = r.v > 0.2 ? "ok" : r.v < -0.2 ? "warn" : "";
+    var arrow = r.v > 0.2 ? "⬆️" : r.v < -0.2 ? "⬇️" : "➖";
+    h += '<div class="mrow"><span class="lbl">' + arrow + " " + r.e + " " + r.n + '</span>' +
+         '<b class="' + cls + '">' + demandWord(r) + '</b></div>';
+    if (r.need > bn){ bn = r.need; best = r; }
+  }
+  if (blockers.length)
+    h += '<div class="mhint" style="text-align:right;margin-top:10px">כל עוד הבעיות למעלה לא מתוקנות, לא עוזר לסמן עוד אזורים.</div>';
+  else if (best)
+    h += '<div class="tipbox" style="margin-top:12px">👉 <b>הכי דחוף עכשיו:</b> סמן עוד <b>' +
+         best.need + '</b> משבצות ' + best.e + ' ' + best.n + '</div>';
   else
-    setTimeout(function(){ toast("👉 הכול מאוזן. תבנה שירותים: 🌳 פארק, 🚓 משטרה, 🏫 בית ספר"); }, 120);
+    h += '<div class="tipbox" style="margin-top:12px">✔ <b>האזורים מאוזנים!</b> עכשיו תבנה שירותים: 🌳 פארק · 🚓 משטרה · 🏫 בית ספר · 🗑️ פחים — הם מעלים את השמחה וככה הבניינים מתמלאים ומשתדרגים.</div>';
+  h += '<div class="mhint" style="text-align:right;margin-top:8px">⬆️ = חסר לך · ➖ = מאוזן · ⬇️ = יש יותר מדי</div>';
+  document.getElementById("demandBody").innerHTML = h;
+  document.getElementById("demandScreen").className = "overlay";
   beep(640,0.05);
 }
 function drawDemand(){
