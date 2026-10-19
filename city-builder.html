@@ -44,6 +44,13 @@
   #watFill{ background:linear-gradient(90deg,#5ED0FF,#2A8CFF); }
   #traFill{ background:linear-gradient(90deg,#9FE07A,#4FA85C); }
   .bar.over i{ background:linear-gradient(90deg,#FF6B6B,#E53935) !important; }
+  /* מד הביקוש RCI */
+  .stat.rci{ gap:5px; padding:4px 10px; align-items:flex-end; height:auto; }
+  .rciCol{ position:relative; width:11px; height:26px; display:block;
+    border-bottom:2px solid rgba(255,255,255,.4); }
+  .rciCol i{ position:absolute; left:0; right:0; bottom:11px; display:block;
+    height:2px; border-radius:2px; transition:height .4s ease, bottom .4s ease; }
+  #rciR{ background:#5FC96E; } #rciC{ background:#5EA8F0; } #rciI{ background:#E8C44E; }
 
   /* ===== side buttons ===== */
   #side{ position:fixed; top:58px; left:10px; z-index:21; display:flex; flex-direction:column; gap:8px;
@@ -251,6 +258,11 @@
     <div class="bar-row"><span>💧</span><span class="bar" id="watBar"><i id="watFill"></i></span><span id="sWat">0/0</span></div>
     <div class="bar-row"><span>🗑️</span><span class="bar" id="traBar"><i id="traFill"></i></span><span id="sTra">0/0</span></div>
   </div>
+  <div class="stat rci" id="rciBox" title="ביקוש: מגורים · מסחר · תעשייה">
+    <span class="rciCol"><i id="rciR"></i></span>
+    <span class="rciCol"><i id="rciC"></i></span>
+    <span class="rciCol"><i id="rciI"></i></span>
+  </div>
   <div class="stat"><span class="ico">📅</span><span id="sDay">1</span></div>
 </div>
 
@@ -363,31 +375,49 @@
         <li>בונים <b>⚡ תחנת כוח</b> (או 🌬️ טורבינה) ו-<b>🚰 מגדל מים</b>.</li>
         <li>אם הפס למעלה נהיה אדום — אין מספיק, והאנשים מתחילים לברוח!</li>
       </ul>
-      <h3>3. בתים</h3>
+      <h3>3. 🏘️ אזורים — ככה זה עובד בסים סיטי!</h3>
+      <div class="tipbox">⭐ <b>אתה לא בונה בתים בעצמך!</b> אתה <b>מסמן קרקע</b>, והבניינים <b>גדלים שם לבד</b> — בדיוק כמו בסים סיטי האמיתי.</div>
       <ul>
-        <li><b>🏠 בית</b> = עד 4 אנשים. <b>🏢 בניין דירות</b> = עד 16 אנשים.</li>
-        <li>אנשים באים לאט לאט. 😊 = באים, 😞 = בורחים.</li>
+        <li><b>🏘️ אזור מגורים</b> (ירוק) — כאן גדלים בתים ואנשים באים לגור.</li>
+        <li><b>🏬 אזור מסחרי</b> (כחול) — כאן גדלות חנויות ונותנות <b>עבודה</b>.</li>
+        <li><b>🏭 אזור תעשייה</b> (צהוב) — כאן גדלים מפעלים: הרבה עבודה וכסף, אבל <b>מזהם</b>.</li>
+        <li>אזור עולה רק <b>30-35 💰</b> למשבצת. סמן כמה שאתה רוצה!</li>
       </ul>
-      <h3>4. 🗑️ אשפה — חדש!</h3>
+      <h3>4. 📊 מד הביקוש (RCI)</h3>
+      <ul>
+        <li>למעלה יש <b>3 מקלות קטנים</b>: 🟩 ירוק = מגורים, 🟦 כחול = מסחר, 🟨 צהוב = תעשייה.</li>
+        <li><b>מקל למעלה</b> = יש ביקוש! תסמן עוד מהאזור הזה.</li>
+        <li><b>מקל למטה</b> = יש יותר מדי מזה, אל תסמן עוד.</li>
+        <li>זה תמיד מאוזן: אנשים צריכים <b>עבודה</b>, חנויות צריכות <b>לקוחות</b>, ומפעלים צריכים <b>עובדים</b>.</li>
+      </ul>
+      <h3>5. 🏗️ הבניינים גדלים ומשתדרגים</h3>
+      <ul>
+        <li>אזור ריק → <b>רמה 1</b> → <b>רמה 2</b> → <b>רמה 3</b>, כל פעם בניין גדול יותר!</li>
+        <li>מגורים: 🏠 בית ← 🏡 וילה ← 🏢 בניין דירות</li>
+        <li>מסחר: 🏪 חנות ← 🛒 סופרמרקט ← 🏢 מגדל משרדים</li>
+        <li>תעשייה: 📦 מחסן ← 🏭 מפעל ← 🏗️ מפעל ענק</li>
+        <li>אם אין כביש, אין חשמל, יש זיהום או אין ביקוש — <b>הבניין מתרוקן וננטש</b> 🚫</li>
+      </ul>
+      <h3>6. 🗑️ אשפה</h3>
       <ul>
         <li>כל תושב מייצר <b>זבל</b> כל יום. יש פס 🗑️ למעלה שמראה כמה זבל יש.</li>
         <li>בונים <b>🗑️ פח אשפה</b> (זול, רק 35 💰) או <b>♻️ מרכז מיחזור</b> (מפנה הרבה).</li>
         <li>אם הפס נהיה אדום — <b>ערימות זבל מופיעות בעיר עם זבובים</b> 🪰 והאנשים בורחים!</li>
         <li>למרכז מיחזור יוצאת <b>משאית זבל</b> שנוסעת בעיר.</li>
       </ul>
-      <h3>5. 🏛️ העירייה — משרד ראש העיר</h3>
+      <h3>7. 🏛️ העירייה — משרד ראש העיר</h3>
       <ul>
         <li>אפשר לבנות <b>רק עירייה אחת</b> בעיר (850 💰).</li>
         <li>היא נותנת: <b>+15% מיסים</b>, <b>פחות פשע</b>, <b>פרסום זול ב-30%</b> והרבה שמחה.</li>
       </ul>
-      <h3>6. שמחה</h3>
+      <h3>8. שמחה</h3>
       <ul>
         <li>🌳 פארק · ⛲ מזרקה · 🏊 בריכה · 🏟️ אצטדיון · 🕍 בית כנסת · 📚 ספרייה · 🏫 בית ספר · 🏥 חולים · 🚓 משטרה · 🚌 תחנת אוטובוס — כולם מעלים שמחה.</li>
         <li>🛒 סופרמרקט · 🍕 מסעדה · 🏦 בנק · ⛽ תחנת דלק — נותנים עבודה והכנסה.</li>
         <li>🏭 מפעל נותן הרבה כסף ועבודה — אבל מלכלך! בונים אותו <b>רחוק</b> מהבתים.</li>
         <li>צריך <b>עבודה</b> לכולם: 🏪 חנויות ו-🏭 מפעלים נותנים עבודה.</li>
       </ul>
-      <h3>7. איך מזיזים את המצלמה</h3>
+      <h3>9. איך מזיזים את המצלמה</h3>
       <ul>
         <li><b>לחיצה</b> על הקרקע = בונה.</li>
         <li><b>גרירה</b> (אצבע או עכבר) = מסתובבים מסביב לעיר.</li>
@@ -395,14 +425,14 @@
         <li>💥 <b>דחפור</b> = מוחק בניין (מקבלים חצי כסף בחזרה).</li>
         <li>👆 <b>מידע</b> = לוחצים על בניין ורואים מה קורה לו.</li>
       </ul>
-      <h3>8. 🚗 להיכנס למכונית ולנסוע!</h3>
+      <h3>10. 🚗 להיכנס למכונית ולנסוע!</h3>
       <ul>
         <li>לוחצים על כפתור <b>🚗</b> בצד — ואתה בתוך מכונית בעיר שבנית.</li>
         <li><b>גז</b> ⬆️ · <b>בלם ואחורה</b> ⬇️ · <b>הגה</b> ⬅️ ➡️ · <b>צופר</b> 📣 · <b>יציאה</b> 🚪</li>
         <li>במחשב אפשר גם בחיצים או W A S D, ורווח לצופר.</li>
         <li>על <b>כביש</b> נוסעים מהר, על הדשא לאט, ובבניינים מתנגשים 💥</li>
       </ul>
-      <h3>9. 🚶 לצאת מהמכונית ולהיכנס לבניינים!</h3>
+      <h3>11. 🚶 לצאת מהמכונית ולהיכנס לבניינים!</h3>
       <ul>
         <li>כשאתה בתוך המכונית, לוחצים <b>🚪</b> — ואתה <b>יוצא ועומד ליד האוטו</b>.</li>
         <li>אפשר גם ללחוץ <b>🚶</b> בצד כדי ללכת ברגל בלי מכונית בכלל.</li>
@@ -411,34 +441,34 @@
         <li>אפשר להיכנס ל-<b>19 בניינים</b>: בתים, חנויות, בית ספר, בית כנסת, מפעל, העירייה ועוד.</li>
         <li>בתוך הבניין מסתובבים חופשי. ליד הדלת לוחצים <b>🚪</b> כדי לצאת.</li>
       </ul>
-      <h3>10. 🏛️ המשרד שלך בעירייה</h3>
+      <h3>12. 🏛️ המשרד שלך בעירייה</h3>
       <ul>
         <li>תיכנס לעירייה — יש לך שם <b>משרד אמיתי</b>: שולחן, מחשב, כיסא מנהלים, דגלים, ספרייה, כספת ומפת העיר.</li>
         <li><b>השולחן 📊</b> — לנהל את כל העיר מהמשרד (מיסים, שכר, פרסום).</li>
         <li><b>המפה על הקיר 🗺️</b> — לחזור לתצוגת העיר מלמעלה.</li>
         <li><b>הכספת 💰</b> — לספור כמה כסף יש לעיר.</li>
       </ul>
-      <h3>11. 🎯 המשימות שלך</h3>
+      <h3>13. 🎯 המשימות שלך</h3>
       <ul>
         <li>למעלה באמצע יש פס <b>🎯 משימה</b> שאומר מה לעשות עכשיו.</li>
         <li>יש <b>21 משימות</b> מהקלה לקשה — על כל אחת מקבלים <b>כסף</b>!</li>
         <li>לוחצים על הפס (או על 🎯 בצד) כדי לראות את כל הרשימה.</li>
       </ul>
-      <h3>12. 🚑 אמבולנס והצלות</h3>
+      <h3>14. 🚑 אמבולנס והצלות</h3>
       <ul>
         <li>מדי פעם מישהו בעיר <b>צריך עזרה</b> — מופיע סימן <b>🆘</b> ברחוב.</li>
         <li>אם יש לך <b>🏥 בית חולים</b> — יוצא <b>אמבולנס עם סירנה</b> שנוסע אליו ומציל אותו.</li>
         <li>אם אין בית חולים — <b>לא מספיקים</b>, ואתה מפסיד 120 💰.</li>
         <li><b>אתה יכול להציל בעצמך!</b> סע או לך אל ה-🆘 ותקבל <b>+120 💰</b>.</li>
       </ul>
-      <h3>13. 🚓 גנבים ומשטרה</h3>
+      <h3>15. 🚓 גנבים ומשטרה</h3>
       <ul>
         <li>כשהעיר גדלה מתחיל <b>פשע</b>. אם הוא גבוה — מופיע <b>🦹 גנב</b>.</li>
         <li><b>🚓 תחנת משטרה</b> שולחת ניידת שרודפת אחריו ותופסת אותו.</li>
         <li>אם אין משטרה — הגנב בורח עם <b>90 💰</b> שלך!</li>
         <li><b>אתה יכול לתפוס אותו בעצמך</b> — פשוט סע עליו עם המכונית! +150 💰</li>
       </ul>
-      <h3>14. 📊 לוח הניהול</h3>
+      <h3>16. 📊 לוח הניהול</h3>
       <ul>
         <li>כפתור <b>📊</b> פותח את לוח הניהול של ראש העיר.</li>
         <li><b>💸 מיסים</b> — יותר מיסים = יותר כסף, אבל אנשים כועסים ובורחים.</li>
@@ -446,7 +476,7 @@
         <li><b>📢 קמפיין פרסום</b> — משלמים, ואנשים חדשים מגיעים לעיר הרבה יותר מהר.</li>
         <li>אפשר גם לבנות <b>📢 לוח מודעות</b> בעיר — הוא מפרסם כל הזמן.</li>
       </ul>
-      <div class="tipbox">💡 <b>טיפ זהב:</b> כביש ➜ תחנת כוח ➜ מגדל מים ➜ 3 בתים ➜ 🗑️ פחים ➜ חנות ➜ פארק. כשיש 30 תושבים תבנה 🚓 משטרה ו-🏛️ עירייה!</div>
+      <div class="tipbox">💡 <b>טיפ זהב (סדר הבנייה):</b> 🛣️ כביש ➜ ⚡ תחנת כוח ➜ 🚰 מגדל מים ➜ 🏘️ כמה אזורי מגורים ליד הכביש ➜ 🏬 אזור מסחרי ➜ 🏭 אזור תעשייה. ואז תחכה — הבניינים יגדלו לבד! אחר כך 🗑️ פחים, 🌳 פארק, 🚓 משטרה ו-🏛️ עירייה.</div>
     </div>
     <button class="big" id="btnCloseHelp">בוא נשחק! 🚀</button>
   </div>
@@ -467,20 +497,23 @@ var TICK_MS = 1600;
 
 var TYPES = {
   road:       { name:"כביש",        e:"🛣️", cost:12,  up:0.1, cat:"infra" },
-  house:      { name:"בית",         e:"🏠", cost:110, up:0.8, pw:2, wt:2, cap:4,  res:true, inside:"home", cat:"homes" },
-  apartment:  { name:"בניין דירות", e:"🏢", cost:330, up:2.2, pw:6, wt:6, cap:16, res:true, inside:"home", cat:"homes" },
-  villa:      { name:"וילה",        e:"🏡", cost:260, up:1.6, pw:4, wt:4, cap:6,  res:true, lux:true, inside:"home", cat:"homes" },
-  shop:       { name:"חנות",        e:"🏪", cost:150, up:1.5, pw:3, wt:1, jobs:6,  inc:6,  joy:10, joyR:4, trash:2, inside:"shop", cat:"biz" },
-  factory:    { name:"מפעל",        e:"🏭", cost:320, up:3,  pw:8, wt:3, jobs:22, inc:18, pol:20, polR:3, trash:5, inside:"industrial", cat:"biz" },
-  supermarket:{ name:"סופרמרקט",    e:"🛒", cost:290, up:3, pw:5, wt:2, jobs:14, inc:12, joy:12, joyR:5, trash:4, inside:"shop", cat:"biz" },
-  restaurant: { name:"מסעדה",       e:"🍕", cost:200, up:2.5, pw:4, wt:3, jobs:8, inc:9, joy:11, joyR:4, trash:4, inside:"shop", cat:"biz" },
-  bank:       { name:"בנק",         e:"🏦", cost:420, up:4, pw:4, wt:2, jobs:10, inc:24, inside:"shop", cat:"biz" },
-  gas:        { name:"תחנת דלק",    e:"⛽", cost:210, up:2, pw:3, jobs:5, inc:10, pol:5, polR:2, inside:"shop", cat:"biz" },
+  house:      { name:"בית",         e:"🏠", cost:110, up:0.8, pw:2, wt:2, cap:4,  res:true, inside:"home", cat:"grown" },
+  apartment:  { name:"בניין דירות", e:"🏢", cost:330, up:2.2, pw:6, wt:6, cap:16, res:true, inside:"home", cat:"grown" },
+  villa:      { name:"וילה",        e:"🏡", cost:260, up:1.6, pw:4, wt:4, cap:6,  res:true, lux:true, inside:"home", cat:"grown" },
+  shop:       { name:"חנות",        e:"🏪", cost:150, up:1.5, pw:3, wt:1, jobs:6,  inc:6,  joy:10, joyR:4, trash:2, inside:"shop", cat:"grown" },
+  factory:    { name:"מפעל",        e:"🏭", cost:320, up:3,  pw:8, wt:3, jobs:22, inc:18, pol:20, polR:3, trash:5, inside:"industrial", cat:"grown" },
+  supermarket:{ name:"סופרמרקט",    e:"🛒", cost:290, up:3, pw:5, wt:2, jobs:14, inc:12, joy:12, joyR:5, trash:4, inside:"shop", cat:"grown" },
+  restaurant: { name:"מסעדה",       e:"🍕", cost:200, up:2.5, pw:4, wt:3, jobs:8, inc:9, joy:11, joyR:4, trash:4, inside:"shop", cat:"grown" },
+  bank:       { name:"בנק",         e:"🏦", cost:420, up:4, pw:4, wt:2, jobs:10, inc:24, inside:"shop", cat:"serv" },
+  gas:        { name:"תחנת דלק",    e:"⛽", cost:210, up:2, pw:3, jobs:5, inc:10, pol:5, polR:2, inside:"shop", cat:"infra" },
+  officetower:{ name:"מגדל משרדים", e:"🏢", cost:0, up:4, pw:8, wt:4, inside:"shop", cat:"grown" },
+  warehouse:  { name:"מחסן",        e:"📦", cost:0, up:1.5, pw:3, wt:1, inside:"industrial", cat:"grown" },
+  bigfactory: { name:"מפעל ענק",    e:"🏗️", cost:0, up:4.5, pw:12, wt:5, inside:"industrial", cat:"grown" },
   trashbin:   { name:"פח אשפה",     e:"🗑️", cost:35, up:0.3, trashCap:9, cat:"infra" },
   recycling:  { name:"מרכז מיחזור", e:"♻️", cost:340, up:3, pw:5, wt:2, jobs:12, trashCap:70, pol:6, polR:2, truck:true, inside:"industrial", cat:"infra" },
-  powerplant: { name:"תחנת כוח",    e:"⚡", cost:280, up:4,  pwGen:48, jobs:6, pol:14, polR:3, inside:"industrial", cat:"infra" },
-  windmill:   { name:"טורבינת רוח", e:"🌬️", cost:200, up:0.8, pwGen:15, jobs:1, cat:"infra" },
-  watertower: { name:"מגדל מים",    e:"🚰", cost:170, up:1.5, pw:2, wtGen:48, jobs:2, inside:"industrial", cat:"infra" },
+  powerplant: { name:"תחנת כוח",    e:"⚡", cost:280, up:4,  pwGen:72, jobs:6, pol:14, polR:3, inside:"industrial", cat:"infra" },
+  windmill:   { name:"טורבינת רוח", e:"🌬️", cost:200, up:0.8, pwGen:24, jobs:1, cat:"infra" },
+  watertower: { name:"מגדל מים",    e:"🚰", cost:170, up:1.5, pw:2, wtGen:70, jobs:2, inside:"industrial", cat:"infra" },
   park:       { name:"פארק",        e:"🌳", cost:75,  up:0.6, wt:1, joy:13, joyR:3, cat:"fun" },
   tree:       { name:"עץ",          e:"🌲", cost:15,  up:0,  joy:4, joyR:2, cat:"fun" },
   fountain:   { name:"מזרקה",       e:"⛲", cost:95,  up:0.7, wt:2, joy:9, joyR:3, cat:"fun" },
@@ -497,10 +530,26 @@ var TYPES = {
   fire:       { name:"מכבי אש",     e:"🚒", cost:240, up:2,  pw:3, wt:3, jobs:9,  joy:8,  joyR:6, inside:"service", cat:"serv" }
 };
 
+/* ===== אזורים בסגנון סים סיטי: מסמנים קרקע, והבניינים גדלים לבד ===== */
+var ZONES = {
+  r: { name:"אזור מגורים", e:"🏘️", cost:30, col:0x5FC96E, dim:0x2E7A3A,
+       lv:[ { t:"house",     cap:4 },
+            { t:"villa",     cap:9 },
+            { t:"apartment", cap:20 } ] },
+  c: { name:"אזור מסחרי",  e:"🏬", cost:35, col:0x5EA8F0, dim:0x24577F,
+       lv:[ { t:"shop",        jobs:6,  inc:6,  trash:2 },
+            { t:"supermarket", jobs:15, inc:13, trash:4 },
+            { t:"officetower", jobs:28, inc:26, trash:5 } ] },
+  i: { name:"אזור תעשייה", e:"🏭", cost:35, col:0xE8C44E, dim:0x7A6520,
+       lv:[ { t:"warehouse",  jobs:10, inc:9,  pol:8,  trash:3 },
+            { t:"factory",    jobs:24, inc:19, pol:18, trash:5 },
+            { t:"bigfactory", jobs:42, inc:32, pol:28, trash:7 } ] }
+};
+var C2_VARIANTS = ["supermarket", "restaurant"];
+
 var CATS = [
-  { id:"homes", name:"🏠 בתים" },
+  { id:"zones", name:"🏘️ אזורים" },
   { id:"infra", name:"🔧 תשתיות" },
-  { id:"biz",   name:"🛒 עסקים" },
   { id:"serv",  name:"🏛️ שירותים" },
   { id:"fun",   name:"🎉 כיף" },
   { id:"tools", name:"🛠️ כלים" }
@@ -512,7 +561,8 @@ var S = {
   grid: [], tool: "road", cat: "infra", speed: 1, started: false, everHadPop: false,
   tax: 1, salary: 1, adDays: 0, crime: 0, unemployed: 0,
   traUse: 0, traCap: 0, hasHall: false,
-  level: 0, rescued: 0, flags: {}
+  level: 0, rescued: 0, flags: {},
+  demR: 0.6, demC: 0, demI: 0, zoneCount: 0
 };
 function cell(x,z){ return S.grid[z*GRID+x]; }
 function inGrid(x,z){ return x>=0 && z>=0 && x<GRID && z<GRID; }
@@ -1546,6 +1596,126 @@ function buildBusStop(){
   return g;
 }
 
+/* ---------- מגדל משרדים (מסחרי רמה 3) ---------- */
+function buildOfficeTower(seed){
+  var g = new THREE.Group();
+  var tex = windowTex(4, 8);
+  var mat = new THREE.MeshStandardMaterial({ map:tex, roughness:0.35, metalness:0.25,
+    emissive:new THREE.Color(0xFFD98A), emissiveMap:tex, emissiveIntensity:0 });
+  if (!g.userData.wins) g.userData.wins = [];
+  g.userData.wins.push(mat);
+  g.add(box(2.7, 6.8, 2.7, mat, 0, 3.4, 0));
+  g.add(box(2.3, 1.9, 2.3, mat, 0, 7.75, 0));
+  g.add(box(3.0, 0.3, 3.0, M(0x4A5668, 0.6, 0.3), 0, 6.9, 0));
+  g.add(box(2.5, 0.3, 2.5, M(0x4A5668, 0.6, 0.3), 0, 8.8, 0));
+  /* לובי זכוכית */
+  g.add(box(2.9, 1.2, 2.9, M(0x3A4458, 0.5, 0.3), 0, 0.6, 0));
+  g.add(box(2.5, 0.95, 0.1, winMat(g, 0xBFE8FF), 0, 0.6, 1.43));
+  g.add(box(0.1, 0.95, 2.5, winMat(g, 0xBFE8FF), -1.43, 0.6, 0));
+  g.add(box(1.0, 1.0, 0.14, M(0x2A3444, 0.4, 0.5), 0, 0.5, 1.5));
+  /* אנטנה עם אור מהבהב */
+  g.add(cyl(0.05, 0.05, 1.6, 6, M(0x8A8A96, 0.5, 0.4), 0, 9.7, 0));
+  var beacon = new THREE.Mesh(new THREE.SphereGeometry(0.14, 9, 8),
+    new THREE.MeshStandardMaterial({ color:0xFF6B6B, emissive:new THREE.Color(0xFF0000), emissiveIntensity:1.5 }));
+  beacon.position.set(0, 10.5, 0); g.add(beacon);
+  /* פסי קומות */
+  for (var f=1; f<=5; f++) g.add(box(2.76, 0.1, 2.76, M(0x6E7A90, 0.5, 0.3), 0, f*1.15, 0));
+  bush(g, -1.7, 1.7, 0.36); bush(g, 1.7, 1.7, 0.36);
+  g.userData.anim = function(t){ beacon.material.emissiveIntensity = Math.sin(t*3) > 0 ? 2.4 : 0.15; };
+  return g;
+}
+
+/* ---------- מחסן (תעשייה רמה 1) ---------- */
+function buildWarehouse(seed){
+  var g = new THREE.Group();
+  var wall = M(0xC8CBD2, 0.8);
+  g.add(box(3.2, 1.6, 2.6, wall, 0, 0.8, 0));
+  /* גג קשתי */
+  var roof = cyl(1.42, 1.42, 3.2, 14, M(0x8A9099, 0.7), 0, 1.6, 0, 0);
+  roof.rotation.z = Math.PI/2; g.add(roof);
+  /* דלתות מוסך */
+  g.add(box(1.3, 1.1, 0.12, M(0x5E6670, 0.7), -0.7, 0.55, 1.33));
+  for (var i=0;i<4;i++) g.add(box(1.25, 0.05, 0.03, M(0x454C56, 0.7), -0.7, 0.2 + i*0.28, 1.4));
+  g.add(box(0.7, 1.0, 0.1, M(0x7A828C, 0.7), 1.1, 0.5, 1.33));
+  g.add(box(0.1, 0.5, 1.2, winMat(g, 0xFFE0A0), -1.63, 1.1, 0));
+  /* רציף העמסה + ארגזים */
+  g.add(box(1.8, 0.4, 0.8, M(0xA8AEB6, 0.85), -0.7, 0.2, 1.9));
+  var crate = M(0xC58A4E, 0.9);
+  g.add(box(0.5, 0.5, 0.5, crate, 1.2, 0.25, 2.0));
+  g.add(box(0.5, 0.5, 0.5, crate, 1.2, 0.76, 2.0));
+  g.add(box(0.5, 0.5, 0.5, crate, 0.6, 0.25, 2.1));
+  /* מלגזה */
+  var fork = new THREE.Group(); fork.position.set(-1.8, 0, 1.9); g.add(fork);
+  fork.add(box(0.6, 0.4, 0.5, M(0xE8A33C, 0.6), 0, 0.34, 0));
+  fork.add(box(0.1, 0.7, 0.45, M(0x5A5A66, 0.6), 0.34, 0.5, 0));
+  fork.add(box(0.3, 0.05, 0.4, M(0x8A8A96, 0.5), 0.5, 0.1, 0));
+  var w1 = cyl(0.13,0.13,0.08, 8, M(0x22222A, 0.8), -0.2, 0.13, 0.26); w1.rotation.x = Math.PI/2; fork.add(w1);
+  var w2 = cyl(0.13,0.13,0.08, 8, M(0x22222A, 0.8), -0.2, 0.13, -0.26); w2.rotation.x = Math.PI/2; fork.add(w2);
+  return g;
+}
+
+/* ---------- מפעל ענק (תעשייה רמה 3) ---------- */
+function buildBigFactory(){
+  var g = new THREE.Group();
+  g.add(box(3.4, 2.4, 2.8, M(0x7E828C, 0.85), -0.1, 1.2, 0));
+  g.add(box(3.6, 0.22, 3.0, M(0x5E6670, 0.8), -0.1, 2.5, 0));
+  g.add(box(1.6, 1.6, 1.3, M(0x8E929C, 0.8), 1.3, 0.8, 1.4));
+  /* ארובות גדולות */
+  var stackM = M(0xB8544C, 0.85);
+  g.add(cyl(0.34, 0.42, 4.0, 12, stackM, -1.2, 2.9, -0.9));
+  g.add(cyl(0.3, 0.36, 3.2, 12, stackM, -0.3, 2.5, -1.0));
+  g.add(cyl(0.38, 0.38, 0.22, 12, M(0xE8E2D4, 0.8), -1.2, 5.0, -0.9));
+  g.add(cyl(0.34, 0.34, 0.2, 12, M(0xE8E2D4, 0.8), -0.3, 4.2, -1.0));
+  /* מכלי אחסון */
+  g.add(cyl(0.62, 0.62, 1.8, 14, M(0xCBCBD4, 0.5, 0.35), 1.4, 0.9, -1.1));
+  g.add(cyl(0.62, 0.62, 0.2, 14, M(0x9AA4B4, 0.5, 0.4), 1.4, 1.9, -1.1));
+  g.add(cyl(0.45, 0.45, 1.3, 12, M(0xE8C44E, 0.6), 0.5, 0.65, -1.5));
+  /* צינורות */
+  var p1 = cyl(0.16, 0.16, 2.2, 8, M(0x9A9AA6, 0.5, 0.4), 0.3, 1.9, -1.1);
+  p1.rotation.z = Math.PI/2; g.add(p1);
+  var p2 = cyl(0.12, 0.12, 1.4, 8, M(0xC2703C, 0.5, 0.3), 1.0, 2.6, 0.3);
+  p2.rotation.x = Math.PI/2; g.add(p2);
+  /* חלונות וסרגל אזהרה */
+  var wm = winMat(g, 0xFFD080);
+  g.add(box(0.1, 0.8, 2.0, wm, -1.83, 1.4, 0));
+  for (var s=0;s<7;s++) g.add(box(0.2, 0.5, 0.05, M(s%2 ? 0xFFC94E : 0x3A3A44, 0.7), -1.6 + s*0.42, 0.3, 1.42));
+  var a1 = smoke(g, -1.2, 5.1, -0.9, 0.5, 0xC8C4BC);
+  var a2 = smoke(g, -0.3, 4.3, -1.0, 0.4, 0xD4D0C8);
+  g.userData.anim = function(t, dt){ a1(dt); a2(dt); };
+  return g;
+}
+
+/* ---------- ריבוע אזור ריק ---------- */
+function buildZonePad(kind){
+  var Z = ZONES[kind];
+  var g = new THREE.Group();
+  var pad = box(TILE-0.35, 0.08, TILE-0.35, new THREE.MeshStandardMaterial({
+    color:Z.col, roughness:0.9, transparent:true, opacity:0.55 }), 0, 0.05, 0);
+  pad.castShadow = false;
+  g.add(pad);
+  /* מסגרת מקווקוות */
+  var dash = new THREE.MeshStandardMaterial({ color:Z.dim, roughness:0.8 });
+  var half = (TILE-0.35)/2;
+  for (var i=0;i<4;i++){
+    for (var d=0; d<4; d++){
+      var o = -half + 0.42 + d*0.9;
+      var b = (i<2) ? box(0.55, 0.1, 0.13, dash, o, 0.1, (i===0?-half:half))
+                    : box(0.13, 0.1, 0.55, dash, (i===2?-half:half), 0.1, o);
+      b.castShadow = false;
+      g.add(b);
+    }
+  }
+  /* סמל האזור */
+  var c = document.createElement("canvas"); c.width = 64; c.height = 64;
+  var ctx = c.getContext("2d");
+  ctx.font = "44px -apple-system, Segoe UI, Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.globalAlpha = 0.85; ctx.fillText(Z.e, 32, 38);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true, opacity:0.8 }));
+  sp.position.y = 1.0; sp.scale.set(1.3, 1.3, 1);
+  g.add(sp);
+  return g;
+}
+
 /* ---------- לוח מודעות ---------- */
 function adTex(i){
   var c = document.createElement("canvas"); c.width = 160; c.height = 96;
@@ -1650,7 +1820,8 @@ var BUILDERS = {
   stadium: buildStadium, school: buildSchool, hospital: buildHospital, police: buildPolice, fire: buildFire,
   billboard: buildBillboard, cityhall: buildCityHall, trashbin: buildTrashBin, recycling: buildRecycling,
   synagogue: buildSynagogue, library: buildLibrary, pool: buildPool, supermarket: buildSupermarket,
-  restaurant: buildRestaurant, bank: buildBank, gas: buildGas, busstop: buildBusStop
+  restaurant: buildRestaurant, bank: buildBank, gas: buildGas, busstop: buildBusStop,
+  officetower: buildOfficeTower, warehouse: buildWarehouse, bigfactory: buildBigFactory
 };
 var nightFactor = 0;
 
@@ -1677,7 +1848,16 @@ function faceRoad(x,z){
 function renderCell(x,z){
   var c = cell(x,z);
   if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
-  if (!c.t) return;
+  if (!c.t){
+    if (c.zone){
+      var zg = buildZonePad(c.zone);
+      var zw = tileToWorld(x,z);
+      zg.position.set(zw.x, 0, zw.z);
+      zg.userData.tx = x; zg.userData.tz = z;
+      cityGroup.add(zg); c.g = zg;
+    }
+    return;
+  }
   var g = BUILDERS[c.t](c.seed === undefined ? 0.5 : c.seed, x, z);
   var w = tileToWorld(x,z);
   g.position.set(w.x, 0, w.z);
@@ -1727,18 +1907,30 @@ function place(x,z,type){
   puffRing(w.x, w.z);
   beep(520, 0.07); setTimeout(function(){ beep(760, 0.07); }, 60);
   if (T.res && !hasRoadNear(x,z)) toast("⚠️ ל" + T.name + " הזה אין כביש — אף אחד לא יבוא!", "bad");
-  updateUI();
+  updateUI(); checkLevels();
 }
 function demolish(x,z){
   var c = cell(x,z);
+  if (!c.t && c.zone){
+    /* מחיקת אזור ריק */
+    S.money += Math.round(ZONES[c.zone].cost/2);
+    setWarn(c, x, z, null);
+    c.zone = null; c.level = 0; c.grow = 0;
+    if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
+    var zw = tileToWorld(x,z);
+    puffRing(zw.x, zw.z, 0xD8D8D8);
+    beep(300,0.1); updateUI();
+    return;
+  }
   if (!c.t){ return; }
   var T = TYPES[c.t];
-  var back = Math.round(T.cost/2);
+  var back = Math.round((c.zone ? ZONES[c.zone].cost : T.cost)/2);
   S.money += back;
   var had = c.res;
   var w = tileToWorld(x,z);
   setWarn(c, x, z, null);
-  c.t = null; c.res = 0; c.cap = 0;
+  c.t = null; c.res = 0; c.cap = 0; c.jobs = 0; c.inc = 0; c.pol = 0; c.trash = 0;
+  c.zone = null; c.level = 0; c.grow = 0;
   if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
   refreshRoadsAround(x,z); refreshRoadList();
   floatText("+" + back + " 💰", w.x, w.z, 3, "#8CF4B6");
@@ -1917,21 +2109,35 @@ function simulate(){
   S.day++;
   var pwCap=0, pwUse=0, wtCap=0, wtUse=0, jobs=0, upkeep=0, fixedInc=0;
   var traCap=0, traUse=0, hasHall=false;
+  var cJobs=0, iJobs=0, cCount=0, iCount=0, rCap=0, zoneCount=0;
   var list = [], joySrc = [], polSrc = [], i, c, x, z, T;
 
   for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
-    c = cell(x,z); if (!c.t) continue;
+    c = cell(x,z);
+    if (c.zone) zoneCount++;
+    if (!c.t) continue;
     T = TYPES[c.t];
     upkeep += T.up || 0;
     if (T.pwGen) pwCap += T.pwGen;
     if (T.wtGen) wtCap += T.wtGen;
-    if (T.jobs)  jobs  += T.jobs;
-    if (T.inc)   fixedInc += T.inc;
     if (T.trashCap) traCap += T.trashCap;
-    if (T.trash)    traUse += T.trash;
     if (T.hall)     hasHall = true;
-    if (T.joy)   joySrc.push({ x:x, z:z, v:T.joy, r:T.joyR });
-    if (T.pol)   polSrc.push({ x:x, z:z, v:T.pol, r:T.polR });
+    if (T.joy)      joySrc.push({ x:x, z:z, v:T.joy, r:T.joyR });
+    if (c.zone){
+      /* בניין שגדל מאזור — המספרים שלו באים מהרמה, לא מהטבלה */
+      jobs     += c.jobs  || 0;
+      fixedInc += c.inc   || 0;
+      traUse   += c.trash || 0;
+      if (c.pol) polSrc.push({ x:x, z:z, v:c.pol, r:3 });
+      if (c.zone === "c"){ cJobs += c.jobs||0; cCount++; }
+      if (c.zone === "i"){ iJobs += c.jobs||0; iCount++; }
+      if (c.zone === "r") rCap += c.cap || 0;
+    } else {
+      if (T.jobs)  jobs     += T.jobs;
+      if (T.inc)   fixedInc += T.inc;
+      if (T.trash) traUse   += T.trash;
+      if (T.pol)   polSrc.push({ x:x, z:z, v:T.pol, r:T.polR });
+    }
     list.push({ x:x, z:z, c:c, T:T });
   }
 
@@ -1945,6 +2151,15 @@ function simulate(){
     if (needW){ if (remW >= needW){ it.c.wtOk = true; remW -= needW; } else it.c.wtOk = false; }
     else it.c.wtOk = true;
     pwUse += needP; wtUse += needW;
+  }
+
+  /* אזורים ריקים: מסמנים למה שום דבר לא גדל בהם */
+  var sparePower = (pwCap - pwUse) > 0;
+  for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
+    c = cell(x,z);
+    if (!c.zone || c.t) continue;
+    c.pwOk = sparePower;
+    setWarn(c, x, z, !hasRoadNear(x,z) ? "🛣️" : !c.pwOk ? "⚡" : null);
   }
 
   /* תעסוקה */
@@ -2009,9 +2224,10 @@ function simulate(){
     h = Math.max(0, Math.min(100, Math.round(h)));
     c.happy = h;
 
-    var target = Math.round(T.cap * Math.max(0, Math.min(1, (h - 26)/50)));
+    var capHere = c.cap || T.cap || 0;
+    var target = Math.round(capHere * Math.max(0, Math.min(1, (h - 26)/50)));
     if (!road) target = 0;
-    var step = T.cap > 8 ? 2 : 1;
+    var step = capHere > 8 ? 2 : 1;
     if (S.adDays > 0) step++;
     if (c.res < target){
       c.res = Math.min(target, c.res + step); arriving++;
@@ -2057,6 +2273,12 @@ function simulate(){
   if (leaving > 2)   warnOnce("lv", "🏃 " + leaving + " בתים מתרוקנים! תבדוק חשמל, מים ושמחה");
   if (S.everHadPop && pop === 0) warnOnce("zero", "😱 כל האנשים ברחו מהעיר! תתקן את הבעיות");
   if (S.money < 60)  warnOnce("mn", "💰 נגמר הכסף! תחכה שהמיסים ייכנסו או תמכור בניין בדחפור");
+  /* הביקוש והצמיחה של האזורים — הלב של סים סיטי */
+  updateDemand(cJobs, iJobs, cCount, iCount, rCap);
+  growthStep(joySrc, polSrc);
+  drawDemand();
+  S.zoneCount = zoneCount;
+
   setGarbageCount(Math.round(trashOver * 20));
   if (trashOver > 0)  warnOnce("tr", "🗑️ העיר מתמלאת בזבל! תבנה פחים או מרכז מיחזור");
   if (S.crime > 55)  warnOnce("cr", "🚓 הפשע בעיר גבוה! תבנה תחנת משטרה");
@@ -2160,6 +2382,11 @@ function killAgent(arr, i){
 function countType(id){
   var n = 0;
   for (var i=0;i<S.grid.length;i++) if (S.grid[i].t === id) n++;
+  return n;
+}
+function countZone(kind){
+  var n = 0;
+  for (var i=0;i<S.grid.length;i++) if (S.grid[i].zone === kind) n++;
   return n;
 }
 function updateAgents(){
@@ -2276,6 +2503,11 @@ var TOOLS = {
   bulldoze: { name:"דחפור", e:"💥" },
   info:     { name:"מידע",  e:"👆" }
 };
+var ZONE_ITEMS = {
+  zone_r: { name:ZONES.r.name, e:ZONES.r.e, cost:ZONES.r.cost, kind:"r" },
+  zone_c: { name:ZONES.c.name, e:ZONES.c.e, cost:ZONES.c.cost, kind:"c" },
+  zone_i: { name:ZONES.i.name, e:ZONES.i.e, cost:ZONES.i.cost, kind:"i" }
+};
 function setTool(id){
   S.tool = id;
   var kids = elItems.children;
@@ -2286,6 +2518,7 @@ function setTool(id){
                   (!isTool && TYPES[tid] && S.money < TYPES[tid].cost ? " poor" : "");
   }
   buildGhost();
+  if (ZONE_ITEMS[id]) toast(ZONE_ITEMS[id].e + " סמן קרקע — והבניינים יגדלו שם לבד!");
   if (id === "bulldoze") toast("💥 דחפור: לחץ על בניין כדי למחוק אותו");
   if (id === "info") toast("👆 מידע: לחץ על בניין כדי לראות מה קורה לו");
 }
@@ -2294,15 +2527,18 @@ function buildItems(cat){
   elItems.innerHTML = "";
   var ids = [], k;
   if (cat === "tools"){ for (k in TOOLS) ids.push(k); }
+  else if (cat === "zones"){ ids = ["zone_r", "zone_c", "zone_i"]; }
   else { for (k in TYPES) if (TYPES[k].cat === cat) ids.push(k); }
   for (var i=0;i<ids.length;i++){
     var id = ids[i];
-    var T = TYPES[id] || TOOLS[id];
+    var T = TYPES[id] || TOOLS[id] || ZONE_ITEMS[id];
     var d = document.createElement("div");
     d.className = "item" + (TOOLS[id] ? " tool" : "") + (S.tool===id ? " on" : "");
     d.setAttribute("data-id", id);
+    var costTxt = TYPES[id] ? TYPES[id].cost + " 💰"
+                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰" : "חינם";
     d.innerHTML = '<div class="e">'+T.e+'</div><div class="n">'+T.name+'</div>' +
-                  (TYPES[id] ? '<div class="c">'+TYPES[id].cost+' 💰</div>' : '<div class="c">חינם</div>');
+                  '<div class="c">'+costTxt+'</div>';
     d.onclick = (function(x){ return function(){ setTool(x); beep(640,0.05); }; })(id);
     elItems.appendChild(d);
   }
@@ -2328,11 +2564,38 @@ var infoEl = document.getElementById("info");
 document.getElementById("infoX").onclick = function(){ infoEl.style.display = "none"; };
 function showInfo(x,z){
   var c = cell(x,z);
-  if (!c.t){ infoEl.style.display = "none"; return; }
-  var T = TYPES[c.t];
-  document.getElementById("infoTitle").innerHTML = T.e + " " + T.name;
   var h = "";
   function line(a,b,cls){ h += '<div class="line"><span>'+a+'</span><b class="'+(cls||"")+'">'+b+'</b></div>'; }
+  if (!c.t && c.zone){
+    var Z = ZONES[c.zone];
+    document.getElementById("infoTitle").innerHTML = Z.e + " " + Z.name + " (ריק)";
+    line("כביש", hasRoadNear(x,z) ? "יש ✔" : "אין ✖", hasRoadNear(x,z)?"ok":"warn");
+    line("חשמל", c.pwOk ? "יש ✔" : "אין ✖", c.pwOk?"ok":"warn");
+    var dm = c.zone === "r" ? S.demR : c.zone === "c" ? S.demC : S.demI;
+    line("ביקוש", Math.round(dm*100) + "%", dm > 0 ? "ok" : "warn");
+    line("התקדמות בנייה", Math.round(Math.max(0,c.grow)*100) + "%");
+    document.getElementById("infoBody").innerHTML = h;
+    infoEl.style.display = "block";
+    return;
+  }
+  if (!c.t){ infoEl.style.display = "none"; return; }
+  var T = TYPES[c.t];
+  document.getElementById("infoTitle").innerHTML = T.e + " " + T.name +
+    (c.zone ? ' <span style="font-size:12px;opacity:.75">רמה ' + c.level + '</span>' : "");
+  if (c.zone){
+    if (c.cap) line("תושבים", c.res + " / " + c.cap, c.res>0?"ok":"warn");
+    if (c.cap) line("שמחה", c.happy + "% " + face(c.happy), c.happy>=50?"ok":"warn");
+    if (c.jobs) line("מקומות עבודה", c.jobs + " 💼", "ok");
+    if (c.inc) line("הכנסה ליום", "+" + c.inc + " 💰", "ok");
+    if (c.pol) line("מזהם", "-" + c.pol + " 😷", "warn");
+    line("כביש", hasRoadNear(x,z) ? "יש ✔" : "אין ✖", hasRoadNear(x,z)?"ok":"warn");
+    line("חשמל", c.pwOk ? "מחובר ✔" : "אין ✖", c.pwOk?"ok":"warn");
+    if (c.level < 3) line("שדרוג", Math.round(Math.max(0,c.grow)*100) + "%");
+    else line("רמה", "מקסימום! 🏆", "ok");
+    document.getElementById("infoBody").innerHTML = h;
+    infoEl.style.display = "block";
+    return;
+  }
   if (T.res){
     line("תושבים", c.res + " / " + T.cap, c.res>0 ? "ok":"warn");
     line("שמחה", c.happy + "% " + face(c.happy), c.happy>=50?"ok":"warn");
@@ -2374,6 +2637,7 @@ function buildGhost(){
   if (ghost){ cursor.remove(ghost); disposeGroup(ghost); ghost = null; }
   ghostType = null; ghostTile = "";
   var id = S.tool;
+  if (ZONE_ITEMS[id]){ cursorMat.color.setHex(ZONES[ZONE_ITEMS[id].kind].col); return; }
   if (!TYPES[id]) { cursorMat.color.setHex(id==="bulldoze" ? 0xFF6B6B : 0xFFD24E); return; }
   cursorMat.color.setHex(0x7CFFB2);
   ghostType = id;
@@ -2402,9 +2666,10 @@ function moveCursor(x,z){
   var w = tileToWorld(x,z);
   cursor.position.set(w.x, 0, w.z);
   cursor.visible = true;
-  var occupied = !!cell(x,z).t;
+  var occupied = !!(cell(x,z).t || cell(x,z).zone);
   if (S.tool === "bulldoze") cursorMat.color.setHex(occupied ? 0xFF6B6B : 0x888899);
   else if (S.tool === "info") cursorMat.color.setHex(0xFFD24E);
+  else if (ZONE_ITEMS[S.tool]) cursorMat.color.setHex(occupied ? 0xFF6B6B : ZONES[ZONE_ITEMS[S.tool].kind].col);
   else cursorMat.color.setHex(occupied ? 0xFF6B6B : 0x7CFFB2);
   if (ghost) ghost.visible = !occupied;
   updateGhost(x,z);
@@ -2414,6 +2679,7 @@ function doClick(cx, cy){
   if (!t) return;
   if (S.tool === "bulldoze") demolish(t.x, t.z);
   else if (S.tool === "info") showInfo(t.x, t.z);
+  else if (ZONE_ITEMS[S.tool]) placeZone(t.x, t.z, ZONE_ITEMS[S.tool].kind);
   else place(t.x, t.z, S.tool);
 }
 
@@ -2591,7 +2857,9 @@ function saveGame(silent){
     var cells = [];
     for (var i=0;i<S.grid.length;i++){
       var c = S.grid[i];
-      cells.push(c.t ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000] : 0);
+      cells.push((c.t || c.zone)
+        ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0]
+        : 0);
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       money:S.money, day:S.day, cells:cells,
@@ -2620,12 +2888,21 @@ function loadGame(){
       var v = d.cells[i];
       if (!v) continue;
       var c = S.grid[i];
-      if (!TYPES[v[0]]) continue;
-      c.t = v[0]; c.res = v[1]||0; c.seed = v[2];
-      c.cap = TYPES[v[0]].cap || 0;
+      c.seed = v[2];
+      c.zone = v[3] || null;
+      c.level = v[4] || 0;
+      if (TYPES[v[0]]){
+        c.t = v[0]; c.res = v[1]||0;
+        c.cap = TYPES[v[0]].cap || 0;
+      }
+      if (c.zone && c.level > 0){
+        var lv = ZONES[c.zone].lv[c.level-1];
+        c.cap = lv.cap || 0; c.jobs = lv.jobs || 0;
+        c.inc = lv.inc || 0; c.pol = lv.pol || 0; c.trash = lv.trash || 0;
+      }
     }
     refreshRoadList();
-    for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++) if (cell(x,z).t) renderCell(x,z);
+    for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++) if (cell(x,z).t || cell(x,z).zone) renderCell(x,z);
     simulate();
     toast("📂 העיר שלך חזרה!", "good");
     return true;
@@ -2637,7 +2914,10 @@ function clearCity(){
     setWarn(c, i % GRID, Math.floor(i / GRID), null);
     if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
     c.t = null; c.res = 0; c.cap = 0; c.happy = 60; c.pwOk = true; c.wtOk = true;
+    c.zone = null; c.level = 0; c.grow = 0;
+    c.jobs = 0; c.inc = 0; c.pol = 0; c.trash = 0;
   }
+  S.demR = 0.6; S.demC = 0; S.demI = 0;
   while (cars.length) killAgent(cars, 0);
   while (peds.length) killAgent(peds, 0);
   while (trucks.length) killAgent(trucks, 0);
@@ -2654,6 +2934,140 @@ function clearCity(){
   var st = document.getElementById("sTax"), ss = document.getElementById("sSal");
   if (st) st.value = 100; if (ss) ss.value = 100;
   S.everHadPop = false; warnCool = {};
+}
+
+/* ============================================================
+   19. אזורים שגדלים לבד — הלב של סים סיטי 🏘️
+   ============================================================ */
+function placeZone(x, z, kind){
+  var c = cell(x,z);
+  var Z = ZONES[kind];
+  if (c.t || c.zone){
+    toast("המשבצת הזאת כבר תפוסה — תשתמש בדחפור 💥", "bad"); beep(160,0.08); return;
+  }
+  if (S.money < Z.cost){ toast("אין מספיק כסף ל" + Z.name + " (" + Z.cost + " 💰)", "bad"); beep(150,0.1); return; }
+  S.money -= Z.cost;
+  c.zone = kind; c.level = 0; c.grow = 0; c.seed = Math.random();
+  renderCell(x,z);
+  var w = tileToWorld(x,z);
+  puffRing(w.x, w.z, ZONES[kind].col);
+  beep(480, 0.05);
+  if (!hasRoadNear(x,z)) toast("⚠️ לאזור הזה אין כביש — שום דבר לא יגדל בו", "bad");
+  updateUI(); checkLevels();
+}
+/* כמה "רצוי" לגור/לעבוד כאן — זה מה שמחליט אם הבניין גדל או מתרוקן */
+function zoneDesire(x, z, kind, joySrc, polSrc, dem){
+  if (!hasRoadNear(x,z)) return -1;
+  var c = cell(x,z);
+  if (!c.pwOk) return -1;
+  var v = 0.45 + dem*0.6;                    /* ביקוש */
+  var k, d;
+  var pol = 0;
+  for (k=0;k<polSrc.length;k++){
+    d = dist(x,z, polSrc[k].x, polSrc[k].z);
+    if (d <= polSrc[k].r) pol += polSrc[k].v * (1 - d/(polSrc[k].r+1.2));
+  }
+  if (kind === "r" || kind === "c"){
+    var joy = 0;
+    for (k=0;k<joySrc.length;k++){
+      d = dist(x,z, joySrc[k].x, joySrc[k].z);
+      if (d <= joySrc[k].r) joy += joySrc[k].v * (1 - d/(joySrc[k].r+1.5));
+    }
+    v += Math.min(0.35, joy/55);
+    v -= Math.min(0.3, pol/70);              /* זיהום מפריע, אבל לא הורג */
+    v -= S.crime/600;
+    if (kind === "r" && S.traUse > S.traCap)
+      v -= Math.min(0.15, (S.traUse - S.traCap)/Math.max(1,S.traUse) * 0.15);
+  } else {
+    v += 0.1;                                 /* לתעשייה לא אכפת מזיהום */
+  }
+  return Math.max(-1, Math.min(1, v));
+}
+function growthStep(joySrc, polSrc){
+  var x, z, c, Z, i;
+  var dems = { r:S.demR, c:S.demC, i:S.demI };
+  for (z=0; z<GRID; z++) for (x=0; x<GRID; x++){
+    c = cell(x,z);
+    if (!c.zone) continue;
+    Z = ZONES[c.zone];
+    var des = zoneDesire(x, z, c.zone, joySrc, polSrc, dems[c.zone]);
+    if (des > 0.52){
+      c.grow += (des - 0.45) * 0.55;
+      if (c.grow >= 1 && c.level < 3){
+        c.grow = 0; c.level++;
+        applyZoneLevel(x, z);
+        var w = tileToWorld(x,z);
+        floatText(c.level === 1 ? "🏗️ נבנה!" : "⬆️ שדרוג!", w.x, w.z, 3.2, "#8CF4B6");
+        puffRing(w.x, w.z, Z.col);
+      } else if (c.grow > 1) c.grow = 1;
+    } else if (des < 0.28){
+      c.grow -= 0.09;
+      if (c.grow <= -1){
+        c.grow = 0;
+        if (c.level > 0){
+          c.level--;
+          applyZoneLevel(x, z);
+          var w2 = tileToWorld(x,z);
+          floatText(c.level === 0 ? "🚫 ננטש" : "⬇️ מתרוקן", w2.x, w2.z, 3.2, "#FF9A9A");
+        }
+      }
+    } else {
+      c.grow *= 0.9;
+    }
+  }
+}
+function applyZoneLevel(x, z){
+  var c = cell(x,z);
+  var Z = ZONES[c.zone];
+  if (c.level <= 0){
+    c.t = null; c.res = 0; c.cap = 0; c.jobs = 0; c.inc = 0; c.pol = 0; c.trash = 0;
+    renderCell(x,z);
+    return;
+  }
+  var L = Z.lv[c.level-1];
+  var type = L.t;
+  if (c.zone === "c" && c.level === 2) type = C2_VARIANTS[Math.floor((c.seed||0.5)*C2_VARIANTS.length) % C2_VARIANTS.length];
+  c.t = type;
+  c.cap = L.cap || 0;
+  c.jobs = L.jobs || 0;
+  c.inc = L.inc || 0;
+  c.pol = L.pol || 0;
+  c.trash = L.trash || 0;
+  if (c.res > c.cap) c.res = c.cap;
+  renderCell(x,z);
+}
+/* מד הביקוש RCI — בדיוק כמו בסים סיטי */
+function updateDemand(cJobs, iJobs, cCount, iCount, rCap){
+  var pop = S.pop;
+  var workers = pop * 0.55;
+  var jobs = cJobs + iJobs;
+  var young = pop < 12;
+  /* מגורים: רוצים לבוא אם יש עבודה ומקום */
+  var r = (jobs - workers) / Math.max(10, workers);
+  if (young) r = Math.max(r, 0.55);
+  if (pop >= rCap && rCap > 0) r = Math.min(r, 0.9);
+  /* מסחר: צריך לקוחות */
+  var c = (pop/5 - cCount*1.6) / Math.max(3, cCount*1.6 || 3);
+  if (pop >= 6 && cCount === 0) c = 0.9;
+  /* תעשייה: צריכה עובדים וייצוא */
+  var i = ((pop/4 + cCount*1.1) - iCount*2.0) / Math.max(3, iCount*2.0 || 3);
+  if (pop >= 8 && iCount === 0) i = 0.8;
+  var sm = 0.35;
+  S.demR += (Math.max(-1, Math.min(1, r)) - S.demR) * sm;
+  S.demC += (Math.max(-1, Math.min(1, c)) - S.demC) * sm;
+  S.demI += (Math.max(-1, Math.min(1, i)) - S.demI) * sm;
+}
+function drawDemand(){
+  var set = [["rciR", S.demR], ["rciC", S.demC], ["rciI", S.demI]];
+  for (var i=0;i<set.length;i++){
+    var el = document.getElementById(set[i][0]);
+    if (!el) continue;
+    var v = set[i][1];
+    var h = Math.min(22, Math.abs(v)*22);
+    el.style.height = Math.max(2, h) + "px";
+    el.style.bottom = v >= 0 ? "11px" : (11 - h) + "px";
+    el.style.opacity = Math.abs(v) < 0.08 ? 0.35 : 1;
+  }
 }
 
 /* ============================================================
@@ -2805,11 +3219,13 @@ function updateEmergencies(dt, t){
    18. רמות ומשימות 🎯
    ============================================================ */
 var LEVELS = [
-  { t:"תבנה 3 בתים 🏠",                 c:function(){ return countType("house") >= 3; },                 m:150 },
   { t:"תבנה תחנת כוח ⚡",                c:function(){ return countType("powerplant")+countType("windmill") >= 1; }, m:150 },
   { t:"תבנה מגדל מים 🚰",                c:function(){ return countType("watertower") >= 1; },            m:150 },
+  { t:"סמן 4 אזורי מגורים 🏘️",           c:function(){ return countZone("r") >= 4; },                     m:200 },
+  { t:"חכה שייבנה הבית הראשון 🏗️",       c:function(){ return countType("house") >= 1; },                 m:200 },
+  { t:"סמן אזור מסחרי — צריך עבודה! 🏬", c:function(){ return countZone("c") >= 2; },                     m:200 },
+  { t:"סמן אזור תעשייה 🏭",              c:function(){ return countZone("i") >= 2; },                     m:250 },
   { t:"הגע ל-10 תושבים 👨‍👩‍👧",              c:function(){ return S.pop >= 10; },                             m:200 },
-  { t:"תבנה חנות — צריך עבודה! 🏪",      c:function(){ return countType("shop")+countType("supermarket") >= 1; }, m:200 },
   { t:"תבנה פח אשפה 🗑️",                c:function(){ return countType("trashbin")+countType("recycling") >= 1; }, m:150 },
   { t:"סע במכונית בעיר שלך 🚗",          c:function(){ return !!S.flags.drove; },                         m:200 },
   { t:"הגע ל-25 תושבים 👨‍👩‍👧",              c:function(){ return S.pop >= 25; },                             m:300 },
@@ -3898,13 +4314,15 @@ function newGame(){
   simulate();
   S.money = START_MONEY; S.day = 1;
   updateUI();
-  toast("בניתי לך כביש להתחלה 🛣️ עכשיו תבנה תחנת כוח ומגדל מים!", "good");
+  drawDemand();
+  toast("🛣️ בניתי כביש להתחלה. עכשיו: ⚡ תחנת כוח, 🚰 מים, ואז סמן 🏘️ אזורי מגורים ליד הכביש!", "good");
 }
 function start(){
   S.started = true;
   document.getElementById("startScreen").className = "overlay hide";
   buildItems("infra");
   setTool("road");
+  drawDemand();
   beep(680,0.08); setTimeout(function(){ beep(880,0.1); }, 90);
 }
 document.getElementById("btnNew").onclick = function(){ newGame(); start(); };
@@ -3934,6 +4352,7 @@ window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:c
                   enterInterior:enterInterior, exitInterior:exitInterior, getOutOfCar:getOutOfCar,
                   getAction:function(){ return walkAction; },
                   LEVELS:LEVELS, checkLevels:checkLevels, openLevels:openLevels,
+                  ZONES:ZONES, placeZone:placeZone, growthStep:growthStep,
                   spawnEmergency:spawnEmergency, updateEmergencies:updateEmergencies,
                   emergencies:emergencies, ambulances:ambulances,
                   draw:function(){ if(!DRV.on) updateCam(); renderer.render(scene, camera); } };
