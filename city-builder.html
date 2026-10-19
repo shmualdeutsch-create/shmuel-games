@@ -873,6 +873,8 @@ var LINE    = M(0xFFE873, 0.6);
 /* חומרים משותפים — אסור למחוק אותם כשמוחקים בניין */
 ASPHALT.userData.keep = true; CURB.userData.keep = true; LINE.userData.keep = true;
 SIDEWALK_TOP.userData.keep = true; CROSSWALK.userData.keep = true;
+/* מרכז המדרכה וגובה פני השטח — בדיוק כמו ב-buildRoad (SW=0.9, SH=0.3) */
+var SIDEWALK_MID = TILE/2 - 0.45, SIDEWALK_TOP_Y = 0.335, ROAD_TOP_Y = 0.24;
 function buildRoad(seed, x, z){
   var g = new THREE.Group();
   var pad = box(TILE, 0.22, TILE, ASPHALT, 0, 0.11, 0);
@@ -2596,7 +2598,8 @@ function roadNeighbors(x,z){
 function spawnAgent(arr, maker, speed, side){
   var r = randRoad(); if (!r) return;
   var g = maker();
-  var a = { g:g, x:r.x, z:r.z, nx:r.x, nz:r.z, px:r.x, pz:r.z, p:1, speed:speed, side:side };
+  var a = { g:g, x:r.x, z:r.z, nx:r.x, nz:r.z, px:r.x, pz:r.z, p:1, speed:speed, side:side,
+            jit:(Math.random()-0.5)*0.34 };
   fxGroup.add(g); arr.push(a);
 }
 function killAgent(arr, i){
@@ -2619,7 +2622,7 @@ function updateAgents(){
   var wantBuses  = roadList.length < 2 ? 0 : Math.min(4, countType("busstop"));
   while (cars.length < wantCars) spawnAgent(cars, makeCar, 2.4, 0.85);
   while (cars.length > wantCars) killAgent(cars, cars.length-1);
-  while (peds.length < wantPeds) spawnAgent(peds, makePed, 1.05, -1.55);
+  while (peds.length < wantPeds) spawnAgent(peds, makePed, 1.05, -1);
   while (peds.length > wantPeds) killAgent(peds, peds.length-1);
   while (trucks.length < wantTrucks) spawnAgent(trucks, makeGarbageTruck, 1.6, 0.85);
   while (trucks.length > wantTrucks) killAgent(trucks, trucks.length-1);
@@ -2653,11 +2656,23 @@ function moveAgents(arr, dt, t){
     var wx = w0.x + (w1.x-w0.x)*a.p, wz = w0.z + (w1.z-w0.z)*a.p;
     var dx = w1.x-w0.x, dz = w1.z-w0.z;
     var ang = Math.atan2(dx, dz);
-    /* הזזה לצד הנסיעה/מדרכה */
-    var offx = Math.cos(ang) * a.side * 0.5;
-    var offz = -Math.sin(ang) * a.side * 0.5;
-    /* הולכי רגל עומדים על המדרכה (גבוהה יותר מהכביש) */
-    var baseY = a.g.userData.legs ? 0.36 : 0.24;
+    /* הזזה לצד הנסיעה/מדרכה — הולכי רגל זזים עד מרכז המדרכה */
+    var isPed = !!a.g.userData.legs;
+    var lat = isPed ? a.side * (SIDEWALK_MID + a.jit) : a.side * 0.5;
+    var offx = Math.cos(ang) * lat;
+    var offz = -Math.sin(ang) * lat;
+    /* הולכי רגל עומדים על המדרכה (גבוהה יותר מהכביש), ויורדים לכביש בצומת */
+    var baseY = 0.24;
+    if (isPed){
+      var cx = (a.p < 0.5) ? a.px : a.nx, cz = (a.p < 0.5) ? a.pz : a.nz;
+      var sdx = Math.abs(offx) > Math.abs(offz) ? (offx > 0 ? 1 : -1) : 0;
+      var sdz = sdx ? 0 : (offz > 0 ? 1 : -1);
+      var sideIsRoad = inGrid(cx+sdx, cz+sdz) && cell(cx+sdx, cz+sdz).t === "road";
+      var tgtY = sideIsRoad ? ROAD_TOP_Y : SIDEWALK_TOP_Y;
+      if (a.y === undefined) a.y = tgtY;
+      a.y += (tgtY - a.y) * Math.min(1, dt*8);
+      baseY = a.y;
+    }
     a.g.position.set(wx + offx, baseY, wz + offz);
     a.g.rotation.y = ang - Math.PI/2;
     if (a.g.userData.legs){
