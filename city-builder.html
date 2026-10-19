@@ -3259,31 +3259,33 @@ function updateDemand(cJobs, iJobs, cCount, iCount, rCap){
   S.demC += (Math.max(-1, Math.min(1, c)) - S.demC) * sm;
   S.demI += (Math.max(-1, Math.min(1, i)) - S.demI) * sm;
 }
-/* כמה משבצות חסרות מכל סוג — מספר אמיתי, לא רק מקל */
+/* כמה משבצות חסרות מכל סוג — מספר אמיתי, לא רק מקל.
+   אזור שגדל ומשתדרג מחזיק בסוף הרבה (בניין דירות = 20),
+   לכן מחלקים בקיבולת הסופית ולא בהתחלתית, ומגבילים
+   להמלצה שאפשר באמת לבצע עכשיו. */
+/* ההמלצה באה ישירות מגובה המקל, כדי שהמספר תמיד יתאים
+   לחץ שרואים ולא ייצא מספר מטורף */
 function zoneAdvice(){
-  var pop = S.pop, jobs = S.jobsCI || 0;
-  var cCount = S.cCount || 0, iCount = S.iCount || 0, rCap = S.rCap || 0;
-  /* מגורים: צריך מספיק מקום לכל מי שיכול לעבוד */
-  var popTarget = Math.round(jobs / 0.55);
-  var needR = Math.max(0, Math.ceil((popTarget - rCap) / 6));
-  if (pop < 10 && (S.rZones || 0) < 4) needR = Math.max(needR, 4 - (S.rZones || 0));
-  if (S.demR < -0.1) needR = 0;
-  /* מסחר: חנות אחת לכל ~8 תושבים */
-  var needC = Math.max(0, Math.ceil(pop/8 - cCount));
-  if (S.demC < -0.1) needC = 0;
-  /* תעשייה: לפי האוכלוסייה והמסחר */
-  var needI = Math.max(0, Math.ceil((pop/4 + cCount*1.1)/2 - iCount));
-  if (S.demI < -0.1) needI = 0;
-  return [
-    { e:"🏘️", n:"מגורים", v:S.demR, need:needR, tool:"zone_r" },
-    { e:"🏬", n:"מסחר",   v:S.demC, need:needC, tool:"zone_c" },
-    { e:"🏭", n:"תעשייה", v:S.demI, need:needI, tool:"zone_i" }
+  /* עיר גדולה יכולה לקלוט יותר משבצות בבת אחת */
+  var scale = Math.max(5, Math.min(12, 5 + S.pop/30));
+  function need(dem){
+    if (dem <= 0.15) return 0;
+    return Math.max(1, Math.round(dem * scale));
+  }
+  var rows = [
+    { e:"🏘️", n:"מגורים", v:S.demR, need:need(S.demR) },
+    { e:"🏬", n:"מסחר",   v:S.demC, need:need(S.demC) },
+    { e:"🏭", n:"תעשייה", v:S.demI, need:need(S.demI) }
   ];
+  /* בהתחלה תמיד צריך קצת מגורים */
+  if (S.pop < 10 && (S.rZones || 0) < 4)
+    rows[0].need = Math.max(rows[0].need, 4 - (S.rZones || 0));
+  return rows;
 }
 function demandWord(r){
   if (r.v < -0.2) return "יש לך יותר מדי ✋";
-  if (r.need >= 1) return "חסרות לך בערך <b>" + r.need + "</b> משבצות";
-  if (r.v > 0.2)   return "אפשר עוד קצת 👍";
+  if (r.need >= 1) return "סמן עוד <b>" + r.need + "</b> משבצות";
+  if (r.v > 0.15)  return "אפשר עוד קצת 👍";
   return "יש מספיק ✔";
 }
 function explainDemand(){
@@ -3317,7 +3319,8 @@ function explainDemand(){
     h += '<div class="mhint" style="text-align:right;margin-top:10px">כל עוד הבעיות למעלה לא מתוקנות, לא עוזר לסמן עוד אזורים.</div>';
   else if (best)
     h += '<div class="tipbox" style="margin-top:12px">👉 <b>הכי דחוף עכשיו:</b> סמן עוד <b>' +
-         best.need + '</b> משבצות ' + best.e + ' ' + best.n + '</div>';
+         best.need + '</b> משבצות ' + best.e + ' ' + best.n +
+         '<br><span style="font-size:12px;opacity:.8">אחרי שהן ייבנו, תלחץ שוב על המד ותראה מה הלאה</span></div>';
   else
     h += '<div class="tipbox" style="margin-top:12px">✔ <b>האזורים מאוזנים!</b> עכשיו תבנה שירותים: 🌳 פארק · 🚓 משטרה · 🏫 בית ספר · 🗑️ פחים — הם מעלים את השמחה וככה הבניינים מתמלאים ומשתדרגים.</div>';
   h += '<div class="mhint" style="text-align:right;margin-top:8px">⬆️ = חסר לך · ➖ = מאוזן · ⬇️ = יש יותר מדי</div>';
