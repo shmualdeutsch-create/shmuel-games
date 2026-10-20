@@ -4327,13 +4327,14 @@ function makeTornado(){
   return g;
 }
 function spawnTornado(){
-  if (tornado){ toast("כבר יש טורנדו בעיר! 🌪️"); return; }
+  if (tornado) return;
   var g = makeTornado();
   var z0 = (Math.random()-0.5)*HALF*1.3;
   g.position.set(-HALF-8, 0, z0);
   fxGroup.add(g);
   tornado = { g:g, x:-HALF-8, z:z0, vz:(Math.random()-0.5)*4, hit:0 };
-  toast("🌪️ טורנדו נכנס לעיר!! הוא הורס כל מה שבדרך", "bad");
+  S.flags.tornado = 1;   /* טורנדו אחד לכל עיר — זהו, לא יהיה עוד */
+  toast("🌪️ טורנדו!!! הוא הורס כל מה שבדרך — וזה קורה פעם אחת בלבד בעיר", "bad");
   beep(90,0.7,"sawtooth");
 }
 
@@ -4444,11 +4445,13 @@ function maybeDisaster(){
   if (Math.random() > risk) return;
   disasterCool = 150;            /* בערך 4 דקות שקט אחרי כל אסון */
   var r = Math.random();
-  if (r < 0.62)      randomFire();
-  else if (r < 0.82) strikeLightning();
-  else if (r < 0.93) quake();
-  else if (r < 0.985) spawnTornado();
-  else               dropMeteor();
+  /* טורנדו — רק פעם אחת בחיים של העיר, ורק כשהיא כבר גדולה */
+  var tornadoOk = !S.flags.tornado && S.pop >= 60;
+  if (r < 0.64)       randomFire();
+  else if (r < 0.86)  strikeLightning();
+  else if (r < 0.965) quake();
+  else if (r < 0.99)  { if (tornadoOk) spawnTornado(); else randomFire(); }
+  else                dropMeteor();
 }
 
 /* ============================================================
