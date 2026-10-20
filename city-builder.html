@@ -570,7 +570,7 @@
       </ul>
       <h3>17ב. 🚨 אסונות ושריפות</h3>
       <ul>
-        <li>בלשונית <b>🚨 אסונות</b> יש כפתורים — אתה יכול להפעיל אסון <b>בעצמך</b> מתי שאתה רוצה!</li>
+        <li>מדי פעם <b>קורה אסון בעיר לבד</b> — בלי שום אזהרה! ככל שהעיר גדולה ויש בה יותר מפעלים, זה קורה יותר.</li>
         <li><b>🔥 שריפה</b> — האש מתפשטת לבניינים שליד, ואם לא מכבים — הבניין <b>נשרף</b>.</li>
         <li><b>🚒 מכבי אש</b> — אם בנית תחנה, יוצאת משאית כיבוי לבד ומכבה את האש.</li>
         <li><b>⚡ ברק</b> מצית בניין · <b>🫨 רעידת אדמה</b> מפילה כמה בניינים · <b>🌪️ טורנדו</b> הורס כל מה שבדרך · <b>☄️ מטאור</b> עושה מכתש ענק.</li>
@@ -578,7 +578,7 @@
             יופיע כפתור <b>🧯 לכבות את השריפה</b>. שלוש לחיצות וכבית! <b>+150 💰</b></li>
         <li>אחרי אסון נשארות <b>🧱 הריסות</b> — אי אפשר לבנות עליהן. תלך לשם ברגל ותלחץ
             <b>🧹 לפנות את ההריסות</b> (חינם, ועוד מקבלים <b>+60 💰</b>), או תפנה בדחפור 💥 תמורת 40 💰.</li>
-        <li>לא בא לך אסונות? בלשונית 🚨 תלחץ על <b>🎲 אסונות לבד</b> כדי לכבות אותם.</li>
+        <li>הכי חשוב: <b>תבנה 🚒 מכבי אש</b> לפני שיהיה אסון — אז יש מי שיכבה מהר.</li>
       </ul>
       <h3>18. 📊 לוח הניהול</h3>
       <ul>
@@ -671,7 +671,6 @@ var CATS = [
   { id:"infra", name:"🔧 תשתיות" },
   { id:"serv",  name:"🏛️ שירותים" },
   { id:"fun",   name:"🎉 כיף" },
-  { id:"boom",  name:"🚨 אסונות" },
   { id:"tools", name:"🛠️ כלים" }
 ];
 
@@ -707,7 +706,7 @@ var S = {
   grid: [], tool: "road", cat: "infra", speed: 1, started: false, everHadPop: false,
   tax: 1, salary: 1, adDays: 0, crime: 0, unemployed: 0,
   traUse: 0, traCap: 0, hasHall: false,
-  level: 0, rescued: 0, flags: {}, disasters: true,
+  level: 0, rescued: 0, flags: {},
   demR: 0.6, demC: 0, demI: 0, zoneCount: 0
 };
 function cell(x,z){ return S.grid[z*GRID+x]; }
@@ -2933,27 +2932,18 @@ function buildItems(cat){
   var ids = [], k;
   if (cat === "tools"){ for (k in TOOLS) ids.push(k); }
   else if (cat === "zones"){ ids = ["zone_r", "zone_c", "zone_i"]; }
-  else if (cat === "boom"){ for (k in DISASTERS) ids.push(k); }
   else { for (k in TYPES) if (TYPES[k].cat === cat) ids.push(k); }
   for (var i=0;i<ids.length;i++){
     var id = ids[i];
-    var T = TYPES[id] || TOOLS[id] || ZONE_ITEMS[id] || DISASTERS[id];
+    var T = TYPES[id] || TOOLS[id] || ZONE_ITEMS[id];
     var d = document.createElement("div");
-    d.className = "item" + (TOOLS[id] ? " tool" : "") + (!DISASTERS[id] && S.tool===id ? " on" : "");
+    d.className = "item" + (TOOLS[id] ? " tool" : "") + (S.tool===id ? " on" : "");
     d.setAttribute("data-id", id);
     var costTxt = TYPES[id] ? TYPES[id].cost + " 💰"
-                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰"
-                : id === "d_rand" ? (S.disasters ? "דולק ✔" : "כבוי ✖")
-                : DISASTERS[id] ? "לחץ!" : "חינם";
+                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰" : "חינם";
     d.innerHTML = '<div class="e">'+T.e+'</div><div class="n">'+T.name+'</div>' +
                   '<div class="c">'+costTxt+'</div>';
-    d.onclick = DISASTERS[id]
-      ? (function(x){ return function(){
-          if (!S.started){ toast("קודם תתחיל עיר 🙂"); return; }
-          DISASTERS[x].fn(); beep(300,0.09,"sawtooth");
-          if (x === "d_rand") buildItems("boom");
-        }; })(id)
-      : (function(x){ return function(){ setTool(x); beep(640,0.05); }; })(id);
+    d.onclick = (function(x){ return function(){ setTool(x); beep(640,0.05); }; })(id);
     elItems.appendChild(d);
   }
   var tabs = elTabs.children;
@@ -4316,22 +4306,9 @@ function clearFires(){
   shakeAmt = 0;
 }
 
-/* --- מי שולט באסונות: אקראי או ראש העיר בעצמו --- */
-var DISASTERS = {
-  d_fire:  { name:"שריפה",      e:"🔥",  fn:function(){ randomFire(true); } },
-  d_bolt:  { name:"ברק",        e:"⚡",  fn:function(){ strikeLightning(); } },
-  d_quake: { name:"רעידת אדמה", e:"🫨",  fn:function(){ quake(); } },
-  d_torn:  { name:"טורנדו",     e:"🌪️", fn:function(){ spawnTornado(); } },
-  d_met:   { name:"מטאור",      e:"☄️",  fn:function(){ dropMeteor(); } },
-  d_rand:  { name:"אסונות לבד", e:"🎲",  fn:function(){
-      S.disasters = !S.disasters;
-      toast(S.disasters ? "🎲 אסונות אקראיים דולקים — תיזהר!" : "🛡️ אסונות אקראיים כבויים — עיר רגועה",
-            S.disasters ? "bad" : "good");
-    } }
-};
-/* אסון אקראי מדי פעם — ככל שהעיר גדולה ומלוכלכת יותר, הסיכון גדל */
+/* אסון אקראי מדי פעם — ככל שהעיר גדולה ויש בה יותר מפעלים, הסיכון גדל */
 function maybeDisaster(){
-  if (!S.disasters || S.pop < 12) return;
+  if (S.pop < 12) return;
   var risk = Math.min(0.018, 0.004 + S.pop/14000 + countType("factory")*0.0015 + countType("bigfactory")*0.002);
   if (countType("fire") > 0) risk *= 0.7;
   if (Math.random() > risk) return;
