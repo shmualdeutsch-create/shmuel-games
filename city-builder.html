@@ -578,7 +578,12 @@
             יופיע כפתור <b>🧯 לכבות את השריפה</b>. שלוש לחיצות וכבית! <b>+150 💰</b></li>
         <li>אחרי אסון נשארות <b>🧱 הריסות</b> — אי אפשר לבנות עליהן. תלך לשם ברגל ותלחץ
             <b>🧹 לפנות את ההריסות</b> (חינם, ועוד מקבלים <b>+60 💰</b>), או תפנה בדחפור 💥 תמורת 40 💰.</li>
+        <li><b>👷 עובדי העירייה</b> — בלשונית <b>🛠️ כלים</b> יש כפתור <b>👷 עובדי עירייה</b>.
+            תלחץ עליו ואז תלחץ על 🔥 שריפה או על 🧱 הריסות — <b>טנדר עובדים יוצא מהעירייה</b>,
+            נוסע לשם, ומתקן! עולה 40 💰 לכל שליחה, אפשר 3 צוותים בו-זמנית.
+            <b>צריך 🏛️ עירייה</b> — שם יושבים העובדים.</li>
         <li>הכי חשוב: <b>תבנה 🚒 מכבי אש</b> לפני שיהיה אסון — אז יש מי שיכבה מהר.</li>
+        <li>האסונות <b>נדירים</b>, ואחרי כל אסון יש הפוגה ארוכה בלי שום אסון.</li>
       </ul>
       <h3>18. 📊 לוח הניהול</h3>
       <ul>
@@ -2906,6 +2911,7 @@ function updateUI(){
 }
 var TOOLS = {
   bulldoze: { name:"דחפור", e:"💥" },
+  crew:     { name:"עובדי עירייה", e:"👷" },
   info:     { name:"מידע",  e:"👆" }
 };
 var ZONE_ITEMS = {
@@ -2925,6 +2931,10 @@ function setTool(id){
   buildGhost();
   if (ZONE_ITEMS[id]) toast(ZONE_ITEMS[id].e + " סמן קרקע — והבניינים יגדלו שם לבד!");
   if (id === "bulldoze") toast("💥 דחפור: לחץ על בניין כדי למחוק אותו");
+  if (id === "crew"){
+    if (!countType("cityhall")) toast("👷 העובדים יושבים בעירייה — קודם תבנה 🏛️ עירייה!", "bad");
+    else toast("👷 לחץ על 🔥 שריפה או על 🧱 הריסות — והעובדים ייסעו לשם (" + CREW_COST + " 💰)");
+  }
   if (id === "info") toast("👆 מידע: לחץ על בניין כדי לראות מה קורה לו");
 }
 function buildItems(cat){
@@ -2941,7 +2951,8 @@ function buildItems(cat){
     d.className = "item" + (TOOLS[id] ? " tool" : "") + (S.tool===id ? " on" : "");
     d.setAttribute("data-id", id);
     var costTxt = TYPES[id] ? TYPES[id].cost + " 💰"
-                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰" : "חינם";
+                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰"
+                : id === "crew" ? CREW_COST + " 💰" : "חינם";
     d.innerHTML = '<div class="e">'+T.e+'</div><div class="n">'+T.name+'</div>' +
                   '<div class="c">'+costTxt+'</div>';
     d.onclick = (function(x){ return function(){ setTool(x); beep(640,0.05); }; })(id);
@@ -3073,6 +3084,7 @@ function moveCursor(x,z){
   cursor.visible = true;
   var occupied = !!(cell(x,z).t || cell(x,z).zone);
   if (S.tool === "bulldoze") cursorMat.color.setHex(occupied ? 0xFF6B6B : 0x888899);
+  else if (S.tool === "crew") cursorMat.color.setHex(0xFFB020);
   else if (S.tool === "info") cursorMat.color.setHex(0xFFD24E);
   else if (ZONE_ITEMS[S.tool]) cursorMat.color.setHex(occupied ? 0xFF6B6B : ZONES[ZONE_ITEMS[S.tool].kind].col);
   else cursorMat.color.setHex(occupied ? 0xFF6B6B : 0x7CFFB2);
@@ -3083,6 +3095,7 @@ function doClick(cx, cy){
   var t = pickTile(cx, cy);
   if (!t) return;
   if (S.tool === "bulldoze") demolish(t.x, t.z);
+  else if (S.tool === "crew") sendCrew(t.x, t.z);
   else if (S.tool === "info") showInfo(t.x, t.z);
   else if (ZONE_ITEMS[S.tool]) placeZone(t.x, t.z, ZONE_ITEMS[S.tool].kind);
   else place(t.x, t.z, S.tool);
@@ -4037,7 +4050,7 @@ function randomFire(loud){
   var p = cand[Math.floor(Math.random()*cand.length)];
   return startFire(p.x, p.z);
 }
-function putOutFire(i, byPlayer){
+function putOutFire(i, byPlayer, byCrew){
   var f = fires[i];
   var w = tileToWorld(f.x, f.z);
   fxGroup.remove(f.g); disposeGroup(f.g);
@@ -4053,7 +4066,7 @@ function putOutFire(i, byPlayer){
     toast("🦸 ראש העיר כיבה את השריפה! +150 💰", "good");
   } else {
     floatText("💧 כבוי!", w.x, w.z, 3.6, "#9FD8FF");
-    toast("🚒 מכבי האש כיבו את השריפה!", "good");
+    toast(byCrew ? "👷 העובדים של העירייה כיבו את השריפה!" : "🚒 מכבי האש כיבו את השריפה!", "good");
   }
   beep(700,0.1); setTimeout(function(){ beep(960,0.12); }, 90);
   updateUI();
@@ -4120,9 +4133,9 @@ function updateFires(dt, t){
     ud.li.intensity = 2 + Math.sin(t*11)*0.9;
     /* האש מתפשטת לשכנים — פחות אם יש מכבי אש קרוב */
     f.spread += dt;
-    if (f.spread > 7){
+    if (f.spread > 10){
       f.spread = 0;
-      if (Math.random() < (nearFireStation(f.x,f.z) ? 0.1 : 0.3)){
+      if (Math.random() < (nearFireStation(f.x,f.z) ? 0.06 : 0.18)){
         var d = [[1,0],[-1,0],[0,1],[0,-1]][Math.floor(Math.random()*4)];
         startFire(f.x+d[0], f.z+d[1], true);
       }
@@ -4150,6 +4163,112 @@ function updateFires(dt, t){
     tr.g.userData.lights[0].emissiveIntensity = fl ? 3.2 : 0.1;
     tr.g.userData.lights[1].emissiveIntensity = fl ? 0.1 : 3.2;
   }
+}
+
+/* --- 👷 עובדי העירייה: ראש העיר שולח אותם לתקן נזקים --- */
+var crews = [];
+var CREW_COST = 40, CREW_MAX = 3, CREW_WORK = 5;
+
+function makeCrewTruck(){
+  var g = new THREE.Group();
+  var yel = M(0xF2B01E, 0.5, 0.2);
+  g.add(box(1.6, 0.46, 0.86, yel, -0.05, 0.44, 0));
+  g.add(box(0.72, 0.42, 0.82, yel, 0.78, 0.72, 0));
+  g.add(box(0.6, 0.26, 0.78, winMat(g, 0x9FD8FF), 0.8, 0.78, 0));
+  g.add(box(0.9, 0.3, 0.8, M(0x8A8A96, 0.8), -0.42, 0.72, 0));     /* ארגז כלים מאחור */
+  g.add(box(0.26, 0.26, 0.26, M(0xD8342E, 0.7), -0.42, 0.98, 0.2));
+  /* עובד קטן עומד מאחור */
+  g.add(cyl(0.11, 0.13, 0.4, 7, M(0x2F6FD8, 0.85), -0.42, 1.12, -0.18));
+  var head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 7), M(0xF0C8A0, 0.8));
+  head.position.set(-0.42, 1.42, -0.18); g.add(head);
+  var hat = cyl(0.17, 0.19, 0.12, 9, M(0xFFD24E, 0.6), -0.42, 1.53, -0.18);
+  g.add(hat);
+  var orange = new THREE.MeshStandardMaterial({ color:0xFFB020, emissive:new THREE.Color(0xFF8000), emissiveIntensity:2 });
+  g.add(box(0.2, 0.11, 0.2, orange, 0.5, 1.0, 0));
+  g.userData.light = orange;
+  var sp = warnSprite("🔧"); sp.position.y = 2.6; g.add(sp);
+  for (var w=0; w<4; w++){
+    var wh = cyl(0.18,0.18,0.1, 9, M(0x18181E, 0.85), (w<2?-0.5:0.6), 0.18, (w%2?-0.42:0.42));
+    wh.rotation.x = Math.PI/2; g.add(wh);
+  }
+  return g;
+}
+function cityHallTiles(){
+  var out = [];
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++)
+    if (cell(x,z).t === "cityhall") out.push({ x:x, z:z });
+  return out;
+}
+function sendCrew(x, z){
+  if (!inGrid(x,z)) return;
+  var c = cell(x,z);
+  var isFire = fireAt(x,z) >= 0;
+  if (!isFire && !c.rub){
+    toast("👷 העובדים מתקנים רק 🔥 שריפות ו-🧱 הריסות — לחץ על משהו שנפגע");
+    beep(200,0.08); return;
+  }
+  var hall = cityHallTiles();
+  if (!hall.length){
+    toast("👷 העובדים יושבים בעירייה — תבנה 🏛️ עירייה קודם!", "bad");
+    beep(160,0.1); return;
+  }
+  for (var i=0;i<crews.length;i++) if (crews[i].tx === x && crews[i].tz === z){
+    toast("👷 כבר שלחת עובדים לשם — הם בדרך!"); return;
+  }
+  if (crews.length >= CREW_MAX){
+    toast("👷 כל " + CREW_MAX + " הצוותים בחוץ! חכה שיסיימו", "bad"); beep(170,0.1); return;
+  }
+  if (S.money < CREW_COST){
+    toast("👷 אין מספיק כסף לשלוח עובדים (" + CREW_COST + " 💰)", "bad"); beep(150,0.1); return;
+  }
+  S.money -= CREW_COST;
+  var hw = tileToWorld(hall[0].x, hall[0].z);
+  var g = makeCrewTruck();
+  g.position.set(hw.x, 0.22, hw.z);
+  fxGroup.add(g);
+  crews.push({ g:g, x:hw.x, z:hw.z, tx:x, tz:z, work:0, arrived:false });
+  var tw = tileToWorld(x,z);
+  floatText("👷 -" + CREW_COST + " 💰", tw.x, tw.z, 3.2, "#FFD24E");
+  toast("👷 העובדים יצאו מהעירייה " + (isFire ? "לכבות את השריפה!" : "לפנות את ההריסות!"), "good");
+  beep(620,0.07); setTimeout(function(){ beep(760,0.07); }, 70);
+  updateUI();
+}
+function killCrew(i){
+  var cr = crews[i];
+  fxGroup.remove(cr.g); disposeGroup(cr.g);
+  crews.splice(i,1);
+}
+function updateCrews(dt, t){
+  for (var i=crews.length-1; i>=0; i--){
+    var cr = crews[i];
+    var c = cell(cr.tx, cr.tz);
+    var fi = fireAt(cr.tx, cr.tz);
+    if (fi < 0 && !c.rub){ killCrew(i); continue; }     /* כבר תוקן — חוזרים הביתה */
+    var w = tileToWorld(cr.tx, cr.tz);
+    var dx = w.x - cr.x, dz = w.z - cr.z, d = Math.hypot(dx, dz);
+    if (!cr.arrived && d > 2.4){
+      cr.x += dx/d * 6.5 * dt; cr.z += dz/d * 6.5 * dt;
+      cr.g.position.set(cr.x, 0.22, cr.z);
+      cr.g.rotation.y = Math.atan2(dx, dz) - Math.PI/2;
+    } else {
+      cr.arrived = true;
+      cr.work += dt;
+      if (Math.random() < dt*3) puffRing(w.x + (Math.random()-0.5)*2.4, w.z + (Math.random()-0.5)*2.4, 0xFFD24E);
+      if (fi >= 0){
+        fires[fi].hp -= dt*0.3;
+        if (fires[fi].hp <= 0){ putOutFire(fi, false, true); continue; }
+      } else if (cr.work > CREW_WORK){
+        clearRubbleAt(cr.tx, cr.tz, false);
+        floatText("👷 תוקן!", w.x, w.z, 3.4, "#8CF4B6");
+        toast("👷 העובדים סיימו לפנות את ההריסות!", "good");
+        killCrew(i); continue;
+      }
+    }
+    if (cr.g.userData.light) cr.g.userData.light.emissiveIntensity = Math.sin(t*9) > 0 ? 3 : 0.3;
+  }
+}
+function clearCrews(){
+  while (crews.length){ var cr = crews[0]; fxGroup.remove(cr.g); disposeGroup(cr.g); crews.shift(); }
 }
 
 /* --- ⚡ ברק --- */
@@ -4301,6 +4420,7 @@ function applyShake(dt){
   camera.position.z += (Math.random()-0.5)*s;
 }
 function clearFires(){
+  clearCrews();
   while (fires.length){ var f = fires[0]; fxGroup.remove(f.g); disposeGroup(f.g); fires.shift(); }
   while (fireTrucks.length){ var tr = fireTrucks[0]; fxGroup.remove(tr.g); disposeGroup(tr.g); fireTrucks.shift(); }
   if (tornado){ fxGroup.remove(tornado.g); disposeGroup(tornado.g); tornado = null; }
@@ -4313,17 +4433,21 @@ function clearFires(){
   shakeAmt = 0;
 }
 
-/* אסון אקראי מדי פעם — ככל שהעיר גדולה ויש בה יותר מפעלים, הסיכון גדל */
+/* אסון אקראי מדי פעם — נדיר! ואחרי אסון יש הפוגה ארוכה בלי שום אסון */
+var disasterCool = 0;
 function maybeDisaster(){
-  if (S.pop < 12) return;
-  var risk = Math.min(0.018, 0.004 + S.pop/14000 + countType("factory")*0.0015 + countType("bigfactory")*0.002);
+  if (disasterCool > 0){ disasterCool--; return; }
+  if (S.pop < 15) return;
+  if (fires.length) return;      /* כל עוד בוערת שריפה — לא מוסיפים עוד צרות */
+  var risk = Math.min(0.005, 0.0012 + S.pop/50000 + countType("factory")*0.0005 + countType("bigfactory")*0.0008);
   if (countType("fire") > 0) risk *= 0.7;
   if (Math.random() > risk) return;
+  disasterCool = 150;            /* בערך 4 דקות שקט אחרי כל אסון */
   var r = Math.random();
-  if (r < 0.5)       randomFire();
-  else if (r < 0.74) strikeLightning();
-  else if (r < 0.9)  quake();
-  else if (r < 0.97) spawnTornado();
+  if (r < 0.62)      randomFire();
+  else if (r < 0.82) strikeLightning();
+  else if (r < 0.93) quake();
+  else if (r < 0.985) spawnTornado();
   else               dropMeteor();
 }
 
@@ -5415,6 +5539,7 @@ function animate(){
   if (thieves.length || copCars.length) updateCrime(dt, t);
   if (emergencies.length || ambulances.length) updateEmergencies(dt, t);
   if (fires.length || fireTrucks.length) updateFires(dt, t);
+  if (crews.length) updateCrews(dt, t);
   if (tornado || meteor) updateDisasters(dt, t);
   if (shakeAmt > 0) applyShake(dt);
 
@@ -5610,6 +5735,7 @@ window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:c
                   strikeLightning:strikeLightning, quake:quake, spawnTornado:spawnTornado,
                   dropMeteor:dropMeteor, clearRubbleAt:clearRubbleAt, wreckTile:wreckTile,
                   updateFires:updateFires, updateDisasters:updateDisasters,
+                  crews:crews, sendCrew:sendCrew, updateCrews:updateCrews,
                   draw:function(){ if(!DRV.on) updateCam(); renderer.render(scene, camera); } };
 
 })();
