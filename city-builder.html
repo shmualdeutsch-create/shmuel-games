@@ -2453,6 +2453,7 @@ function warnOnce(key, msg, kind){
   toast(msg, kind||"bad");
 }
 
+var quietTick = false;   /* בטיק של הכניסה למשחק לא מראים הודעות מקפצות */
 function simulate(){
   S.day++;
   var pwCap=0, pwUse=0, wtCap=0, wtUse=0, jobs=0, upkeep=0, fixedInc=0;
@@ -2598,14 +2599,14 @@ function simulate(){
     if (S.adDays > 0) step++;
     if (c.res < target){
       c.res = Math.min(target, c.res + step); arriving++;
-      if (Math.random() < 0.5){
+      if (!quietTick && Math.random() < 0.5){
         var wA = tileToWorld(b.x, b.z);
         floatText("😊 +" + step, wA.x, wA.z, 3.4, "#8CF4B6");
       }
     } else if (c.res > target + 1){
       /* עוזבים לאט, ורק אם באמת צפוף מדי — הפרש של תושב אחד זה בסדר גמור */
       c.res = Math.max(target, c.res - 1); leaving++;
-      if (Math.random() < 0.35){
+      if (!quietTick && Math.random() < 0.35){
         var wB = tileToWorld(b.x, b.z);
         floatText("😞 בורחים!", wB.x, wB.z, 3.4, "#FF9A9A");
       }
@@ -3301,7 +3302,8 @@ function cityData(){
   for (var i=0;i<S.grid.length;i++){
     var c = S.grid[i];
     cells.push((c.t || c.zone)
-      ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0, c.wire?1:0]
+      ? [c.t, c.res, Math.round((c.seed||0.5)*1000)/1000, c.zone||0, c.level||0, c.wire?1:0,
+         Math.round(c.happy === undefined ? 60 : c.happy)]
       : 0);
   }
   return {
@@ -3361,6 +3363,8 @@ function loadGame(d){
       c.zone = v[3] || null;
       c.level = v[4] || 0;
       c.wire = !!v[5];
+      /* ההרגשה של השכונה נשמרת גם היא — אחרת בטיק הראשון כולם פתאום באים או בורחים */
+      if (typeof v[6] === "number") c.happy = v[6];
       if (TYPES[v[0]]){
         c.t = v[0]; c.res = v[1]||0;
         c.cap = TYPES[v[0]].cap || 0;
@@ -3373,7 +3377,10 @@ function loadGame(d){
     }
     refreshRoadList();
     for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++) if (cell(x,z).t || cell(x,z).zone) renderCell(x,z);
+    /* הטיק הראשון רק מסדר מספרים — בלי "+1" ו"בורחים!" שמקפצים על המסך בשנייה שנכנסים */
+    quietTick = true;
     simulate();
+    quietTick = false;
     toast("📂 " + (S.cityName || "העיר שלך") + " חזרה!", "good");
     return true;
   }catch(e){ return false; }
@@ -5587,6 +5594,7 @@ animate();
 /* נקודת בדיקה (לשימוש פיתוח) */
 window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:cell,
                   newGame:newGame, start:start, BUILDERS:BUILDERS, TYPES:TYPES, GRID:GRID,
+                  cityData:cityData, loadGame:loadGame,
                   renderer:renderer, scene:scene, camera:camera, DRV:DRV,
                   enterDrive:enterDrive, exitDrive:exitDrive, updateDrive:updateDrive,
                   spawnThief:spawnThief, updateCrime:updateCrime, thieves:thieves, copCars:copCars,
