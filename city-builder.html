@@ -568,6 +568,18 @@
         <li>אם אין משטרה — הגנב בורח עם <b>90 💰</b> שלך!</li>
         <li><b>אתה יכול לתפוס אותו בעצמך</b> — פשוט סע עליו עם המכונית! +150 💰</li>
       </ul>
+      <h3>17ב. 🚨 אסונות ושריפות</h3>
+      <ul>
+        <li>בלשונית <b>🚨 אסונות</b> יש כפתורים — אתה יכול להפעיל אסון <b>בעצמך</b> מתי שאתה רוצה!</li>
+        <li><b>🔥 שריפה</b> — האש מתפשטת לבניינים שליד, ואם לא מכבים — הבניין <b>נשרף</b>.</li>
+        <li><b>🚒 מכבי אש</b> — אם בנית תחנה, יוצאת משאית כיבוי לבד ומכבה את האש.</li>
+        <li><b>⚡ ברק</b> מצית בניין · <b>🫨 רעידת אדמה</b> מפילה כמה בניינים · <b>🌪️ טורנדו</b> הורס כל מה שבדרך · <b>☄️ מטאור</b> עושה מכתש ענק.</li>
+        <li><b>ראש העיר צריך לרדת לשטח!</b> תיכנס למכונית 🚗, תצא ממנה 🚪 ותלך לשריפה —
+            יופיע כפתור <b>🧯 לכבות את השריפה</b>. שלוש לחיצות וכבית! <b>+150 💰</b></li>
+        <li>אחרי אסון נשארות <b>🧱 הריסות</b> — אי אפשר לבנות עליהן. תלך לשם ברגל ותלחץ
+            <b>🧹 לפנות את ההריסות</b> (חינם, ועוד מקבלים <b>+60 💰</b>), או תפנה בדחפור 💥 תמורת 40 💰.</li>
+        <li>לא בא לך אסונות? בלשונית 🚨 תלחץ על <b>🎲 אסונות לבד</b> כדי לכבות אותם.</li>
+      </ul>
       <h3>18. 📊 לוח הניהול</h3>
       <ul>
         <li>כפתור <b>📊</b> פותח את לוח הניהול של ראש העיר.</li>
@@ -659,6 +671,7 @@ var CATS = [
   { id:"infra", name:"🔧 תשתיות" },
   { id:"serv",  name:"🏛️ שירותים" },
   { id:"fun",   name:"🎉 כיף" },
+  { id:"boom",  name:"🚨 אסונות" },
   { id:"tools", name:"🛠️ כלים" }
 ];
 
@@ -694,7 +707,7 @@ var S = {
   grid: [], tool: "road", cat: "infra", speed: 1, started: false, everHadPop: false,
   tax: 1, salary: 1, adDays: 0, crime: 0, unemployed: 0,
   traUse: 0, traCap: 0, hasHall: false,
-  level: 0, rescued: 0, flags: {},
+  level: 0, rescued: 0, flags: {}, disasters: true,
   demR: 0.6, demC: 0, demI: 0, zoneCount: 0
 };
 function cell(x,z){ return S.grid[z*GRID+x]; }
@@ -2174,6 +2187,10 @@ function place(x,z,type){
   var c = cell(x,z);
   var T = TYPES[type];
   if (!T) return;
+  if (c.rub){
+    toast("יש כאן הריסות 🧱 — תפנה אותן בדחפור 💥 (40 💰) או תלך לשם ברגל 🧹 (חינם)", "bad");
+    beep(160,0.08); return;
+  }
   /* קו חשמל מעל כביש קיים — בדיוק כמו בסים סיטי */
   if (type === "powerline" && c.t === "road"){
     if (c.wire){ toast("כבר יש כאן קו חשמל 🔌"); return; }
@@ -2210,6 +2227,14 @@ function place(x,z,type){
 }
 function demolish(x,z){
   var c = cell(x,z);
+  if (c.rub){
+    /* פינוי הריסות בדחפור עולה כסף — ראש העיר שהולך לשם ברגל מפנה בחינם */
+    if (S.money < 40){ toast("פינוי הריסות עולה 40 💰 — או שראש העיר ילך לשם ברגל 🧹", "bad"); beep(150,0.1); return; }
+    S.money -= 40;
+    clearRubbleAt(x, z, false);
+    toast("🧹 פינית את ההריסות (-40 💰)");
+    return;
+  }
   if (!c.t && c.zone){
     /* מחיקת אזור ריק */
     S.money += Math.round(ZONES[c.zone].cost/2);
@@ -2653,6 +2678,9 @@ function simulate(){
 
   /* מצבי חירום — צריך בית חולים */
   if (S.pop >= 8 && Math.random() < Math.min(0.035, S.pop/1800)) spawnEmergency();
+  /* אסונות — שריפה, ברק, רעידת אדמה, טורנדו או מטאור */
+  maybeDisaster();
+  if (fires.length) warnOnce("fr", "🔥 יש שריפה בעיר! תבנה 🚒 מכבי אש — או צא לשטח ותכבה בעצמך");
 
   updateUI();
   updateAgents();
@@ -2905,18 +2933,27 @@ function buildItems(cat){
   var ids = [], k;
   if (cat === "tools"){ for (k in TOOLS) ids.push(k); }
   else if (cat === "zones"){ ids = ["zone_r", "zone_c", "zone_i"]; }
+  else if (cat === "boom"){ for (k in DISASTERS) ids.push(k); }
   else { for (k in TYPES) if (TYPES[k].cat === cat) ids.push(k); }
   for (var i=0;i<ids.length;i++){
     var id = ids[i];
-    var T = TYPES[id] || TOOLS[id] || ZONE_ITEMS[id];
+    var T = TYPES[id] || TOOLS[id] || ZONE_ITEMS[id] || DISASTERS[id];
     var d = document.createElement("div");
-    d.className = "item" + (TOOLS[id] ? " tool" : "") + (S.tool===id ? " on" : "");
+    d.className = "item" + (TOOLS[id] ? " tool" : "") + (!DISASTERS[id] && S.tool===id ? " on" : "");
     d.setAttribute("data-id", id);
     var costTxt = TYPES[id] ? TYPES[id].cost + " 💰"
-                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰" : "חינם";
+                : ZONE_ITEMS[id] ? ZONE_ITEMS[id].cost + " 💰"
+                : id === "d_rand" ? (S.disasters ? "דולק ✔" : "כבוי ✖")
+                : DISASTERS[id] ? "לחץ!" : "חינם";
     d.innerHTML = '<div class="e">'+T.e+'</div><div class="n">'+T.name+'</div>' +
                   '<div class="c">'+costTxt+'</div>';
-    d.onclick = (function(x){ return function(){ setTool(x); beep(640,0.05); }; })(id);
+    d.onclick = DISASTERS[id]
+      ? (function(x){ return function(){
+          if (!S.started){ toast("קודם תתחיל עיר 🙂"); return; }
+          DISASTERS[x].fn(); beep(300,0.09,"sawtooth");
+          if (x === "d_rand") buildItems("boom");
+        }; })(id)
+      : (function(x){ return function(){ setTool(x); beep(640,0.05); }; })(id);
     elItems.appendChild(d);
   }
   var tabs = elTabs.children;
@@ -3365,7 +3402,7 @@ function clearCity(){
   while (peds.length) killAgent(peds, 0);
   while (trucks.length) killAgent(trucks, 0);
   while (buses.length) killAgent(buses, 0);
-  clearCrime(); clearGarbage(); clearEmergencies();
+  clearCrime(); clearGarbage(); clearEmergencies(); clearFires();
   S.level = 0; S.rescued = 0; S.flags = {};
   updateGoalPill();
   if (INS.on) exitInterior();
@@ -3385,6 +3422,7 @@ function clearCity(){
 function placeZone(x, z, kind){
   var c = cell(x,z);
   var Z = ZONES[kind];
+  if (c.rub){ toast("יש כאן הריסות 🧱 — צריך לפנות אותן קודם", "bad"); beep(160,0.08); return; }
   if (c.t || c.zone){
     toast("המשבצת הזאת כבר תפוסה — תשתמש בדחפור 💥", "bad"); beep(160,0.08); return;
   }
@@ -3802,6 +3840,507 @@ function updateEmergencies(dt, t){
     ab.g.userData.lights[0].emissiveIntensity = fl ? 3.2 : 0.1;
     ab.g.userData.lights[1].emissiveIntensity = fl ? 0.1 : 3.2;
   }
+}
+
+/* ============================================================
+   17ב. אסונות: שריפות, ברק, רעידת אדמה, טורנדו ומטאור 🔥🌪️☄️
+   ראש העיר צריך לרדת לשטח: לכבות אש 🧯 ולפנות הריסות 🧹
+   ============================================================ */
+var fires = [], fireTrucks = [], tornado = null, meteor = null, shakeAmt = 0;
+var FIRE_BURN = 40;      /* שניות עד שבניין שלא כיבו אותו נשרף לגמרי */
+
+function makeFlames(){
+  var g = new THREE.Group();
+  var hot  = new THREE.MeshStandardMaterial({ color:0xFF8A2A, emissive:new THREE.Color(0xFF4400),
+             emissiveIntensity:1.8, transparent:true, opacity:0.95 });
+  var warm = new THREE.MeshStandardMaterial({ color:0xFFD24E, emissive:new THREE.Color(0xFFA000),
+             emissiveIntensity:2.2, transparent:true, opacity:0.95 });
+  var fl = [], i;
+  for (i=0;i<8;i++){
+    var m = new THREE.Mesh(new THREE.ConeGeometry(0.5 + Math.random()*0.3, 2 + Math.random()*1.2, 7),
+            (i%2) ? warm : hot);
+    m.position.set((Math.random()-0.5)*2.2, 1.1 + Math.random()*0.9, (Math.random()-0.5)*2.2);
+    m.userData.ph = Math.random()*6;
+    g.add(m); fl.push(m);
+  }
+  var sm = [];
+  for (i=0;i<4;i++){
+    var s = new THREE.Mesh(new THREE.SphereGeometry(0.6 + Math.random()*0.35, 7, 6),
+            new THREE.MeshStandardMaterial({ color:0x4A4650, transparent:true, opacity:0.45 }));
+    s.position.set((Math.random()-0.5)*1.6, 3 + i*0.9, (Math.random()-0.5)*1.6);
+    s.userData.y0 = s.position.y; s.userData.ph = Math.random()*2.4;
+    g.add(s); sm.push(s);
+  }
+  var li = new THREE.PointLight(0xFF6A20, 2.4, 16);
+  li.position.y = 1.6; g.add(li);
+  var sp = warnSprite("🔥"); sp.position.y = 4.2; sp.scale.set(2,2,1); g.add(sp);
+  g.userData.fl = fl; g.userData.sm = sm; g.userData.li = li;
+  return g;
+}
+function makeFireTruck(){
+  var g = new THREE.Group();
+  var red = M(0xD8342E, 0.45, 0.2);
+  g.add(box(1.9, 0.66, 0.96, red, -0.1, 0.62, 0));
+  g.add(box(0.78, 0.52, 0.92, red, 1.02, 0.58, 0));
+  g.add(box(0.64, 0.3, 0.88, winMat(g, 0x9FD8FF), 1.04, 0.72, 0));
+  g.add(box(1.5, 0.1, 0.18, M(0xC9CDD6, 0.5), -0.3, 1.02, 0));      /* סולם */
+  g.add(box(0.5, 0.18, 0.18, M(0xC9CDD6, 0.5), 0.5, 1.08, 0));
+  g.add(box(1.9, 0.12, 0.98, M(0x3A3A46, 0.6), -0.1, 0.3, 0));
+  var r = new THREE.MeshStandardMaterial({ color:0xFF5555, emissive:new THREE.Color(0xFF0000), emissiveIntensity:2 });
+  var y = new THREE.MeshStandardMaterial({ color:0xFFD24E, emissive:new THREE.Color(0xFFAA00), emissiveIntensity:2 });
+  g.add(box(0.2, 0.12, 0.2, r, -0.5, 1.2, 0));
+  g.add(box(0.2, 0.12, 0.2, y, -0.1, 1.2, 0));
+  g.userData.lights = [r, y];
+  for (var w=0; w<4; w++){
+    var wh = cyl(0.21,0.21,0.12, 9, M(0x18181E, 0.85), (w<2?-0.7:0.8), 0.21, (w%2?-0.48:0.48));
+    wh.rotation.x = Math.PI/2; g.add(wh);
+  }
+  return g;
+}
+function makeRubble(){
+  var g = new THREE.Group();
+  for (var i=0;i<8;i++){
+    var s = 0.26 + Math.random()*0.4;
+    var r = new THREE.Mesh(new THREE.BoxGeometry(s, s*0.7, s), M(i%2 ? 0x8A8A96 : 0x6E6E7A, 0.95));
+    r.position.set((Math.random()-0.5)*2.4, s*0.35, (Math.random()-0.5)*2.4);
+    r.rotation.y = Math.random()*3; r.castShadow = true;
+    g.add(r);
+  }
+  var sp = warnSprite("🧱"); sp.position.y = 3.2; g.add(sp);
+  return g;
+}
+
+/* --- הריסות שנשארות אחרי אסון --- */
+function addRubble(x,z){
+  var c = cell(x,z);
+  if (c.rub) return;
+  c.rub = true;
+  var w = tileToWorld(x,z);
+  var g = makeRubble();
+  g.position.set(w.x, 0.05, w.z);
+  fxGroup.add(g);
+  c.rubG = g;
+}
+function clearRubbleAt(x, z, byPlayer){
+  var c = cell(x,z);
+  if (!c.rub) return false;
+  c.rub = false;
+  if (c.rubG){ fxGroup.remove(c.rubG); disposeGroup(c.rubG); c.rubG = null; }
+  var w = tileToWorld(x,z);
+  puffRing(w.x, w.z, 0xD8D8D8);
+  if (byPlayer){
+    S.money += 60;
+    floatText("🧹 +60 💰", w.x, w.z, 3, "#8CF4B6");
+    toast("🧹 ראש העיר פינה את ההריסות! +60 💰", "good");
+  }
+  beep(420,0.08);
+  updateUI();
+  return true;
+}
+function nearestRubble(px, pz, maxD){
+  var best = null, bd = maxD*maxD;
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++){
+    if (!cell(x,z).rub) continue;
+    var w = tileToWorld(x,z);
+    var d = (w.x-px)*(w.x-px) + (w.z-pz)*(w.z-pz);
+    if (d < bd){ bd = d; best = { x:x, z:z }; }
+  }
+  return best;
+}
+
+/* --- בניין נהרס באסון (בלי החזר כסף) ונשארות הריסות --- */
+function wreckTile(x,z){
+  if (!inGrid(x,z)) return false;
+  var c = cell(x,z);
+  if (!c.t && !c.zone) return false;
+  var fi = fireAt(x,z);
+  if (fi >= 0){ var ff = fires[fi]; fxGroup.remove(ff.g); disposeGroup(ff.g); fires.splice(fi,1); }
+  var w = tileToWorld(x,z);
+  var had = c.res || 0;
+  setWarn(c, x, z, null);
+  c.t = null; c.res = 0; c.cap = 0; c.jobs = 0; c.inc = 0; c.pol = 0; c.trash = 0;
+  c.zone = null; c.level = 0; c.grow = 0; c.wire = false; c.grid = false;
+  if (c.g){ cityGroup.remove(c.g); disposeGroup(c.g); c.g = null; }
+  refreshRoadsAround(x,z); refreshRoadList();
+  addRubble(x,z);
+  puffRing(w.x, w.z, 0x8A8A96);
+  if (had > 0) floatText("😢 -" + had, w.x, w.z, 3.2, "#FF9A9A");
+  return true;
+}
+
+/* --- שריפות --- */
+function fireAt(x,z){
+  for (var i=0;i<fires.length;i++) if (fires[i].x === x && fires[i].z === z) return i;
+  return -1;
+}
+function fireStationTiles(){
+  var out = [];
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++)
+    if (cell(x,z).t === "fire") out.push({ x:x, z:z });
+  return out;
+}
+function burnableTiles(){
+  var out = [];
+  for (var z=0; z<GRID; z++) for (var x=0; x<GRID; x++){
+    var c = cell(x,z);
+    if (c.t && c.t !== "road" && c.t !== "powerline") out.push({ x:x, z:z });
+  }
+  return out;
+}
+function dispatchFireTruck(f){
+  var st = fireStationTiles();
+  if (!st.length) return;
+  var fw = tileToWorld(f.x, f.z);
+  var best = st[0], bd = 1e9;
+  for (var i=0;i<st.length;i++){
+    var sw = tileToWorld(st[i].x, st[i].z);
+    var d = (sw.x-fw.x)*(sw.x-fw.x) + (sw.z-fw.z)*(sw.z-fw.z);
+    if (d < bd){ bd = d; best = st[i]; }
+  }
+  var bw = tileToWorld(best.x, best.z);
+  var g = makeFireTruck();
+  g.position.set(bw.x, 0.22, bw.z);
+  fxGroup.add(g);
+  var tr = { g:g, x:bw.x, z:bw.z, target:f };
+  fireTrucks.push(tr); f.truck = tr;
+}
+function killTruck(i){
+  var tr = fireTrucks[i];
+  fxGroup.remove(tr.g); disposeGroup(tr.g);
+  if (tr.target && tr.target.truck === tr) tr.target.truck = null;
+  fireTrucks.splice(i,1);
+}
+function startFire(x, z, quiet){
+  if (!inGrid(x,z)) return false;
+  var c = cell(x,z);
+  if (!c.t || c.t === "road" || c.t === "powerline") return false;
+  if (fireAt(x,z) >= 0) return false;
+  var w = tileToWorld(x,z);
+  var g = makeFlames();
+  /* האש יושבת על הגג של הבניין — אחרת היא נבלעת בתוכו ולא רואים כלום */
+  var topY = 1;
+  if (c.g){
+    var bb = new THREE.Box3().setFromObject(c.g);
+    if (isFinite(bb.max.y)) topY = Math.max(0.8, Math.min(14, bb.max.y - 0.8));
+  }
+  g.position.set(w.x, topY, w.z);
+  fxGroup.add(g);
+  var f = { x:x, z:z, g:g, life:0, hp:1, spread:0, truck:null };
+  fires.push(f);
+  if (!quiet){
+    toast("🔥 שריפה ב" + TYPES[c.t].name + "! תשלח מכבי אש — או לך לכבות בעצמך 🧯", "bad");
+    beep(240,0.25,"sawtooth");
+  }
+  dispatchFireTruck(f);
+  return true;
+}
+function randomFire(loud){
+  var cand = burnableTiles();
+  if (!cand.length){ if (loud) toast("אין עדיין בניינים שיכולים להישרף 🙂"); return false; }
+  var p = cand[Math.floor(Math.random()*cand.length)];
+  return startFire(p.x, p.z);
+}
+function putOutFire(i, byPlayer){
+  var f = fires[i];
+  var w = tileToWorld(f.x, f.z);
+  fxGroup.remove(f.g); disposeGroup(f.g);
+  if (f.truck){
+    var ti = fireTrucks.indexOf(f.truck);
+    if (ti >= 0){ fxGroup.remove(f.truck.g); disposeGroup(f.truck.g); fireTrucks.splice(ti,1); }
+  }
+  fires.splice(i,1);
+  puffRing(w.x, w.z, 0x9FD8FF);
+  if (byPlayer){
+    S.money += 150;
+    floatText("🦸 +150 💰", w.x, w.z, 3.6, "#8CF4B6");
+    toast("🦸 ראש העיר כיבה את השריפה! +150 💰", "good");
+  } else {
+    floatText("💧 כבוי!", w.x, w.z, 3.6, "#9FD8FF");
+    toast("🚒 מכבי האש כיבו את השריפה!", "good");
+  }
+  beep(700,0.1); setTimeout(function(){ beep(960,0.12); }, 90);
+  updateUI();
+}
+function burnDown(i){
+  var f = fires[i];
+  var c = cell(f.x, f.z);
+  var nm = c.t ? TYPES[c.t].name : "הבניין";
+  fxGroup.remove(f.g); disposeGroup(f.g);
+  if (f.truck){
+    var ti = fireTrucks.indexOf(f.truck);
+    if (ti >= 0){ fxGroup.remove(f.truck.g); disposeGroup(f.truck.g); fireTrucks.splice(ti,1); }
+  }
+  fires.splice(i,1);
+  wreckTile(f.x, f.z);
+  toast("😱 ה" + nm + " נשרף! נשארו הריסות 🧱 — ראש העיר צריך ללכת לפנות אותן", "bad");
+  beep(140,0.4,"sawtooth");
+  updateUI();
+}
+/* ראש העיר מכבה בעצמו — כל לחיצה מורידה שליש מהאש */
+function mayorFight(x,z){
+  var i = fireAt(x,z);
+  if (i < 0) return;
+  var f = fires[i];
+  f.hp -= 0.34;
+  var w = tileToWorld(x,z);
+  puffRing(w.x + (Math.random()-0.5)*1.6, w.z + (Math.random()-0.5)*1.6, 0x9FD8FF);
+  beep(620,0.06);
+  if (f.hp <= 0){ putOutFire(i, true); return; }
+  floatText("💦 " + Math.round(f.hp*100) + "%", w.x, w.z, 4.2, "#9FD8FF");
+}
+function nearestFire(px, pz, maxD){
+  var best = null, bd = maxD*maxD;
+  for (var i=0;i<fires.length;i++){
+    var w = tileToWorld(fires[i].x, fires[i].z);
+    var d = (w.x-px)*(w.x-px) + (w.z-pz)*(w.z-pz);
+    if (d < bd){ bd = d; best = { x:fires[i].x, z:fires[i].z }; }
+  }
+  return best;
+}
+function nearFireStation(x,z){
+  var st = fireStationTiles();
+  for (var i=0;i<st.length;i++) if (dist(x,z, st[i].x, st[i].z) <= 7) return true;
+  return false;
+}
+function updateFires(dt, t){
+  var i, k;
+  for (i=fires.length-1; i>=0; i--){
+    var f = fires[i];
+    f.life += dt;
+    var ud = f.g.userData;
+    for (k=0;k<ud.fl.length;k++){
+      var m = ud.fl[k];
+      var s = 0.72 + Math.abs(Math.sin(t*7 + m.userData.ph))*0.55;
+      m.scale.set(s, s*1.2, s);
+      m.rotation.y = t*2.2 + k;
+    }
+    for (k=0;k<ud.sm.length;k++){
+      var sm = ud.sm[k];
+      var a = (t*0.85 + sm.userData.ph) % 2.6;
+      sm.position.y = sm.userData.y0 + a;
+      sm.material.opacity = 0.45 * (1 - a/2.6);
+    }
+    ud.li.intensity = 2 + Math.sin(t*11)*0.9;
+    /* האש מתפשטת לשכנים — פחות אם יש מכבי אש קרוב */
+    f.spread += dt;
+    if (f.spread > 7){
+      f.spread = 0;
+      if (Math.random() < (nearFireStation(f.x,f.z) ? 0.1 : 0.3)){
+        var d = [[1,0],[-1,0],[0,1],[0,-1]][Math.floor(Math.random()*4)];
+        startFire(f.x+d[0], f.z+d[1], true);
+      }
+    }
+    if (f.life > FIRE_BURN){ burnDown(i); continue; }
+  }
+  for (i=fireTrucks.length-1; i>=0; i--){
+    var tr = fireTrucks[i];
+    if (!tr.target || fires.indexOf(tr.target) < 0){ killTruck(i); continue; }
+    var tw = tileToWorld(tr.target.x, tr.target.z);
+    var dx = tw.x - tr.x, dz = tw.z - tr.z, dd = Math.hypot(dx, dz);
+    if (dd > 2.6){
+      tr.x += dx/dd * 7 * dt; tr.z += dz/dd * 7 * dt;
+      tr.g.position.set(tr.x, 0.22, tr.z);
+      tr.g.rotation.y = Math.atan2(dx, dz) - Math.PI/2;
+    } else {
+      tr.target.hp -= dt*0.32;
+      if (Math.random() < dt*5) puffRing(tw.x + (Math.random()-0.5)*2.4, tw.z + (Math.random()-0.5)*2.4, 0x9FD8FF);
+      if (tr.target.hp <= 0){
+        var fi = fires.indexOf(tr.target);
+        if (fi >= 0){ putOutFire(fi, false); continue; }
+      }
+    }
+    var fl = Math.sin(t*10) > 0;
+    tr.g.userData.lights[0].emissiveIntensity = fl ? 3.2 : 0.1;
+    tr.g.userData.lights[1].emissiveIntensity = fl ? 0.1 : 3.2;
+  }
+}
+
+/* --- ⚡ ברק --- */
+function strikeLightning(){
+  var cand = burnableTiles();
+  if (!cand.length){ toast("אין בניינים שהברק יכול לפגוע בהם 🙂"); return; }
+  var p = cand[Math.floor(Math.random()*cand.length)];
+  var w = tileToWorld(p.x, p.z);
+  var bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.34, 46, 6),
+             new THREE.MeshBasicMaterial({ color:0xFFFFFF, transparent:true, opacity:0.95 }));
+  bolt.position.set(w.x, 23, w.z);
+  fxGroup.add(bolt);
+  var li = new THREE.PointLight(0xCFE4FF, 7, 70);
+  li.position.set(w.x, 12, w.z); fxGroup.add(li);
+  setTimeout(function(){
+    fxGroup.remove(bolt); bolt.geometry.dispose(); bolt.material.dispose();
+    fxGroup.remove(li);
+  }, 280);
+  toast("⚡ ברק פגע בעיר!", "bad");
+  beep(1300,0.05); setTimeout(function(){ beep(90,0.5,"sawtooth"); }, 110);
+  shakeAmt = Math.max(shakeAmt, 0.5);
+  startFire(p.x, p.z, true);
+}
+
+/* --- 🫨 רעידת אדמה --- */
+function quake(){
+  var cand = burnableTiles();
+  if (!cand.length){ toast("עוד אין מה שיתמוטט 🙂"); return; }
+  shakeAmt = 1.4;
+  toast("🫨 רעידת אדמה!!! בניינים מתמוטטים", "bad");
+  beep(70,0.8,"sawtooth");
+  var n = Math.max(2, Math.min(7, Math.round(cand.length*0.14)));
+  for (var i=0;i<n && cand.length;i++){
+    var p = cand.splice(Math.floor(Math.random()*cand.length), 1)[0];
+    wreckTile(p.x, p.z);
+  }
+  if (cand.length && Math.random() < 0.6){
+    var q = cand[Math.floor(Math.random()*cand.length)];
+    startFire(q.x, q.z, true);
+  }
+  updateUI();
+}
+
+/* --- 🌪️ טורנדו --- */
+function makeTornado(){
+  var g = new THREE.Group();
+  var cols = [0x5A5560, 0x6B6672, 0x4A4650], ring = [];
+  for (var i=0;i<10;i++){
+    var m = new THREE.Mesh(new THREE.TorusGeometry(0.55 + i*0.4, 0.24, 6, 14),
+            new THREE.MeshStandardMaterial({ color:cols[i%3], transparent:true, opacity:0.55 }));
+    m.rotation.x = Math.PI/2; m.position.y = 0.5 + i*1.5;
+    g.add(m); ring.push(m);
+  }
+  var sp = warnSprite("🌪️"); sp.position.y = 18; sp.scale.set(2.4,2.4,1); g.add(sp);
+  g.userData.ring = ring;
+  return g;
+}
+function spawnTornado(){
+  if (tornado){ toast("כבר יש טורנדו בעיר! 🌪️"); return; }
+  var g = makeTornado();
+  var z0 = (Math.random()-0.5)*HALF*1.3;
+  g.position.set(-HALF-8, 0, z0);
+  fxGroup.add(g);
+  tornado = { g:g, x:-HALF-8, z:z0, vz:(Math.random()-0.5)*4, hit:0 };
+  toast("🌪️ טורנדו נכנס לעיר!! הוא הורס כל מה שבדרך", "bad");
+  beep(90,0.7,"sawtooth");
+}
+
+/* --- ☄️ מטאור --- */
+function dropMeteor(){
+  if (meteor){ toast("כבר נופל מטאור! ☄️"); return; }
+  var tx = 3 + Math.floor(Math.random()*(GRID-6));
+  var tz = 3 + Math.floor(Math.random()*(GRID-6));
+  var w = tileToWorld(tx,tz);
+  var g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(1.3, 0), M(0x3A3238, 0.95)));
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2, 9, 8),
+        new THREE.MeshBasicMaterial({ color:0xFF7A2A, transparent:true, opacity:0.45 })));
+  var li = new THREE.PointLight(0xFF8A33, 4, 40); g.add(li);
+  g.position.set(w.x - 22, 70, w.z - 22);
+  fxGroup.add(g);
+  meteor = { g:g, tx:tx, tz:tz, w:w, t:0, x0:w.x-22, y0:70, z0:w.z-22 };
+  toast("☄️ מטאור נופל על העיר!!!", "bad");
+  beep(130,0.5,"sawtooth");
+}
+function meteorImpact(){
+  var tx = meteor.tx, tz = meteor.tz, w = meteor.w;
+  fxGroup.remove(meteor.g); disposeGroup(meteor.g); meteor = null;
+  shakeAmt = 1.6;
+  beep(60,0.9,"sawtooth");
+  for (var i=0;i<4;i++) puffRing(w.x + (Math.random()-0.5)*6, w.z + (Math.random()-0.5)*6, 0xFF8A33);
+  for (var dz=-1; dz<=1; dz++) for (var dx=-1; dx<=1; dx++) wreckTile(tx+dx, tz+dz);
+  /* מסביב למכתש מתחילות שריפות */
+  for (var k=0;k<4;k++){
+    var ax = tx + Math.round((Math.random()-0.5)*6), az = tz + Math.round((Math.random()-0.5)*6);
+    startFire(ax, az, true);
+  }
+  toast("☄️ המטאור פגע! מכתש ענק והריסות 🧱", "bad");
+  updateUI();
+}
+
+function updateDisasters(dt, t){
+  if (tornado){
+    tornado.x += 9*dt;
+    tornado.z += tornado.vz*dt;
+    tornado.g.position.set(tornado.x, 0, tornado.z);
+    for (var i=0;i<tornado.g.userData.ring.length;i++){
+      var m = tornado.g.userData.ring[i];
+      m.rotation.z = t*(5 + i*0.7);
+      m.position.x = Math.sin(t*3 + i)*0.5;
+      m.position.z = Math.cos(t*3 + i)*0.5;
+    }
+    shakeAmt = Math.max(shakeAmt, 0.5);
+    /* הורס את מה שהוא עובר עליו */
+    tornado.hit += dt;
+    if (tornado.hit > 0.25){
+      tornado.hit = 0;
+      var gx = Math.floor((tornado.x + HALF)/TILE), gz = Math.floor((tornado.z + HALF)/TILE);
+      for (var dz=-1; dz<=1; dz++) for (var dx=-1; dx<=1; dx++){
+        if (!inGrid(gx+dx, gz+dz)) continue;
+        if (Math.random() < 0.3) wreckTile(gx+dx, gz+dz);
+      }
+    }
+    if (tornado.x > HALF + 10){
+      fxGroup.remove(tornado.g); disposeGroup(tornado.g); tornado = null;
+      toast("🌪️ הטורנדו עזב את העיר", "good");
+      updateUI();
+    }
+  }
+  if (meteor){
+    meteor.t += dt;
+    var a = Math.min(1, meteor.t/1.7);
+    meteor.g.position.set(
+      meteor.x0 + (meteor.w.x - meteor.x0)*a,
+      meteor.y0 + (1.2 - meteor.y0)*a*a,
+      meteor.z0 + (meteor.w.z - meteor.z0)*a
+    );
+    meteor.g.rotation.x += dt*5; meteor.g.rotation.y += dt*4;
+    if (a >= 1) meteorImpact();
+  }
+}
+function applyShake(dt){
+  shakeAmt = Math.max(0, shakeAmt - dt*0.55);
+  if (shakeAmt <= 0 || DRV.on || WALK.on) return;
+  updateCam();
+  var s = shakeAmt*2.4;
+  camera.position.x += (Math.random()-0.5)*s;
+  camera.position.y += (Math.random()-0.5)*s;
+  camera.position.z += (Math.random()-0.5)*s;
+}
+function clearFires(){
+  while (fires.length){ var f = fires[0]; fxGroup.remove(f.g); disposeGroup(f.g); fires.shift(); }
+  while (fireTrucks.length){ var tr = fireTrucks[0]; fxGroup.remove(tr.g); disposeGroup(tr.g); fireTrucks.shift(); }
+  if (tornado){ fxGroup.remove(tornado.g); disposeGroup(tornado.g); tornado = null; }
+  if (meteor){ fxGroup.remove(meteor.g); disposeGroup(meteor.g); meteor = null; }
+  for (var i=0;i<S.grid.length;i++){
+    var c = S.grid[i];
+    if (c.rubG){ fxGroup.remove(c.rubG); disposeGroup(c.rubG); c.rubG = null; }
+    c.rub = false;
+  }
+  shakeAmt = 0;
+}
+
+/* --- מי שולט באסונות: אקראי או ראש העיר בעצמו --- */
+var DISASTERS = {
+  d_fire:  { name:"שריפה",      e:"🔥",  fn:function(){ randomFire(true); } },
+  d_bolt:  { name:"ברק",        e:"⚡",  fn:function(){ strikeLightning(); } },
+  d_quake: { name:"רעידת אדמה", e:"🫨",  fn:function(){ quake(); } },
+  d_torn:  { name:"טורנדו",     e:"🌪️", fn:function(){ spawnTornado(); } },
+  d_met:   { name:"מטאור",      e:"☄️",  fn:function(){ dropMeteor(); } },
+  d_rand:  { name:"אסונות לבד", e:"🎲",  fn:function(){
+      S.disasters = !S.disasters;
+      toast(S.disasters ? "🎲 אסונות אקראיים דולקים — תיזהר!" : "🛡️ אסונות אקראיים כבויים — עיר רגועה",
+            S.disasters ? "bad" : "good");
+    } }
+};
+/* אסון אקראי מדי פעם — ככל שהעיר גדולה ומלוכלכת יותר, הסיכון גדל */
+function maybeDisaster(){
+  if (!S.disasters || S.pop < 12) return;
+  var risk = Math.min(0.018, 0.004 + S.pop/14000 + countType("factory")*0.0015 + countType("bigfactory")*0.002);
+  if (countType("fire") > 0) risk *= 0.7;
+  if (Math.random() > risk) return;
+  var r = Math.random();
+  if (r < 0.5)       randomFire();
+  else if (r < 0.74) strikeLightning();
+  else if (r < 0.9)  quake();
+  else if (r < 0.97) spawnTornado();
+  else               dropMeteor();
 }
 
 /* ============================================================
@@ -4393,8 +4932,17 @@ function updateWalk(dt, t){
       if (d < it.r && d < bestD){ bestD = d; act = { label:it.label, icon:it.icon, fn:it.fn }; }
     }
   } else {
-    /* חזרה למכונית */
-    if (DRV.g && Math.hypot(WALK.x - DRV.x, WALK.z - DRV.z) < 2.6){
+    /* קודם כל — אסון ליד ראש העיר: שריפה לכבות או הריסות לפנות */
+    var fSpot = nearestFire(WALK.x, WALK.z, 4.4);
+    var rSpot = fSpot ? null : nearestRubble(WALK.x, WALK.z, 4.0);
+    if (fSpot){
+      act = { label:"לכבות את השריפה", icon:"🧯",
+              fn:(function(p){ return function(){ mayorFight(p.x, p.z); }; })(fSpot) };
+    } else if (rSpot){
+      act = { label:"לפנות את ההריסות", icon:"🧹",
+              fn:(function(p){ return function(){ clearRubbleAt(p.x, p.z, true); }; })(rSpot) };
+    } else if (DRV.g && Math.hypot(WALK.x - DRV.x, WALK.z - DRV.z) < 2.6){
+      /* חזרה למכונית */
       act = { label:"לחזור למכונית", icon:"🚗", fn:function(){ backToCar(); } };
     } else {
       var tx = Math.floor((WALK.x + HALF)/TILE), tz = Math.floor((WALK.z + HALF)/TILE);
@@ -4882,6 +5430,9 @@ function animate(){
   }
   if (thieves.length || copCars.length) updateCrime(dt, t);
   if (emergencies.length || ambulances.length) updateEmergencies(dt, t);
+  if (fires.length || fireTrucks.length) updateFires(dt, t);
+  if (tornado || meteor) updateDisasters(dt, t);
+  if (shakeAmt > 0) applyShake(dt);
 
   /* פעימת הסימולציה */
   if (S.started && S.speed > 0){
@@ -5070,6 +5621,10 @@ window.__city = { S:S, place:place, demolish:demolish, simulate:simulate, cell:c
                   ZONES:ZONES, placeZone:placeZone, growthStep:growthStep,
                   spawnEmergency:spawnEmergency, updateEmergencies:updateEmergencies,
                   emergencies:emergencies, ambulances:ambulances,
+                  fires:fires, fireTrucks:fireTrucks, startFire:startFire, randomFire:randomFire,
+                  strikeLightning:strikeLightning, quake:quake, spawnTornado:spawnTornado,
+                  dropMeteor:dropMeteor, clearRubbleAt:clearRubbleAt, wreckTile:wreckTile,
+                  updateFires:updateFires, updateDisasters:updateDisasters,
                   draw:function(){ if(!DRV.on) updateCam(); renderer.render(scene, camera); } };
 
 })();
