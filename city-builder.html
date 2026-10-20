@@ -2562,6 +2562,9 @@ function simulate(){
     h += payJoy + adBonus;
     if (T.lux && joy < 8) h -= 10;
     h = Math.max(0, Math.min(100, Math.round(h)));
+    /* ההרגשה של השכונה משתנה לאט — ככה העיר לא קופצת כל שנייה בין "באים" ל"בורחים" */
+    var prevH = (typeof c.happy === "number") ? c.happy : h;
+    h = Math.round(prevH * 0.6 + h * 0.4);
     c.happy = h;
 
     var capHere = c.cap || T.cap || 0;
@@ -2575,10 +2578,13 @@ function simulate(){
         var wA = tileToWorld(b.x, b.z);
         floatText("😊 +" + step, wA.x, wA.z, 3.4, "#8CF4B6");
       }
-    } else if (c.res > target){
-      c.res = Math.max(target, c.res - step); leaving++;
-      var wB = tileToWorld(b.x, b.z);
-      floatText("😞 בורחים!", wB.x, wB.z, 3.4, "#FF9A9A");
+    } else if (c.res > target + 1){
+      /* עוזבים לאט, ורק אם באמת צפוף מדי — הפרש של תושב אחד זה בסדר גמור */
+      c.res = Math.max(target, c.res - 1); leaving++;
+      if (Math.random() < 0.35){
+        var wB = tileToWorld(b.x, b.z);
+        floatText("😞 בורחים!", wB.x, wB.z, 3.4, "#FF9A9A");
+      }
     }
     pop += c.res;
     happySum += h;
